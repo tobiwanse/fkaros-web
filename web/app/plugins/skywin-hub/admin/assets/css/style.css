@@ -1,0 +1,19 @@
+.sw-btn-danger
+{
+    color: #fff;
+    background-color: #d63638;
+    border-color: #d63638;
+    border-width: 1px;
+    font-size: 14px;
+    padding: 9px 15px;
+    min-height:36px;
+    text-decoration: none;
+}
+.sw-btn-danger:hover{
+    background-color: #b32d2e;
+    border-color: #b32d2e;
+    color: #fff;
+}
+.sw-admin-setting-field .connected-as{
+    margin-left: 30px;
+}

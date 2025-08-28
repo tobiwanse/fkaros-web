@@ -1,0 +1,49 @@
+.ui-helper-hidden-accessible{
+	display: none;
+}
+ul.ui-autocomplete {
+	display: none;
+	list-style: none;
+	list-style-type: none;
+	margin: 10;
+	padding: 10px;
+	color:#000;
+	background-color: #ffffff;
+	list-style-position: outside;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 1px 1px;
+	overflow-y: auto;
+	width: 100px;
+}
+
+.ui-autocomplete > li > div {
+	padding: 15px;
+}
+
+.ui-state-hover, .ui-state-active, .ui-state-focus {
+	color: #fff;
+	background-color: #000000;
+}
+#loader{
+	vertical-align: middle;
+	display: none;
+}
+.ui-autocomplete-loading {
+    background: white url("../img/loader.svg") right center no-repeat !important;
+}
+.skywin-deposit-fields{
+	margin-block-start: 1.2rem;
+	margin-block-end: 1.2rem;
+}
+
+
+  
+
+  
+
+  
+
+
+ 
+

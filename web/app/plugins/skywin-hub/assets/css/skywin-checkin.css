@@ -1,0 +1,141 @@
+form p.form-row-first{
+	float:left;
+	width:47%;
+}
+
+form p.form-row-last{
+	float:right;
+	width:47%;			
+}
+
+form p.form-row-wide{
+	width:100%;
+}
+
+clear{
+	clear:none;
+}
+
+form p {
+	margin-bottom: 1.15em;
+}
+
+p.form-row input[type="text"]{
+	
+	width: 100%;
+}
+p.form-row input[type="number"]{
+	
+	width: 100%;
+}
+
+p.form-row input[type="password"]{
+	
+	width: 100%;
+}
+
+p.form-row input[type="checkbox"]{
+	
+	clear:left;
+
+}
+
+
+p.form-row select{
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.row.row-first{
+	width:47%;
+	float:left;
+}
+.row.row-last{
+	width:47%;
+	float:right;
+}
+.row-last:after{
+	clear:both;
+}
+
+.daterangepicker{
+	color: black;
+}
+
+.monthselect{
+	border: 1px solid;
+	padding:5px!important;
+	margin-right: 5%!important;
+	width:40%!important;
+	outline:none;
+}
+
+.monthselect:focus{
+	border: 0px solid;
+	padding:5px!important;
+	margin-right: 5%!important;
+	width:40%!important;
+	outline:none;
+}
+
+.yearselect{
+	border: 1px solid;
+	padding:5px!important;
+	outline:none;
+}
+
+.yearselect:focus{
+	border: 1px solid;
+	padding:5px!important;
+	outline:none;
+}
+
+.required{
+	color: #b22222;
+}
+
+.ui-widget{
+	color: var(--global--color-background);
+	background-color: var(--global--color-primary);
+	border: 1px solid #000000!important;	
+}
+
+.ui-widget-shadow{
+	box-shadow: none;
+}
+
+p.has_error input{
+	box-shadow: 0 0 0px 2px #ff0000 inset;
+}
+
+p.has_error select{
+	box-shadow: 0 0 0px 2px #ff0000 inset;
+}
+
+@media only screen and (max-width: 600px) {
+	
+	form .row.row-first{
+		width:97%;
+		float:none;
+	}
+	
+	form .row.row-last{
+		width:97%;
+		float:none;
+	}
+	
+	form .form-row.form-row-first{
+		float:none;
+		width:97%;
+	}
+	
+	form .form-row.form-row-last{
+		float:none;
+		width:97%;			
+	}
+	
+	form .form-row.form-row-wide{
+		width:97%;
+	}
+
+}
