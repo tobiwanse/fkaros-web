@@ -1,0 +1,167 @@
+/*
+Theme Name: Twenty Twenty-Five Child
+Theme URI: http://localhost/themes/twentytwentyfive-child/
+Author: Tobiwan
+Author URI: https://wordpress.org
+Description: Twenty Twenty-Five Child Theme.
+Version: 1.0
+Template: twentytwentyfive
+*/
+/* Add your custom styles here */
+/*
+--wp--preset--color--custom-color-1: #173e58;
+--wp--preset--color--custom-color-2: #113047;
+--wp--preset--color--custom-color-3: #416b87;
+--wp--preset--color--custom-color-4: #0c293c;
+--wp--preset--color--custom-event-bar-1
+--wp--preset--color--custom-event-bar-2
+--wp--preset--color--accent-5: #FBFAF3;
+*/
+
+.um:not(.um-admin) {
+    font-size: unset!important;
+    color: unset!important;
+}
+.um *:not(.um-admin, input, textarea, select, button) {
+    font-size: unset!important;
+    color: unset!important;
+}
+/* .um:not(.um-admin) {
+    font-size: unset!important;
+    color: unset!important;
+}
+.um .um-field-label {
+    font-size: unset!important;
+    color: unset!important;
+}
+.um span.um-req {
+    color: unset!important;
+}
+.um-field-checkbox-state i, .um-field-radio-state i {
+    color: unset!important;
+}
+.um-field-checkbox-option, .um-field-radio-option {
+  color: unset!important;
+}
+a.um-link-alt{
+    color: unset!important;
+} */
+.um-form input[type="number"],
+.um-form input[type="password"],
+.um-form input[type="search"],
+.um-form input[type="tel"],
+.um-form input[type="text"] {
+  /* border-radius: 4px!important;
+    -moz-border-radius: 4px!important;
+    -webkit-border-radius: 4px!important;
+    font-size: 32px!important;
+    height: 54px!important; */
+}
+@media (max-width: 942px) {
+  header .wp-block-site-title {
+    display: none;
+  }
+}
+@media (max-width: 782px) {
+  div.wpforms-container-full
+    .wpforms-form
+    .wpforms-page-indicator-page:not(.active) {
+    display: none;
+  }
+  div.wpforms-container
+    .wpforms-form
+    .wpforms-page-indicator-page:not(.active) {
+    display: none;
+  }
+  div.wpforms-container-full
+    .wpforms-form
+    .wpforms-page-indicator-page.active
+    .wpforms-page-indicator-page-title {
+    display: block;
+  }
+  div.wpforms-container
+    .wpforms-form
+    .wpforms-page-indicator-page.active
+    .wpforms-page-indicator-page-number {
+    display: block;
+  }
+  div.wpforms-container
+    .wpforms-form
+    .wpforms-page-indicator.connector
+    .wpforms-page-indicator-page.active {
+    display: block;
+    width: 100% !important;
+  }
+  .wp-block-navigation__responsive-container-open:not(.always-shown) {
+    display: flex;
+  }
+  .wp-block-navigation__responsive-container:not(.hidden-by-default):not(
+      .is-menu-open
+    ) {
+    display: none;
+  }
+  .is-align-left {
+    text-align: left !important;
+  }
+  .is-text-col {
+    order: 2;
+  }
+  .is-order-first {
+    order: -9999;
+  }
+  .is-order-0 {
+    order: 0;
+  }
+  .is-order-1 {
+    order: 1;
+  }
+  .is-order-2 {
+    order: 2;
+  }
+  .is-order-3 {
+    order: 3;
+  }
+  .is-order-4 {
+    order: 4;
+  }
+  .is-order-last {
+    order: 9999;
+  }
+}
+footer {
+  margin-top: 0px;
+}
+.wpforms-page-next {
+  width: 48% !important;
+  float: right !important;
+  margin: 0px !important;
+}
+.wpforms-page-prev {
+  margin-right: 0px !important;
+  width: 48% !important;
+  float: left !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.wpforms-submit-container {
+  float: right !important;
+  width: 48% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  clear: none !important;
+}
+.wpforms-submit-container button {
+  width: 100% !important;
+}
+.wpforms-page.last .wpforms-field-pagebreak {
+  float: left !important;
+  display: block !important;
+  width: 48% !important;
+  padding: 0 !important;
+}
+.wpforms-page.last .wpforms-pagebreak-left {
+  width: 100% !important;
+}
+.wpforms-page.last .wpforms-page-prev {
+  width: 100% !important;
+}
