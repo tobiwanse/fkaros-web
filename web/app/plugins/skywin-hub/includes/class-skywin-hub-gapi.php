@@ -1,7 +1,7 @@
 <?php
 defined('ABSPATH') || exit;
 if ( !class_exists('Skywin_Hub_Google_Api') ) :
-    require_once __DIR__ . '/vendor/autoload.php';
+    //require_once __DIR__ . '/vendor/autoload.php';
     class Skywin_Hub_Google_Api {
         protected static $_instance = null;
         private  $client;

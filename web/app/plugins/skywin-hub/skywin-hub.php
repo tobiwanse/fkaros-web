@@ -4,7 +4,7 @@
     Plugin Name:       Skywin Hub
     Plugin URI:        https://skycloud.nu
     Description:       Skywin hub
-    Version:           0.0.1
+    Version:           1.0.0
     Author:            Tåbbe
     Author URI:        https://skycloud.nu
     Text Domain:       skywin-hub

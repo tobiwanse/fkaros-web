@@ -40,8 +40,8 @@ if (!class_exists('Skywin_Admin_Settings')):
 		private function args()
 		{
 			return [
-				'menu_title' => __('Skywin Hub', 'skywin-hub'),
-				'page_title' => __('Skywin Hub', 'skywin-hub'),
+				'menu_title' => 'Skywin Hub',
+				'page_title' => 'Skywin Hub',
 				'menu_slug' => 'skywin_hub',
 				'user_capability' => 'manage_options',
 			];
@@ -52,9 +52,9 @@ if (!class_exists('Skywin_Admin_Settings')):
 		}
 		private function tabs()
 		{
-			$tabs["api"] = esc_html__('SkywinOne', 'skywin-hub');
-			$tabs["db"] = esc_html__('Skywin Database', 'skywin-hub');
-			$tabs["google_api"] = esc_html__('Google Api', 'skywin-hub');
+			$tabs["api"] = esc_html__('SkywinOne');
+			$tabs["db"] = esc_html__('Skywin Database');
+			$tabs["google_api"] = esc_html__('Google Api');
 			return $tabs;
 		}
 		private function current_tab()
@@ -249,9 +249,9 @@ if (!class_exists('Skywin_Admin_Settings')):
 			if (isset($_GET['code']) || isset($_GET['settings-updated'])) {
 
 				if (get_option("{$this->option_page}_is_authorized")) {
-					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.', 'skywin-hub'), 'updated');
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.'), 'updated');
 				} else {
-					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.', 'skywin-hub'), 'error');
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.'), 'error');
 				}
 			}
 
@@ -288,7 +288,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 					do_settings_sections($this->option_page);
 
 					if (!get_option("{$this->option_page}_is_authorized")) {
-						submit_button(__('Save Settings', 'skywin-hub'));
+						submit_button(__('Save Settings'));
 					}
 
 					?>
@@ -504,32 +504,32 @@ if (!class_exists('Skywin_Admin_Settings')):
 
 			if ("api" === $current_tab):
 				$settings[] = [
-					'name' => __('Skywin API settings', 'skywin-hub'),
+					'name' => __('Skywin API settings'),
 					'type' => 'title',
 					'tab' => 'skywinone_api',
 				];
 				if (!get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
 						'id' => "{$this->option_page}_host",
-						'name' => __('Host', 'skywin-hub'),
+						'name' => __('Host'),
 						'type' => 'text',
-						'desc' => __('SkywinOne host ex. localhost or 127.0.0.1', 'skywin-hub'),
-						'desc_tip' => __('SkywinOne host ex. localhost or 127.0.0.1', 'skywin-hub'),
+						'desc' => __('SkywinOne host ex. localhost or 127.0.0.1'),
+						'desc_tip' => __('SkywinOne host ex. localhost or 127.0.0.1'),
 						'default' => 'localhost',
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_port",
-						'name' => __('Port', 'skywin-hub'),
+						'name' => __('Port'),
 						'type' => 'text',
-						'desc' => __('SkywinOne port ex. 8080', 'skywin-hub'),
-						'desc_tip' => __('SkywinOne port ex. 8080', 'skywin-hub'),
+						'desc' => __('SkywinOne port ex. 8080'),
+						'desc_tip' => __('SkywinOne port ex. 8080'),
 						'default' => esc_attr('8080'),
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_path",
-						'name' => __('Path', 'skywin-hub'),
+						'name' => __('Path'),
 						'type' => 'text',
 						'desc' => __('SkywinOne path ex. /skywinone/api/v1/'),
 						'desc_tip' => __('SkywinOne path ex. /skywinone/api/v1/'),
@@ -538,17 +538,17 @@ if (!class_exists('Skywin_Admin_Settings')):
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_username",
-						'name' => __('Username', 'skywin-hub'),
+						'name' => __('Username'),
 						'type' => 'text',
-						'desc' => __('SkywinOne username', 'skywin-hub'),
-						'desc_tip' => __('SkywinOne username', 'skywin-hub'),
+						'desc' => __('SkywinOne username'),
+						'desc_tip' => __('SkywinOne username'),
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_password",
-						'name' => __('Password', 'skywin-hub'),
+						'name' => __('Password'),
 						'type' => "skywin_hub_api_password",
-						'desc' => __('SkywinOne password', 'skywin-hub'),
-						'desc_tip' => __('SkywinOne password', 'skywin-hub'),
+						'desc' => __('SkywinOne password'),
+						'desc_tip' => __('SkywinOne password'),
 						'sanitize_callback' => [$this, "sanitize_{$this->option_page}_password_field"],
 						'custom_attributes' => array(
 							"autocomplete" => "off"
@@ -556,101 +556,101 @@ if (!class_exists('Skywin_Admin_Settings')):
 					];
 				elseif (get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
-						'name' => __('Authorization', 'skywin-hub'),
+						'name' => __('Authorization'),
 						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization', 'skywin-hub'),
+						'desc' => __('Authorization'),
 					];
 				endif;
 
 				$settings[] = [
-					'name' => __('SkywinOne api Settings', 'skywin-hub'),
+					'name' => __('SkywinOne api Settings'),
 					'type' => 'sectionend',
-					'desc' => __('SkywinOne api Settings', 'skywin-hub'),
-					'desc_tip' => __('SkywinOne api Settings', 'skywin-hub'),
+					'desc' => __('SkywinOne api Settings'),
+					'desc_tip' => __('SkywinOne api Settings'),
 				];
 			elseif ("db" === $current_tab):
 
 				$settings[] = [
-					'name' => __('Skywin Database Settings', 'skywin-hub'),
+					'name' => __('Skywin Database Settings'),
 					'type' => 'title',
 				];
 				if (!get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
 						'id' => "{$this->option_page}_host",
-						'name' => __('Host', 'skywin-hub'),
+						'name' => __('Host'),
 						'type' => 'text',
-						'desc' => __('Skywin database host ex. localhost or 127.0.0.1', 'skywin-hub'),
-						'desc_tip' => __('Skywin database host ex. localhost or 127.0.0.1', 'skywin-hub'),
+						'desc' => __('Skywin database host ex. localhost or 127.0.0.1'),
+						'desc_tip' => __('Skywin database host ex. localhost or 127.0.0.1'),
 						'default' => esc_attr('localhost'),
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_port",
-						'name' => __('Port', 'skywin-hub'),
+						'name' => __('Port'),
 						'type' => 'text',
-						'desc' => __('Skywin database port ex. 3306', 'skywin-hub'),
-						'desc_tip' => __('Skywin database port ex. 3306', 'skywin-hub'),
+						'desc' => __('Skywin database port ex. 3306'),
+						'desc_tip' => __('Skywin database port ex. 3306'),
 						'default' => esc_attr('3306'),
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_name",
-						'name' => __('Database name', 'skywin-hub'),
+						'name' => __('Database name'),
 						'type' => 'text',
-						'desc' => __('Skywin database name', 'skywin-hub'),
-						'desc_tip' => __('Skywin database name', 'skywin-hub'),
+						'desc' => __('Skywin database name'),
+						'desc_tip' => __('Skywin database name'),
 						'default' => esc_attr('skywin'),
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_username",
-						'name' => __('Username', 'skywin-hub'),
+						'name' => __('Username'),
 						'type' => 'text',
-						'desc' => __('Skywin database username', 'skywin-hub'),
-						'desc_tip' => __('Skywin database username', 'skywin-hub'),
+						'desc' => __('Skywin database username'),
+						'desc_tip' => __('Skywin database username'),
 						'sanitize_callback' => null,
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_password",
-						'name' => __('Password', 'skywin-hub'),
+						'name' => __('Password'),
 						'type' => 'skywin_hub_db_password',
-						'desc' => __('Skywin database password', 'skywin-hub'),
-						'desc_tip' => __('Skywin database password', 'skywin-hub'),
+						'desc' => __('Skywin database password'),
+						'desc_tip' => __('Skywin database password'),
 						'custom_attributes' => array('autocomplete' => 'off'),
 						'sanitize_callback' => [$this, "sanitize_{$this->option_page}_password_field"],
 					];
 				elseif (get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
-						'name' => __('Authorization', 'skywin-hub'),
+						'name' => __('Authorization'),
 						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization', 'skywin-hub'),
+						'desc' => __('Authorization'),
 					];
 				endif;
 				$settings[] = [
-					'name' => __('Skywin Database Settings', 'skywin-hub'),
+					'name' => __('Skywin Database Settings'),
 					'type' => 'sectionend',
-					'desc' => __('Skywin Database Section', 'skywin-hub'),
-					'desc_tip' => __('Skywin Database Section', 'skywin-hub'),
+					'desc' => __('Skywin Database Section'),
+					'desc_tip' => __('Skywin Database Section'),
 				];
 			elseif ("skywin_hub_google_api" === $this->option_page):
 				$settings[] = [
-					'name' => __('Google Api Settings', 'skywin-hub'),
+					'name' => __('Google Api Settings'),
 					'type' => 'title',
 				];
 				if (!get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
 						'id' => "{$this->option_page}_client_id",
-						'name' => __('Client Id', 'skywin-hub'),
+						'name' => __('Client Id'),
 						'type' => 'text',
-						'desc' => __('Google client id', 'skywin-hub'),
-						'desc_tip' => __('Google client id', 'skywin-hub'),
+						'desc' => __('Google client id'),
+						'desc_tip' => __('Google client id'),
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_client_secret",
-						'name' => __('Client Secret', 'skywin-hub'),
+						'name' => __('Client Secret'),
 						'type' => 'text',
-						'desc' => __('Google client secret', 'skywin-hub'),
-						'desc_tip' => __('Google client secret', 'skywin-hub'),
+						'desc' => __('Google client secret'),
+						'desc_tip' => __('Google client secret'),
 					];
 
 					$redirect_url = add_query_arg(array(
@@ -660,27 +660,27 @@ if (!class_exists('Skywin_Admin_Settings')):
 
 					$settings[] = [
 						'id' => "{$this->option_page}_redirect_uri",
-						'name' => __('Redirect uri', 'skywin-hub'),
+						'name' => __('Redirect uri'),
 						'value' => $redirect_url,
 						'type' => 'text',
-						'desc' => __('Google redirect uri', 'skywin-hub'),
-						'desc_tip' => __('Google redirect uri', 'skywin-hub'),
+						'desc' => __('Google redirect uri'),
+						'desc_tip' => __('Google redirect uri'),
 						'default' => $redirect_url,
 						'custom_attributes' => array('readonly' => true),
 					];
 				elseif (get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
-						'name' => __('Authorization', 'skywin-hub'),
+						'name' => __('Authorization'),
 						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization', 'skywin-hub'),
+						'desc' => __('Authorization'),
 					];
 				endif;
 
 				$settings[] = [
-					'name' => __('Google Api Settings', 'skywin-hub'),
+					'name' => __('Google Api Settings'),
 					'type' => 'sectionend',
-					'desc' => __('Google Api Section', 'skywin-hub'),
-					'desc_tip' => __('Google Api Section', 'skywin-hub'),
+					'desc' => __('Google Api Section'),
+					'desc_tip' => __('Google Api Section'),
 				];
 			endif;
 

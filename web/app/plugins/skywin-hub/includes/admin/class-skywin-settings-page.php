@@ -75,7 +75,7 @@ class Skywin_Admin_settings_Page {
 	}
     public function register_settings()
     {
-        $settings = $this->filter_setting_by_tab(Skywin_Admin_Settings::settings()) ;
+        $settings = $this->filter_setting_by_tab(skywin_admin_settings()->admin_register_scripts()) ;
         $section_id = 0;
         foreach( $settings as $setting ){
             $custom_attributes = '';

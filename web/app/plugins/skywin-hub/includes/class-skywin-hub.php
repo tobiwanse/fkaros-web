@@ -21,7 +21,7 @@ if (!class_exists('Skywin_Hub')):
 		public function __construct()
 		{
 			$this->name = 'skywin-hub';
-			$this->title = __('Skywin Hub', 'skywin-hub');
+			$this->title = 'Skywin Hub';
 			$this->plugin_basename = plugin_basename(SW_PLUGIN_FILE);
 			$this->includes_dir = plugin_dir_path(SW_PLUGIN_FILE) . 'includes/';
 			$this->admin_url = trailingslashit(plugins_url('admin', SW_PLUGIN_FILE));
@@ -238,9 +238,6 @@ if (!class_exists('Skywin_Hub')):
 		{
 			global $order;
 
-			if (!is_object($order) || !isset($order->id)) {
-				//return false;
-			}
 			$product_id = $this->skywin_deposit_product_id;
 			foreach (WC()->cart->get_cart() as $cart_item) {
 				$product_in_cart = $cart_item['product_id'];

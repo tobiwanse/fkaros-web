@@ -5,6 +5,8 @@ if (!class_exists('Skywin_Hub_Wishlist')):
 	class Skywin_Hub_Wishlist
 	{
         protected static $_instance = null;
+        private $name;
+        private $title;
         public static function instance()
         {
             if (is_null(self::$_instance)) {
@@ -15,7 +17,7 @@ if (!class_exists('Skywin_Hub_Wishlist')):
         public function __construct()
         {
             $this->name = 'skywin-hub-wishlist';
-            $this->title = __('Skywin Hub Wishlist', 'skywin-hub');
+            $this->title = 'Skywin Hub Wishlist';
             $this->includes();
         }
         private function includes()
