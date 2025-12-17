@@ -19,20 +19,21 @@ class Skywin_Hub_DB {
 	}
 
 	private function db_connect() {
-		if (is_null($this->db_host)) {
-			$this->db_host = get_option("skywin_hub_db_host");
-			$this->db_name = get_option("skywin_hub_db_name");
-			$this->db_username = get_option("skywin_hub_db_username");
-			$this->db_port = get_option("skywin_hub_db_port");
-			$this->db_password = SKYWIN_HUB()->decrypt(get_option("skywin_hub_db_password"));
-		}
+		$this->db_host 		= get_option("skywin_hub_db_host");
+		$this->db_name 		= get_option("skywin_hub_db_name");
+		$this->db_username 	= get_option("skywin_hub_db_username");
+		$this->db_port 		= get_option("skywin_hub_db_port");
+		$this->db_password 	= encrypt_decrypt(get_option("skywin_hub_db_password"), 'd');
+
 		$host = $this->db_host;
 		$db_name = $this->db_name;
 		$username = $this->db_username;
 		$port = $this->db_port;
 		$password = $this->db_password;
 		if (!$host || !$db_name || !$username || !$port || !$password) {
-			return new WP_Error('error', __('Db Credentials can not be empty.', 'skywin_hub'));
+			$error = new WP_Error('error', __('Db Credentials can not be empty.', 'skywin_hub'));
+			error_log('Skywin db: ' . json_encode($error));
+			return $error;
 		}
 		try{
 			$this->connection = new PDO("mysql:host=" . $host . ";dbname=" . $db_name .";port=" . $port, 
@@ -74,24 +75,53 @@ class Skywin_Hub_DB {
 			$results = $stmt->fetchAll( PDO::FETCH_ASSOC );
 		}
 		catch ( PDOException $exception ) {
-			error_log(json_encode($exception->getMessage()));
+			error_log( 'Status Error' . json_encode($exception->getMessage()));
 			return new WP_Error( 'Status Error', json_encode($exception->getMessage()) );
 		}
-
 		return $results;
 	}
+	public function get_paymentTypes(){
+		$results = null;
+		$conn = $this->db_connect();
+		if( is_wp_error($conn) ){
+			return $conn;
+		}
+		$sql = "SELECT * FROM inttypepayments";
+		try { 
+			$stmt = $conn->prepare( $sql );
+			$stmt->execute( array() );
+			$results = $stmt->fetchAll( PDO::FETCH_ASSOC );
+		}
+		catch ( PDOException $exception ) {
+			error_log('Get paymentTypes Error: ' . json_encode($exception->getMessage()));
+			return new WP_Error( 'Get paymentTypes Error', json_encode($exception->getMessage()) );
+		}
+	}
 	public function accounts($search = null){
+		error_log('Skywin_Hub_DB::accounts');
 		$conn = $this->db_connect();
 		if( is_wp_error($conn) ){
 			return $conn;
 		}
 		$sql = "SELECT
-					m.AccountNo, m.MemberNo, m.ExternalMemberNo, m.FirstName, m.LastName, m.NickName, m.Club, m.Emailaddress, p.PhoneNo, p.PhoneType
-					FROM member AS m LEFT JOIN memberphone AS p ON (m.InternalNo = p.InternalNo AND p.PhoneType = 'M')
-					WHERE (m.MemberNo IS NOT NULL OR m.ExternalMemberNo IS NOT NULL)";
+				m.*,
+				p.*
+			FROM member AS m
+			LEFT JOIN memberphone AS p 
+				ON m.InternalNo = p.InternalNo
+				AND p.PhoneType = 'M'
+			WHERE m.Emailaddress LIKE :search
+			OR m.MemberNo LIKE :search
+			OR m.FirstName LIKE :search
+			OR m.LastName LIKE :search
+			OR CONCAT(m.FirstName, ' ', m.LastName) LIKE :search
+			ORDER BY m.LastName, m.FirstName DESC LIMIT 5
+		";
 		try { 
+			$searchValue = "{$search}";
 			$stmt = $conn->prepare( $sql );
-			$stmt->execute( array() );
+			$stmt->bindParam(':search',$searchValue, PDO::PARAM_STR);
+			$stmt->execute();
 			$results = $stmt->fetchAll( PDO::FETCH_ASSOC );
 		}
 		catch ( PDOException $exception ) {
@@ -122,32 +152,20 @@ class Skywin_Hub_DB {
 	}
 	public function get_account_by_pid($search = NULL) {
 		error_log('Skywin_Hub_DB::get_account_by_pid');
-		
 		$conn = $this->db_connect();
-			
 		if ( is_wp_error( $conn ) ) {
 			return $conn;
 		}
 		
-		$sql = "SELECT * FROM member WHERE PID LIKE ?";
+		$sql = "SELECT * FROM member AS m
+				LEFT JOIN memberphone AS p ON (m.InternalNo = p.InternalNo AND p.PhoneType = 'M')
+				WHERE PID LIKE ?";
 		
 		try { 
 			$search = esc_sql($search);
 			$stmt = $conn->prepare( $sql );
 			$stmt->execute( array ( $search ) );
 			$result = $stmt->fetch( PDO::FETCH_ASSOC );
-			if($result){
-				$result['PhoneNo'] = null;
-				$result['PhoneType'] = null;	
-				$stmt = $conn->prepare( "SELECT * FROM memberphone WHERE InternalNo LIKE :search ");
-				$stmt->bindParam(':search',$result['InternalNo']);
-				$stmt->execute();
-				$phone = $stmt->fetch( PDO::FETCH_ASSOC );
-				if( $phone){
-					$result['PhoneNo'] = isset($phone['PhoneNo']) ? $phone['PhoneNo'] : null;
-					$result['PhoneType'] = isset($phone['PhoneType']) ? $phone['PhoneType'] : null;
-				}
-			}
 		}
 		
 		catch ( PDOException $exception ) {
@@ -155,7 +173,7 @@ class Skywin_Hub_DB {
 			return new WP_Error( 'SQLError', json_encode($exception->getMessage()) );
 		}
 
-		return $result;
+		return [$result];
 
 	}
 	public function get_account_by_id($id){
@@ -165,23 +183,15 @@ class Skywin_Hub_DB {
 		if ( is_wp_error( $conn ) ) {
 			return $conn;
 		}
-		$sql = "SELECT * FROM member WHERE InternalNo LIKE ?";
-		try { 
+		$sql = "SELECT * FROM member AS m
+				LEFT JOIN memberphone AS p ON (m.InternalNo = p.InternalNo AND p.PhoneType = 'M')
+				WHERE InternalNo LIKE ?";
+		$result = [];
+		try {
+			$id = esc_sql($id);
 			$stmt = $conn->prepare( $sql );
 			$stmt->execute( array ( $id ) );
 			$result = $stmt->fetch( PDO::FETCH_ASSOC );
-			if( isset($result['InternalNo']) && !empty($result['InternalNo']) ){
-				$result['PhoneNo'] = null;
-				$result['PhoneType'] = null;	
-				$stmt = $conn->prepare( "SELECT * FROM memberphone WHERE InternalNo LIKE :search ");
-				$stmt->bindParam(':search',$result['InternalNo']);
-				$stmt->execute();
-				$phone = $stmt->fetch( PDO::FETCH_ASSOC );
-				if( $phone){
-					$result['PhoneNo'] = isset($phone['PhoneNo']) ? $phone['PhoneNo'] : null;
-					$result['PhoneType'] = isset($phone['PhoneType']) ? $phone['PhoneType'] : null;
-				}
-			}
 		}
 		
 		catch ( PDOException $exception ) {
@@ -189,7 +199,7 @@ class Skywin_Hub_DB {
 			return new WP_Error( 'SQLError', json_encode($exception->getMessage()) );
 		}
 		
-		return $result;
+		return [$result];
 	}
 	public function get_account_by_email($search = NULL){
 		error_log('Skywin_Hub_DB::get_account_by_email');		
@@ -197,24 +207,23 @@ class Skywin_Hub_DB {
 		if ( is_wp_error( $conn ) ) {
 			return $conn;
 		}
+		$result = [];
+		$sql = "SELECT
+				m.*,
+				p.*
+			FROM member AS m
+			LEFT JOIN memberphone AS p 
+				ON m.InternalNo = p.InternalNo
+				AND p.PhoneType = 'M'
+			WHERE m.Emailaddress = :search
+			ORDER BY m.LastUpd DESC LIMIT 1
+			";
 		try {
-			$stmt = $conn->prepare( "SELECT * FROM member WHERE Emailaddress LIKE :search ");
-			$stmt->bindParam(':search',$search);
+			$stmt = $conn->prepare( $sql);
+			$searchValue= trim($search);
+			$stmt->bindParam(':search', $searchValue, PDO::PARAM_STR);
 			$stmt->execute();
-			$result = $stmt->fetch( PDO::FETCH_ASSOC );
-			
-			if( isset($result['InternalNo']) && !empty($result['InternalNo']) ){
-				$result['PhoneNo'] = null;
-				$result['PhoneType'] = null;
-				$stmt = $conn->prepare( "SELECT * FROM memberphone WHERE InternalNo LIKE :search ");
-				$stmt->bindParam(':search',$result['InternalNo']);
-				$stmt->execute();
-				$phone = $stmt->fetch( PDO::FETCH_ASSOC );
-				if( $phone ){
-					$result['PhoneNo'] = isset($phone['PhoneNo']) ? $phone['PhoneNo'] : null;
-					$result['PhoneType'] = isset($phone['PhoneType']) ? $phone['PhoneType'] : null;
-				}
-			}
+			$result = $stmt->fetchAll( PDO::FETCH_ASSOC );
 		}
 		catch ( PDOException $exception ) {
 			error_log('SQLError: ' . json_encode($exception->getMessage()) );
@@ -222,36 +231,38 @@ class Skywin_Hub_DB {
 		}
 		return $result;
 	}
-	public function get_account_by_MemberNo($search = NULL){
-		error_log('Skywin_Hub_DB::get_account_by_MemberNo');
+	public function get_account_by_memberno($search = NULL){
+		error_log('Skywin_Hub_DB::get_account_by_memberno');
 		$conn = $this->db_connect();
-		$sql = "SELECT * FROM member WHERE MemberNo = ?";
 		if ( is_wp_error( $conn ) ) {
 			return $conn;
 		}
+		$result = [];
+		$sql = "SELECT
+				m.*,
+				p.*
+			FROM member AS m
+			LEFT JOIN memberphone AS p 
+				ON m.InternalNo = p.InternalNo
+				AND p.PhoneType = 'M'
+			WHERE m.MemberNo LIKE :search
+			OR m.ExternalMemberNo LIKE :search
+			";
 		try { 
-			$search = esc_sql($search);
-			$stmt = $conn->prepare( $sql );
-			$stmt->execute( array ( $search ) );
-			$result = $stmt->fetch( PDO::FETCH_ASSOC );
-			if( isset($result['InternalNo']) && !empty($result['InternalNo']) ){
-				$result['PhoneNo'] = null;
-				$result['PhoneType'] = null;
-				$stmt = $conn->prepare( "SELECT * FROM memberphone WHERE InternalNo LIKE :search ");
-				$stmt->bindParam(':search',$result['InternalNo']);
-				$stmt->execute();
-				$phone = $stmt->fetch( PDO::FETCH_ASSOC );
-				if( $phone ){
-					$result['PhoneNo'] = isset($phone['PhoneNo']) ? $phone['PhoneNo'] : null;
-					$result['PhoneType'] = isset($phone['PhoneType']) ? $phone['PhoneType'] : null;
-				}
-			}
+			
+			$stmt = $conn->prepare( $sql);
+			$searchValue = "%{$search}%";
+			$stmt->bindParam(':search',$searchValue, PDO::PARAM_STR);
+			$stmt->execute();
+			$result = $stmt->fetchAll( PDO::FETCH_ASSOC );
 		}
 		catch ( PDOException $exception ) {
 			error_log('SQLError: ' . json_encode( $exception->getMessage() ) );
 			return new WP_Error( 'SQLError', json_encode($exception->getMessage()) );
 		}
+
 		return $result;
+		
 	}
 	public function get_typecountries(){		
 		error_log('Skywin_Hub_DB::get_countries');

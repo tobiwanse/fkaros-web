@@ -1,15 +1,17 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
  * Functions for Ultimate Member integration with Skywin Hub.
  *
  * @package SkywinHub
  */
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 function before_form( $args ) {
     add_filter( 'woocommerce_enqueue_styles', '__return_empty_array' );
     $admin_email = get_option('admin_email');
     if( is_wp_error(skywin_hub_api()->status()) || is_wp_error(skywin_hub_db()->status()) ){
-        UM()->form()->add_error( 'heading', __("Skywin Hub is not available at the moment. Please try again later or contact $admin_email", "skywin_hub") );
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
     }
     if( isset( UM()->form()->errors['heading'] ) ){
          if( is_array( UM()->form()->errors['heading'] ) && !empty( UM()->form()->errors['heading'] ) ){
@@ -70,7 +72,7 @@ function create_wordpress_user( $skywin_account ) {
     ];
     
     $user = get_user_by('email', $skywin_account['Emailaddress'] );
-
+    
     if ( $user ) {
         $user_id = $user->ID;
         update_wordpress_user( $user_id );
@@ -82,6 +84,10 @@ function update_wordpress_user( $user_id ) {
     um_fetch_user( $user_id );
     $internalNo = get_user_meta( $user_id, 'internalNo', true );
     $skywin_account = skywin_hub_db()->get_account_by_id( $internalNo );
+    if( is_wp_error($skywin_account) ){
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
+    }
     if(!isset($skywin_account['InternalNo']) || empty($skywin_account['InternalNo']) ){
         return false;
     }
@@ -209,6 +215,10 @@ function user_login($submitted_data){
 add_action( 'um_user_login', 'user_login' );
 function reset_password_errors( $submission_data, $form_data ) {
     $skywin_account = skywin_hub_db()->get_account_by_email( $submission_data['username_b'] );
+    if( is_wp_error($skywin_account) ){
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
+    }
     if( isset($skywin_account['InternalNo']) && !empty($skywin_account['InternalNo']) ){
         create_wordpress_user($skywin_account);
     }else{
@@ -225,7 +235,10 @@ function um_custom_validate( $args ) {
     }
     $admin_email = get_option('admin_email');
     $pid_exists = skywin_hub_db()->get_account_by_pid($args['pid']);
-
+    if( is_wp_error($pid_exists) ){
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
+    }
     if( $args['nationalityCode'] == 'SE' && $pid_exists ){
         UM()->form()->add_error( 'pid', 'Social security number is already registered' );
     }
@@ -240,6 +253,10 @@ function um_custom_validate( $args ) {
         }
     }
     $memberNo_exists = skywin_hub_db()->get_account_by_MemberNo($args['memberNo']);
+    if( is_wp_error($memberNo_exists) ){
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
+    }
     if( $args['nationalityCode'] == 'SE' && $memberNo_exists ){
         UM()->form()->add_error( 'memberNo', 'Member number is already registered' );
     }
@@ -254,12 +271,16 @@ function um_custom_validate( $args ) {
         }
     }
     $email_exists = skywin_hub_db()->get_account_by_email($args['user_email']);
+    if(is_wp_error($email_exists)){
+        wp_safe_redirect( home_url() . '/error/' );
+        exit;
+    }
     if ( isset( $args['user_email'] ) ) {
 		if ( isset( UM()->form()->errors['user_email'] ) ) {
 			unset( UM()->form()->errors['user_email'] );
 		}
 		if ( empty( $args['user_email'] ) ) {
-			UM()->form()->add_error( 'user_email', __( 'E-mail Address is required', 'ultimate-member' ) );
+			UM()->form()->add_error( 'user_email', __( 'E-mail address is required', 'ultimate-member' ) );
 		} elseif ( ! is_email( $args['user_email'] ) ) {
 			UM()->form()->add_error( 'user_email', __( 'The email you entered is invalid', 'ultimate-member' ) );
 		} elseif ( email_exists( $args['user_email'] ) ) {
@@ -273,15 +294,12 @@ function um_custom_validate( $args ) {
 }
 add_action('um_submit_form_errors_hook_', 'um_custom_validate', 10, 1);
 function before_user_is_approved($user_id){
-    UM()->form()->add_error( 'user_email2', 'Email2 is already registered.' );
+    error_log('before_user_is_approved');
     if( !isset($_REQUEST['_um_password_reset']) || $_REQUEST['_um_password_reset'] != true ){
         create_skywin_user( $user_id );
     }
 }
 add_action('um_before_user_is_approved', 'before_user_is_approved', 10, 2);
-function user_before_updating_profile($user){
-}
-add_action( 'um_user_before_updating_profile', 'user_before_updating_profile', 10, 1 );
 function set_default_profile_privacy($profile_privacy, $object_id, $meta_key) {
     if ($meta_key === 'profile_privacy') {
         $profile_privacy = 'Only me';
@@ -290,7 +308,6 @@ function set_default_profile_privacy($profile_privacy, $object_id, $meta_key) {
 }
 add_filter('get_user_metadata', 'set_default_profile_privacy', 10, 3);
 function user_profile_restricted_edit_fields( $fields ){
-    unset( $fields[0] );
     return $fields;
 }
 add_filter( 'um_user_profile_restricted_edit_fields', 'user_profile_restricted_edit_fields');

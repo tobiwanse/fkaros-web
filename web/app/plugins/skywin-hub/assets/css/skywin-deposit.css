@@ -1,49 +1,214 @@
-.ui-helper-hidden-accessible{
-	display: none;
+/* Autocomplete styles */
+.ui-helper-hidden-accessible {
+  display: none;
 }
 ul.ui-autocomplete {
-	display: none;
-	list-style: none;
-	list-style-type: none;
-	margin: 10;
-	padding: 10px;
-	color:#000;
-	background-color: #ffffff;
-	list-style-position: outside;
-	border-style: solid;
-	border-color: black;
-	border-width: 0 1px 1px 1px;
-	overflow-y: auto;
-	width: 100px;
+  font-size: var(--wp--preset--font-size--x-large);
+  padding: 0;
+  margin: 0;
+  color: var(--wp--preset--color--accent-5);
+  background-color: var(--wp--preset--color--custom-color-1);
+  border-style: solid;
+  border-color: white;
+  border-width: 1px 1px 1px 1px;
+  border-radius: 0 0 0.4rem 0.4rem;
+  overflow: hidden;
+  width: 100px;
 }
-
 .ui-autocomplete > li > div {
-	padding: 15px;
+  padding: 15px;
+}
+.ui-state-hover,
+.ui-state-active,
+.ui-state-focus {
+  color: #fff;
+  background-color: var(--wp--preset--color--custom-color-4);
 }
 
-.ui-state-hover, .ui-state-active, .ui-state-focus {
-	color: #fff;
-	background-color: #000000;
-}
-#loader{
-	vertical-align: middle;
-	display: none;
-}
 .ui-autocomplete-loading {
-    background: white url("../img/loader.svg") right center no-repeat !important;
+  margin-right: 20px;
+  padding-right: 150px;
+  background: rgba(255, 255, 255, 0) url("../img/loader.svg") right center
+    no-repeat !important;
 }
-.skywin-deposit-fields{
-	margin-block-start: 1.2rem;
-	margin-block-end: 1.2rem;
+
+/* Deposit form styles */
+.skywin_hub-deposit-fields {
+  width: 100%;
+  margin-block-start: 1.2rem;
+}
+.skywin_hub-deposit-fields .skywin_hub-input-text::placeholder {
+  opacity: 0.5;
+}
+.skywin_hub-deposit-fields .skywin_hub-input-text:disabled {
+  opacity: 0.5;
+}
+.skywin_hub-deposit-fields .quick-add-to-cart-wrapper {
+  margin-block-start: 1.2em;
+  margin-block-end: 1.2em;
+}
+.skywin_hub-deposit-fields .quick-add-to-cart-wrapper .is-layout-flex {
+  gap: 1rem;
+}
+.skywin_hub-deposit-fields .quick-add-to-cart-wrapper .wp-block-button {
+  width: 100%;
+  flex-basis: 1rem;
+  flex-grow: 1;
+}
+.skywin_hub-deposit-fields .quick-add-to-cart-wrapper button {
+  width: 100%;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-wrap: nowrap;
+}
+.skywin_hub-deposit-form{
+  padding: 45px;
+  border: 1px solid white;
+  border-radius: 15px;
+}
+form.cart .wp-element-button:disabled {
+  opacity: 0.3!important;
+  cursor: not-allowed!important;
+}
+.skywin_hub-deposit-fields .skywin_hub-input-text {
+  width: 100%;
+  font-size: var(--wp--preset--font-size--x-large);
+  padding: 0.9rem 1.1rem;
+  box-sizing: border-box;
+  background-color: transparent;
+  border-style: solid;
+  border-color: #fff;
+  border-radius: 0.4rem;
+  color: #fff;
+  transition: box-shadow 0.3s ease;
+}
+.skywin_hub-deposit-fields .skywin_hub-input-text.success {
+  box-shadow: 0 0 0 2px rgba(0, 255, 21, 0.703);
+}
+.skywin_hub-deposit-fields .skywin_hub-input-text.error {
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.703);
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: inherit;
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox .skywin_hub-checkbox-box {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  box-sizing: border-box;
+  border: 1px solid var(--wp--preset--color--accent-5);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  font-size: 20px;
+  line-height: 1;
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox input[type="checkbox"]:checked + .skywin_hub-checkbox-box {
+  background: rgba(255, 255, 255, 0); /* accent */
+  border-color: var(--wp--preset--color--accent-5);
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox
+  input[type="checkbox"]:checked
+  + .skywin_hub-checkbox-box::after {
+  content: "\2713";
+  color: #fff;
+  font-weight: 700;
+}
+.skywin_hub-deposit-fields .skywin_hub-checkbox
+  input[type="checkbox"]:focus-visible
+  + .skywin_hub-checkbox-box {
+  box-shadow: 0 0 0 4px rgba(226, 128, 43, 0.18);
+  outline: none;
+}
+.skywin_hub-checkout-modal {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
+}
+.skywin_hub-checkout-modal.open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.45);
+}
+.skywin_hub-checkout-modal-box {
+  box-sizing: border-box;
+  width: 80%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 2rem;
+  position: relative;
+  transform: translateY(40px);
+  opacity: 0;
+  transition: transform .42s cubic-bezier(.2,.9,.2,1), opacity .28s ease;
+  will-change: transform, opacity;
+  background: var(--wp--preset--color--custom-color-1);
+  border-radius: 8px;
+}
+.skywin_hub-checkout-modal.open .skywin_hub-checkout-modal-box {
+  transform: translateY(0);
+  opacity: 1;
+}
+.skywin_hub-checkout-modal .skywin_hub-close-checkout-modal {
+  position: absolute;
+  cursor: pointer;
+  width: 45px;
+  height: 45px;
+  top: 2%;
+  right: 2%;
+  z-index: 200;
+}
+.skywin_hub-close-checkout-modal:hover {
+  opacity: 0.8;
+}
+.skywin_hub-checkout-modal.open #dibs-order-review {
+  display: none!important;
+}
+@media (max-width: 960px) {
+  .skywin_hub-checkout-modal-box {
+    width: calc(100% - 2rem);
+    max-width: none;
+    height: calc(100vh - 2rem);
+    max-height: calc(100vh - 2rem);
+    padding: 1rem;
+    transform: translateY(24px);
+    border-radius: 6px;
+  }
+  .skywin_hub-checkout-modal.open .skywin_hub-checkout-modal-box {
+    transform: translateY(0);
+  }
 }
 
-
-  
-
-  
-
-  
-
-
- 
 

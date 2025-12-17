@@ -35,7 +35,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 			$this->current_tab = $this->current_tab();
 			$this->settings = $this->settings();
 			$this->add_actions();
-			$this->add_filters();
 		}
 		private function args()
 		{
@@ -52,6 +51,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 		}
 		private function tabs()
 		{
+			$tabs["deposit"] = esc_html__('Deposit');
 			$tabs["api"] = esc_html__('SkywinOne');
 			$tabs["db"] = esc_html__('Skywin Database');
 			$tabs["google_api"] = esc_html__('Google Api');
@@ -71,9 +71,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 
 			add_action('admin_enqueue_scripts', array($this, 'admin_register_scripts'), 10, 1);
 			add_action('admin_enqueue_scripts', array($this, 'admin_register_styles'), 10, 1);
-		}
-		private function add_filters()
-		{
 		}
 		public function admin_register_scripts($hook)
 		{
@@ -117,17 +114,13 @@ if (!class_exists('Skywin_Admin_Settings')):
 		}
 		private function remove_connection()
 		{
-
 			delete_option("{$this->option_page}_password");
 			delete_option("{$this->option_page}_is_authorized");
-			//delete_option( "{$this->option_page}_client_id" );
-			//delete_option( "{$this->option_page}_client_secret" );
-			//delete_option( "{$this->option_page}_redirect_uri" );
-			//delete_option( "{$this->option_page}_access_token" );
+			delete_option("{$this->option_page}_client_id");
+			delete_option("{$this->option_page}_client_secret");
+			delete_option("{$this->option_page}_redirect_uri");
+			delete_option("{$this->option_page}_access_token");
 		}
-		/**
-		 * Register the admin menu page.
-		 */
 		public function register_menu_page()
 		{
 			add_menu_page(
@@ -138,9 +131,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 				[$this, 'render_options_page']
 			);
 		}
-		/**
-		 * Register the settings.
-		 */
 		public function register_settings()
 		{
 			if (isset($_GET['code']) || isset($_GET['settings-updated'])) {
@@ -216,7 +206,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 				echo $args['text'];
 			}
 		}
-
 		public function render_options_tabs()
 		{
 			$tabs = $this->tabs;
@@ -245,16 +234,15 @@ if (!class_exists('Skywin_Admin_Settings')):
 			if (!current_user_can($this->user_capability)) {
 				return;
 			}
-
 			if (isset($_GET['code']) || isset($_GET['settings-updated'])) {
-
-				if (get_option("{$this->option_page}_is_authorized")) {
-					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.'), 'updated');
-				} else {
-					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.'), 'error');
+				if ($this->option_page == 'skywin_hub_db' || $this->option_page == 'skywin_hub_api') {
+					if (get_option("{$this->option_page}_is_authorized")) {
+						add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.'), 'updated');
+					} else {
+						add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.'), 'error');
+					}
 				}
 			}
-
 			wp_enqueue_script('admin-skywin-hub-js', plugin_dir_url(SW_PLUGIN_FILE) . 'admin/assets/js/index.js', array('jquery'), null, true);
 			wp_localize_script('admin-skywin-hub-js', 'ajax_get_skywin_db_status_params', array(
 				'ajax_url' => admin_url('admin-ajax.php'),
@@ -320,6 +308,9 @@ if (!class_exists('Skywin_Admin_Settings')):
 				<?php
 			endif;
 		}
+		public function render_select_field($args){
+			echo 'select form';
+		}
 		public function render_skywin_hub_api_password_field($args)
 		{
 			$this->render_password_field($args);
@@ -329,6 +320,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 			$user = get_option("{$this->option_page}_username");
 			$host = get_option("{$this->option_page}_host");
 			$connected_as = $user . '@' . $host;
+				
 			$nonce = wp_create_nonce("{$this->option_page}_remove_nonce");
 			$url = add_query_arg(array(
 				'page' => $this->menu_slug,
@@ -342,7 +334,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 			</div>
 			<?php
 		}
-
 		public function render_skywin_hub_db_password_field($args)
 		{
 			$this->render_password_field($args);
@@ -351,7 +342,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 		{
 			$user = get_option("{$this->option_page}_username");
 			$host = get_option("{$this->option_page}_host");
-			$connected_as = $user . '@' . $host;
+			$connected_as = "$user @ $host ";
 			$nonce = wp_create_nonce("{$this->option_page}_remove_nonce");
 			$url = add_query_arg(array(
 				'page' => $this->menu_slug,
@@ -376,13 +367,16 @@ if (!class_exists('Skywin_Admin_Settings')):
 				'tab' => $this->current_tab,
 				'_wpnonce' => $nonce,
 			), admin_url('admin.php'));
+
+			//skywin_hub_google_api()->authenticate();
+			$email = skywin_hub_google_api()->get_user_email();
 			?>
 			<div class="sw-admin-setting-field">
 				<a href="<?php echo $url; ?>" class="sw-btn-danger">Remove Connection</a>
+				<span class="connected-as">Connected as <?php echo $email ?></span>
 			</div>
 			<?php
 		}
-
 		public function sanitize_skywin_hub_api_host_field($data)
 		{
 			return $data;
@@ -402,11 +396,10 @@ if (!class_exists('Skywin_Admin_Settings')):
 		public function sanitize_skywin_hub_api_password_field($data)
 		{
 			if (isset($_POST["{$this->option_page}_password"]) && !empty($_POST["{$this->option_page}_password"])) {
-				$data = SKYWIN_HUB()->encrypt($_POST["{$this->option_page}_password"]);
+				$data = encrypt_decrypt($_POST["{$this->option_page}_password"], 'e');
 			}
 			return $data;
 		}
-
 		public function sanitize_skywin_hub_db_host_field($data)
 		{
 			return $data;
@@ -426,11 +419,10 @@ if (!class_exists('Skywin_Admin_Settings')):
 		public function sanitize_skywin_hub_db_password_field($data)
 		{
 			if (isset($_POST["{$this->option_page}_password"]) && !empty($_POST["{$this->option_page}_password"])) {
-				$data = SKYWIN_HUB()->encrypt($_POST["{$this->option_page}_password"]);
+				$data = encrypt_decrypt($_POST["{$this->option_page}_password"], 'e');
 			}
 			return $data;
 		}
-
 		public function sanitize_text_field($data)
 		{
 			return $data;
@@ -446,52 +438,31 @@ if (!class_exists('Skywin_Admin_Settings')):
 				return $value;
 			}
 		}
-
-		public function ajax_get_api_status()
-		{
-			global $swapi;
-			check_ajax_referer('ajax_get_skywin_api_status_nonce', '_ajax_nonce');
-			$status = $swapi->status();
-			$connected = false;
-			if (!is_wp_error($status)) {
-				$connected = true;
-			} else {
-				$msg = $status->get_error_message();
-			}
-			wp_send_json($connected);
-		}
-		public function ajax_get_db_status()
-		{
-			global $swdb;
-			check_ajax_referer('ajax_get_skywin_db_status_nonce', '_ajax_nonce');
-			$status = $swdb->status();
-			$connected = false;
-			if (!is_wp_error($status)) {
-				$connected = true;
-			} else {
-				$msg = $status->get_error_message();
-			}
-			wp_send_json($connected);
-		}
 		private function validate_connection()
 		{
 			$connected = false;
-
 			if ($this->option_page === 'skywin_hub_api') {
-				if (!is_wp_error(skywin_hub_api()->status())) {
+				$skywin_api_status = skywin_hub_api()->status();
+				if (!is_wp_error($skywin_api_status)) {
 					$connected = true;
 					update_option("{$this->option_page}_is_authorized", true);
+				} else {
+					update_option("{$this->option_page}_is_authorized", false);
+					update_option("{$this->option_page}_password", null);
 				}
 			}
 			if ($this->option_page === 'skywin_hub_db') {
 				if (!is_wp_error(skywin_hub_db()->status())) {
 					$connected = true;
 					update_option("{$this->option_page}_is_authorized", true);
+				}else{
+					update_option("{$this->option_page}_is_authorized", true);
+					update_option("{$this->option_page}_password", null);
 				}
 			}
 			if ($this->option_page === 'skywin_hub_google_api') {
 				skywin_hub_google_api()->authenticate();
-				if (get_option('skywin_hub_google_api_access_token')) {
+				if (get_option('skywin_hub_google_api_token')) {
 					$connected = true;
 					update_option("{$this->option_page}_is_authorized", true);
 				}
@@ -501,22 +472,21 @@ if (!class_exists('Skywin_Admin_Settings')):
 		{
 			$current_tab = $this->current_tab();
 			$settings = [];
-
 			if ("api" === $current_tab):
 				$settings[] = [
 					'name' => __('Skywin API settings'),
 					'type' => 'title',
-					'tab' => 'skywinone_api',
 				];
 				if (!get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
 						'id' => "{$this->option_page}_host",
 						'name' => __('Host'),
 						'type' => 'text',
-						'desc' => __('SkywinOne host ex. localhost or 127.0.0.1'),
-						'desc_tip' => __('SkywinOne host ex. localhost or 127.0.0.1'),
-						'default' => 'localhost',
+						'desc' => __('SkywinOne host ex. http://localhost or http://127.0.0.1'),
+						'desc_tip' => __('SkywinOne host ex. http://localhost or http://127.0.0.1'),
+						'default' => 'http://localhost',
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_port",
@@ -524,17 +494,19 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'type' => 'text',
 						'desc' => __('SkywinOne port ex. 8080'),
 						'desc_tip' => __('SkywinOne port ex. 8080'),
-						'default' => esc_attr('8080'),
+						'default' => '',
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_path",
 						'name' => __('Path'),
 						'type' => 'text',
-						'desc' => __('SkywinOne path ex. /skywinone/api/v1/'),
-						'desc_tip' => __('SkywinOne path ex. /skywinone/api/v1/'),
-						'default' => esc_attr('/skywinone/api/v1/'),
+						'desc' => __('SkywinOne path ex. /api/v1/'),
+						'desc_tip' => __('SkywinOne path ex. /api/v1/'),
+						'default' => esc_attr('/api/v1/'),
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_username",
@@ -542,6 +514,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'type' => 'text',
 						'desc' => __('SkywinOne username'),
 						'desc_tip' => __('SkywinOne username'),
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_password",
@@ -550,9 +523,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc' => __('SkywinOne password'),
 						'desc_tip' => __('SkywinOne password'),
 						'sanitize_callback' => [$this, "sanitize_{$this->option_page}_password_field"],
-						'custom_attributes' => array(
-							"autocomplete" => "off"
-						),
+						'custom_attributes' => array("autocomplete" => "off")
 					];
 				elseif (get_option("{$this->option_page}_is_authorized")):
 					$settings[] = [
@@ -583,6 +554,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc_tip' => __('Skywin database host ex. localhost or 127.0.0.1'),
 						'default' => esc_attr('localhost'),
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_port",
@@ -592,6 +564,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc_tip' => __('Skywin database port ex. 3306'),
 						'default' => esc_attr('3306'),
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_name",
@@ -601,6 +574,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc_tip' => __('Skywin database name'),
 						'default' => esc_attr('skywin'),
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_username",
@@ -609,6 +583,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc' => __('Skywin database username'),
 						'desc_tip' => __('Skywin database username'),
 						'sanitize_callback' => null,
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_password",
@@ -644,6 +619,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'type' => 'text',
 						'desc' => __('Google client id'),
 						'desc_tip' => __('Google client id'),
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 					$settings[] = [
 						'id' => "{$this->option_page}_client_secret",
@@ -651,6 +627,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'type' => 'text',
 						'desc' => __('Google client secret'),
 						'desc_tip' => __('Google client secret'),
+						'custom_attributes' => array('autocomplete' => 'off')
 					];
 
 					$redirect_url = add_query_arg(array(
@@ -682,8 +659,59 @@ if (!class_exists('Skywin_Admin_Settings')):
 					'desc' => __('Google Api Section'),
 					'desc_tip' => __('Google Api Section'),
 				];
+			elseif ("skywin_hub_deposit" === $this->option_page):
+				$settings[] = [
+					'name' => __('Deposit Settings'),
+					'type' => 'title',
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_min_amount",
+					'name' => __('Min amount(kr)'),
+					'type' => 'text',
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_max_amount",
+					'name' => __('Max amount(kr)'),
+					'type' => 'text',
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_quick_amounts",
+					'name' => __('Quick amounts'),
+					'type' => 'text',
+					'desc' => __('Quick amounts'),
+					'desc_tip' => __('Quick amounts'),
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_amount_selected",
+					'name' => __('Amount default'),
+					'type' => 'text',
+					'desc' => __('Amount default'),
+					'desc_tip' => __('Amount default'),
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_add_to_cart_text",
+					'name' => __('Add to cart text'),
+					'type' => 'text',
+					'desc' => __('Add to cart button text'),
+					'desc_tip' => __('Add to cart button text'),
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_view_product_text",
+					'name' => __('View product text'),
+					'type' => 'text',
+					'desc' => __('View product button text'),
+					'desc_tip' => __('View product button text'),
+					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'type' => 'sectionend',
+				];
 			endif;
-
 			return $settings;
 		}
 	}

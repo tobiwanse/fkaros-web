@@ -20,10 +20,10 @@ jQuery(document).ready(function () {
 		})
 		.always( function(result) {} );
 	};
-	fetchData( ajax_get_skywin_api_status_params, function(response){
-		console.log(`${ajax_get_skywin_api_status_params.action} ${response}`);
-	});
-	fetchData( ajax_get_skywin_db_status_params, function(response){
-		console.log(`${ajax_get_skywin_db_status_params.action} ${response}`);
-	});
+	// fetchData( ajax_get_skywin_api_status_params, function(response){
+	// 	console.log(`${ajax_get_skywin_api_status_params.action} ${response}`);
+	// });
+	// fetchData( ajax_get_skywin_db_status_params, function(response){
+	// 	console.log(`${ajax_get_skywin_db_status_params.action} ${response}`);
+	// });
 });

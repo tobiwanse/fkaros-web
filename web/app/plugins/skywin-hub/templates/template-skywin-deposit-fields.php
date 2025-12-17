@@ -1,30 +1,56 @@
-
-<div class="skywin-deposit-fields">
-	<input autocomplete="false" autofill="off" name="hidden" type="text" style="display:none;" />
+<div class="skywin_hub-deposit-fields">
 	<div>
-		<label for="deposit_amount">
-			<h3>
-				<?php echo __('Amount', 'skywin-hub'); ?>
-				(<?php echo get_woocommerce_currency_symbol(); ?>)
-			</h3>
-		</label>
-	</div>
-	<div>
-		<input type="text" autocomplete="false" autofill="off" class="skywin-input input-text" name="deposit_amount"
-			id="deposit_amount" placeholder="0" value="<?php echo $args['amount'] ?>" required />
-	</div>
-	<div>
-		<label for="deposit_account">
+		<label for="search_account">
 			<h3>
 				<?php echo __('Account', 'skywin-hub'); ?>
+				(email)
 			</h3>
+			<input type="text" class="skywin_hub-input skywin_hub-input-text" name="search_account" placeholder="Search"
+			value="<?php echo $args['search_account'] ?>" autocomplete="off" required />
 		</label>
 	</div>
-	<div>
-		<input type="text" autocomplete="false" autofill="off" class="skywin-input input-text" name="skywin_account"
-			id="skywin_account" placeholder="Search" value="<?php echo $args['account'] ?>" required />
+	<div class="add-to-cart-wrapper">
+		<div class="quick-add-to-cart-wrapper">
+			<div class="wp-block-button is-layout-flex wp-block-buttons-is-layout-flex">
+				<?php foreach ($args['quickAmounts'] as $value): ?>
+					<div class="wp-block-button">
+						<button type="submit" name="add-to-cart" value="<?php echo esc_attr($args['product_id']) ?>"
+							class="skywin_hub-button wp-block-button__link quick_add_to_cart_button wp-element-button"
+							data-amount="<?php echo esc_attr($value) ?>"
+							data-product_id="<?php echo esc_attr($args['product_id']) ?>" disabled>
+							<?php echo esc_html($value) . ' ' . $args['currency']; ?>
+						</button>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<div>
+			<label for="amount">
+				<h3>
+					<?php echo __('Amount', 'skywin-hub'); ?>
+					(<?php
+					if (!empty($args['min_amount']) && !empty($args['max_amount'])) {
+						echo $args['min_amount'] . '-' . $args['max_amount'];
+					} elseif (!empty($args['min_amount'])) {
+						echo 'min: ' . $args['min_amount'];
+					} elseif (!empty($args['max_amount'])) {
+						echo 'max: ' . $args['max_amount'];
+					}
+					echo $args['currency'];
+					?>)
+				</h3>
+				<input type="text" class="skywin_hub-input skywin_hub-input-text" name="amount" placeholder="0"
+				value="<?php echo $args['amount'] ?>" autocomplete="off" required disabled />
+			</label>
+		</div>
+		<div>
+			<label for="remember-me" class="skywin_hub-checkbox">
+				<h3>Remember me</h3>
+				<input type="checkbox" id="remember-me" name="remember-me" class="" />
+				<span class="skywin_hub-checkbox-box" aria-hidden="true"></span>
+			</label>
+		</div>
 	</div>
-	<input type="hidden" id="skywin_accountNo" name="skywin_accountNo" value="<?php echo $args['accountNo']; ?>" />
-	<input type="hidden" id="product_id" name="product_id" value="<?php echo $args['product']->get_id(); ?>" />
-	<input type="hidden" id="nonce" name="nonce" value="<?php echo $args['nonce'] ?>" />
+	<input type="hidden" name="accountNo" value="<?php echo $args['accountNo']; ?>" />
+	<input type="hidden" name="product_id" value="<?php echo $args['product_id']; ?>" />
 </div>

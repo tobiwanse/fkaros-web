@@ -23,20 +23,22 @@ if ( !class_exists('Skywin_Hub_Google_Api') ) :
             $this->client->setClientId( $client_id );
             $this->client->setClientSecret( $client_secret );
             $this->client->setRedirectUri( $client_uri );
-            $this->client->addScope(Google_Service_Calendar::CALENDAR);
+            $this->client->addScope('email');
             $this->client->setAccessType('offline');
             $this->client->setPrompt('consent');
+        
             $this->calendarService = new Google_Service_Calendar($this->client);
         }
         public function refreshToken() {
-            $refreshToken = $this->client->getRefreshToken();
+            $token = get_option('skywin_hub_google_api_token');
+            $refreshToken = $token['refresh_token'];
             if ($refreshToken) {
                 $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
                 if (!isset($newToken['refresh_token'])) {
                     $newToken['refresh_token'] = $refreshToken;
                 }
-                update_option('skywin_hub_google_api_access_token', $newToken);
-                return true;
+                update_option('skywin_hub_google_api_token', $newToken);
+                return $newToken;
             }
             return false;
         }
@@ -45,9 +47,9 @@ if ( !class_exists('Skywin_Hub_Google_Api') ) :
             if ( isset($_GET['code']) ) {
                 $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
                 $token = $this->client->getAccessToken();
-                update_option('skywin_hub_google_api_access_token', $token);
+                update_option('skywin_hub_google_api_token', $token);
             } else {
-                $token = get_option('skywin_hub_google_api_access_token');
+                $token = get_option('skywin_hub_google_api_token');
                 if ($token) {
                     $this->client->setAccessToken($token);
                     if ($this->client->isAccessTokenExpired()) {
@@ -66,16 +68,39 @@ if ( !class_exists('Skywin_Hub_Google_Api') ) :
         }
         public function isTokenValid()
         {
-            $token = get_option('skywin_hub_google_api_access_token');
+            $token = get_option('skywin_hub_google_api_token');
             if ($token) {
                 $this->client->setAccessToken($token);
                 if ($this->client->isAccessTokenExpired()) {
                     if (!$this->refreshToken()) {
                         return false;
                     }
+                    // Fetch the new token and set it on the client
+                    $newToken = get_option('skywin_hub_google_api_token');
+                    $this->client->setAccessToken($newToken);
                 }
                 return !$this->client->isAccessTokenExpired();
             }
+            return false;
+        }
+        public function get_user_email() {
+            error_log('Skywin_Hub_Google_Api::get_user_email');
+            //$isvalid = $this->isTokenValid();
+            $token = get_option('skywin_hub_google_api_token');
+            if ($token) {
+                $this->client->setAccessToken($token);
+                if ($this->client->isAccessTokenExpired()) {
+                    $refrshToken = $this->refreshToken();
+                    if (!$refrshToken) {
+                        error_log('Failed to get user email');
+                        return false;
+                    }
+                }
+                    $oauth = new Google_Service_Oauth2($this->client);
+                    $userInfo = $oauth->userinfo->get();
+                    return $userInfo->email;
+            }
+
             return false;
         }
         public function get_events( $calendarId = 'primary', $optParams = [] )
@@ -122,4 +147,5 @@ if ( !class_exists('Skywin_Hub_Google_Api') ) :
     function skywin_hub_google_api(){
         return Skywin_Hub_Google_Api::instance();
     }
+    skywin_hub_google_api();
 endif;

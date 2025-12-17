@@ -10,8 +10,7 @@
     text-decoration: none;
 }
 .sw-btn-danger:hover{
-    background-color: #b32d2e;
-    border-color: #b32d2e;
+    opacity: 0.8;
     color: #fff;
 }
 .sw-admin-setting-field .connected-as{

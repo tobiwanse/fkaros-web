@@ -19,21 +19,22 @@ class Skywin_Hub_API {
 		$host     = get_option('skywin_hub_api_host');
 		$port     = get_option('skywin_hub_api_port');
 		$path     = get_option('skywin_hub_api_path');
-		$password = SKYWIN_HUB()->decrypt($password);
+		$password = encrypt_decrypt($password, 'd');
 
 		$endpoint 	= "{$host}";
 		if( $port ){
 			$endpoint .= ":{$port}";
 		}
 		$endpoint .= "{$path}{$entity}";
-
 		if( !$username || !$password || !$host){
-			return new WP_Error('error', __('Credentials can not be empty.', 'skywin_hub') );
+			$error = new WP_Error('error', __('Api Credentials can not be empty.', 'skywin_hub') );
+			error_log('Api error: ' . json_encode($error));
+			return $error;
 		}
 		$curl = curl_init();
 		
 		$headers = array(
-			'Content-Type: text/plain',
+			'Content-Type: plain/text',
 			'Accept: application/json'
 		);
 		curl_setopt($curl, CURLOPT_URL, $endpoint);
@@ -57,27 +58,25 @@ class Skywin_Hub_API {
 		}
 		
 		$results = curl_exec($curl);
-		
+		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		if ( curl_errno( $curl )  ){
 			error_log('curlerr: ' . json_encode( curl_error( $curl ) ) );
 			return new WP_Error( 'curlerr', curl_error( $curl ) );
 		}
-
 		curl_close($curl);
-
-		if ( empty($results) ) {
-			error_log('sw_err: ' . json_encode( $results ) );
-			return new WP_Error( 'sw_err', $results );
+		if ($httpCode === 404 || $httpCode === 500) {
+			error_log('curlerr: ' . 'Internal server error: ' . $httpCode );
+			return new WP_Error( 'curlerr', 'Internal server error: ' . $httpCode );
 		}
-		
+		$results = json_decode($results, true);
+
 		if ( is_array( $results ) && array_key_exists('error', $results) ) {
 			error_log('sw_err: ' . json_encode( $results ) );
 			return new WP_Error('sw_err', $results['error'] );
 		}
-		
 		return $results;
 	}
-	public function status($entity = 'clubs/1')
+	public function status($entity = 'clubs?max=1')
 	{
 		$results = $this->apiCall('GET', $entity);
 		return $results;
