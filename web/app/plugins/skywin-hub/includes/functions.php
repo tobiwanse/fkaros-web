@@ -1,4 +1,5 @@
 <?php
+
 function skywin_countries()
 {
     global $countries;

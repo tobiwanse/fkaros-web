@@ -1,26 +1,4 @@
 <?php
-function convert_absolute_to_relative_urls($url) {
-    // Only convert URLs from the current site
-    $home_url = home_url('/');
-    return str_replace($home_url, '/', $url);
-}
-// Convert media URLs
-//add_filter('wp_get_attachment_url', 'convert_absolute_to_relative_urls');
-// Convert content URLs
-add_filter('wp_get_attachment_image_src', function($image) {
-    //$image[0] = convert_absolute_to_relative_urls($image[0]);
-    return $image;
-
-});
-// Convert uploads in content
-add_filter('the_content', function($content) {
-    //return convert_absolute_to_relative_urls($content);
-    return $content;
-});
-
-
-
-
 function login_logo() {
     $custom_logo_id = get_theme_mod( 'custom_logo' );
     $logo_url = $custom_logo_id ? wp_get_attachment_image_url( $custom_logo_id, 'full' ) : '';
@@ -45,6 +23,33 @@ add_filter( 'login_headertext', function() {
 });
 function enqueue_parent_styles() {
 	wp_enqueue_style( 'parent-style', get_stylesheet_directory_uri() . '/style.css' );
+	$um_css = array( 
+		'um_default_css',
+		'um_responsive',
+		'um_styles',
+		'select2',
+		'um_profile',
+		'um_account',
+		'um_members',
+		'um_tipsy',
+		'um_datetime_time',
+		'um_datetime_date',
+		'um_datetime',
+		'um_scrollbar',
+		'um_fileupload',
+		'um_fonticons_fa',
+		'um_fonticons_ii',
+		'um_raty',
+		'um_crop',
+		'um_modal',
+		'um_misc',
+		'um_old_default_css',
+		'um_old_css',
+	); 
+	//wp_dequeue_style( 'select2' );
+	foreach ( $um_css as $css ) :
+		//wp_dequeue_style( $css );
+	endforeach;
 }
 add_action( 'wp_enqueue_scripts', 'enqueue_parent_styles', 9999);
 
@@ -56,3 +61,5 @@ function add_file_types_to_uploads($file_types){
 }
 add_filter( 'big_image_size_threshold', '__return_false' );
 add_filter('upload_mimes', 'add_file_types_to_uploads');
+
+

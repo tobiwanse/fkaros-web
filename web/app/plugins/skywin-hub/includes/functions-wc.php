@@ -11,10 +11,13 @@ function checkout_create_order_line_item($item, $cart_item_key, $values, $order)
     $product_id = $product->get_id();
     if( isset($values['fields']) && !empty($values['fields']) ){
        foreach($values['fields'] as $field){
-            if($field['type'] === 'payment-checkbox'){
-                $item->add_meta_data($field['name'], $field['value']);
-                error_log(json_encode($field));
-                //continue;
+            if( 
+                $field['type'] == 'payment-checkbox' ||
+                $field['type'] == 'payment-multiple' ||
+                $field['type'] == 'payment-select' ||
+                $field['type'] == 'payment-single'
+                ){
+                continue;
             }
             $item->add_meta_data($field['name'], $field['value']);
        }
@@ -40,7 +43,13 @@ function before_calculate_totals($cart)
         if( isset($cart_item['fields']) && !empty($cart_item['fields']) ){
              $fields = $cart_item['fields'];
              foreach($fields as $field){
-                 if( $field['type'] == 'payment-checkbox' ){
+                error_log($field['type']);
+                 if(
+                    $field['type'] == 'payment-checkbox'
+                    || $field['type'] == 'payment-multiple'
+                    || $field['type'] == 'payment-select'
+                    || $field['type'] == 'payment-single'
+                    ){
                     $cart->add_fee($field['value'], $field['amount_raw']);
                  }
              } 
@@ -212,7 +221,11 @@ function get_item_data($cart_item_data, $cart_item)
 {
     if( isset($cart_item['fields']) && !empty($cart_item['fields']) ){
        foreach($cart_item['fields'] as $field){
-            if($field['type'] === 'payment-checkbox'){
+            if(
+                $field['type'] == 'payment-checkbox'
+                || $field['type'] == 'payment-multiple'
+                || $field['type'] == 'payment-select'
+                || $field['type'] == 'payment-single'){
                 continue;
             }
             $cart_item_data[] = array(

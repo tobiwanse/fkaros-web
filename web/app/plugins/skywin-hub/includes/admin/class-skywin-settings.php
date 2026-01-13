@@ -447,6 +447,8 @@ if (!class_exists('Skywin_Admin_Settings')):
 					$connected = true;
 					update_option("{$this->option_page}_is_authorized", true);
 				} else {
+					error_log(json_encode($skywin_api_status));
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', $skywin_api_status->get_error_message(), 'error');
 					update_option("{$this->option_page}_is_authorized", false);
 					update_option("{$this->option_page}_password", null);
 				}

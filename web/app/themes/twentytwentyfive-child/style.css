@@ -86,17 +86,13 @@ footer {
 
 
 /* Modern Event Calendar Styles */
- .mec-wrap{
-  max-width: unset !important;
+.mec-wrap{
   color: unset !important;
   background: var(--wp--preset--color--custom-color-1) !important;
   background-color: var(--wp--preset--color--custom-color-1) !important;
 }
 .mec-wrap *:not(input, textarea, select, button){
   color: unset !important;
-}
-.mec-wrap .mec-search-form{
-  background: var(--wp--preset--color--custom-color-1) !important;
 }
 .mec-wrap span[class^="mec-totalcal"]{
   background: var(--wp--preset--color--custom-color-1) !important;
@@ -111,11 +107,10 @@ footer {
 .mec-wrap .mec-single-event-bar,
 .mec-wrap .mec-events-meta-group-booking,
 .mec-wrap .mec-booking-button,
-.mec-wrap .mec-booking-shortcode{
+.mec-wrap .mec-booking-shortcode,
+.mec-wrap .mec-search-form{
   background: var(--wp--preset--color--custom-color-1)!important;
 }
-
-
 .mec-wrap .info-msg{
   border: #3a30ff 1px solid !important;
 }
@@ -133,6 +128,12 @@ footer {
   background: unset !important;
   background-color: unset !important;
 }
+.mec-wrap .mec-event-meta dd{
+  padding-left: 0px !important;
+}
+.mec-wrap .mec-speakers-details ul{
+  padding-left: 0px!important;
+}
 .mec-wrap .mec-modal-preloader {
   background: unset !important;
   position: fixed;
@@ -141,7 +142,7 @@ footer {
   z-index: 99999;
   width: 100%;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6) !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,8 +150,8 @@ footer {
 .mec-wrap .mec-modal-preloader::before {
   content:"";
   display: block;
-  width: 100px;
-  height: 100px;
+  width: 40px;
+  height: 40px;
   background: no-repeat #ffffff00 url("assets/images/ring-spinner.svg") center center !important;
   background-size: contain;
 }
@@ -163,7 +164,7 @@ footer {
 }
 .mec-wrap .mec-load-more-scroll-loading {
   position: unset !important;
-  height: 100px !important;
+  height: 40px !important;
   background: no-repeat #ffffff00 url("assets/images/ring-spinner.svg") center center !important;
 }
 
@@ -179,12 +180,26 @@ footer {
 }
 
 .featherlight{
+  width: 100%!important;
   height: 100%!important;
 }
-.featherlight .featherlight-content{
-  height: 100%!important;
+.featherlight.featherlight-loading{
+  background: no-repeat rgba(0, 0, 0, 0.4) url("assets/images/ring-spinner.svg") center center !important;
+  background-size: 40px 40px !important;  
 }
+.featherlight.featherlight-iframe{
+  display:flex !important;
+  align-items: center !important;
+}
+.featherlight-iframe .featherlight-content{
+  display:flex !important;
+  justify-content: center !important;
+  width: 100%!important;
+  height: 600px!important;
+}
+
 .featherlight .featherlight-inner{
+  max-width:1024px!important;
   height: 100% !important;
   border-radius: 8px !important;
 }
@@ -195,22 +210,13 @@ footer {
 }
 
 body.mec-booking-modal{
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--wp--preset--color--custom-color-1) !important;
 }
 
-.mec-booking-button{
+body .mec-booking-button,
+body .mec-modal-booking-button{
   background-color: unset !important;
 }
-.mec-modal-booking-button{
-  background-color: unset !important;
-}
-.mec-modal-booking-button.mec-mb-icon{
-  background-color: unset !important;
-}
-
 
 li.mec-active .progress-index{
   background: #fff !important;
@@ -219,6 +225,13 @@ li.mec-active .progress-index{
 li.mec-active:before,  li.mec-active:after{
     background: #fff !important;
 }
+@media only screen and (max-width: 960px) {
+  .mec-single-event .mec-events-meta-group-booking ul li{
+    width: 100%!important;
+    margin-left: 0px!important;
+  }
+}
+
 .mec-book-form-btn-wrap button{
   background: transparent !important;
   border: 1px solid #fff!important;
@@ -249,8 +262,7 @@ li.mec-active:before,  li.mec-active:after{
   top: unset !important;
   left: unset !important;
 }
-.mec-wrap
-.mec-tile-into-content-link{
+.mec-wrap .mec-tile-into-content-link{
   z-index: 99;
 }
 .mec-event-excerpt-wrapper {
@@ -353,6 +365,23 @@ li.mec-active:before,  li.mec-active:after{
 .woocommerce-page table.shop_table {
   width: 100% !important;
 }
+.wc-block-add-to-cart-with-options .wcpay-express-checkout-wrapper{
+  margin-top: 32px !important;
+}
+.wc-block-components-address-card__address-section{
+  color: var(--wp--preset--color--accent-5)!important;
+}
+.wc-block-components-address-card address .wc-block-components-address-card__address-section--secondary {
+    /* color: var(--wp--preset--color--accent-5)!important;; */
+    color: unset !important;
+}
+.wc-block-components-address-form label{
+  color: rgba(17 17 17 1)!important;
+}
+/* input {
+  background: var(--bg)!important;
+  color: var(--text)!important;
+} */
 /* End WooCommerce Styles */
 
 
@@ -442,3 +471,8 @@ li.mec-active:before,  li.mec-active:after{
   }
 }
 /* End WPForms Styles */
+
+/* Start Easy Accordion Styles */
+.esab__icon svg{
+  fill: white !important;
+}
