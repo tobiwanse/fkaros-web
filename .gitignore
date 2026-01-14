@@ -1,6 +1,8 @@
 # Application
 web/app/plugins/*
 !web/app/plugins/skywin-hub
+!web/app/plugins/modern-events-calendar
+!web/app/plugins/wpforms
 !web/app/plugins/.gitkeep
 web/app/mu-plugins/*/
 web/app/themes/twentytwentyfive/
