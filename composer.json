@@ -52,7 +52,8 @@
     "wpackagist-plugin/wpforms-lite": "^1.9",
     "wpackagist-plugin/easy-accordion-block": "*",
     "wpackagist-plugin/cloudflare": "*",
-    "wpackagist-plugin/user-role-editor": "*"
+    "wpackagist-plugin/user-role-editor": "*",
+    "wpackagist-plugin/ultimate-addons-for-gutenberg": "*"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",

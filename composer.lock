@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ed57808488ec9e6daa65eabdbb66e8ef",
+    "content-hash": "22a6c33f8a3ff2606be277ab41bef1ba",
     "packages": [
         {
             "name": "composer/installers",
@@ -2395,6 +2395,24 @@
             },
             "type": "wordpress-plugin",
             "homepage": "https://wordpress.org/plugins/easy-accordion-block/"
+        },
+        {
+            "name": "wpackagist-plugin/ultimate-addons-for-gutenberg",
+            "version": "2.19.17",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/ultimate-addons-for-gutenberg/",
+                "reference": "tags/2.19.17"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/ultimate-addons-for-gutenberg.2.19.17.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/ultimate-addons-for-gutenberg/"
         },
         {
             "name": "wpackagist-plugin/ultimate-member",
