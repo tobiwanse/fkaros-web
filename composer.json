@@ -51,7 +51,8 @@
     "wpackagist-plugin/wordpress-importer": "*",
     "wpackagist-plugin/wpforms-lite": "^1.9",
     "wpackagist-plugin/easy-accordion-block": "*",
-    "wpackagist-plugin/cloudflare": "*"
+    "wpackagist-plugin/cloudflare": "*",
+    "wpackagist-plugin/user-role-editor": "*"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",

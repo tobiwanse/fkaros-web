@@ -60,6 +60,10 @@ function add_file_types_to_uploads($file_types){
 	return $file_types;
 }
 add_filter( 'big_image_size_threshold', '__return_false' );
+add_filter( 'image_resize_dimensions', '__return_false' );
+add_filter( 'wp_calculate_image_srcset', '__return_false' );
+add_filter( 'wp_calculate_image_sizes', '__return_false' );
+
 add_filter('upload_mimes', 'add_file_types_to_uploads');
 
 
