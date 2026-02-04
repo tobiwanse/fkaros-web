@@ -54,7 +54,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 			$tabs["deposit"] = esc_html__('Deposit');
 			$tabs["api"] = esc_html__('SkywinOne');
 			$tabs["db"] = esc_html__('Skywin Database');
-			$tabs["google_api"] = esc_html__('Google Api');
 			return $tabs;
 		}
 		private function current_tab()
@@ -85,41 +84,8 @@ if (!class_exists('Skywin_Admin_Settings')):
 			}
 			wp_enqueue_style('admin-skywin-hub-css', plugin_dir_url(SW_PLUGIN_FILE) . 'admin/assets/css/style.css');
 		}
-		private function is_skywin_hub_page()
-		{
-			$true = false;
-			if (isset($_REQUEST['page']) && $_REQUEST['page'] === $this->menu_slug) {
-				$true = true;
-			}
-			return $true;
-		}
 		public function admin_init()
 		{
-			$this->maybe_remove_connection();
-		}
-		private function maybe_remove_connection()
-		{
-			if (!isset($_GET['settings-updated']) && isset($_REQUEST['_wpnonce']) && wp_verify_nonce($_REQUEST['_wpnonce'], "{$this->option_page}_remove_nonce")) {
-				if (!current_user_can($this->user_capability)) {
-					return;
-				}
-				$this->remove_connection();
-				$url = add_query_arg(array(
-					'page' => $this->menu_slug,
-					'tab' => $this->current_tab(),
-				), admin_url('admin.php'));
-				wp_safe_redirect($url);
-				exit;
-			}
-		}
-		private function remove_connection()
-		{
-			delete_option("{$this->option_page}_password");
-			delete_option("{$this->option_page}_is_authorized");
-			delete_option("{$this->option_page}_client_id");
-			delete_option("{$this->option_page}_client_secret");
-			delete_option("{$this->option_page}_redirect_uri");
-			delete_option("{$this->option_page}_access_token");
 		}
 		public function register_menu_page()
 		{
@@ -133,7 +99,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 		}
 		public function register_settings()
 		{
-			if (isset($_GET['code']) || isset($_GET['settings-updated'])) {
+			if (isset($_GET['settings-updated'])) {
 				$this->validate_connection();
 			}
 			$settings = $this->settings();
@@ -166,20 +132,16 @@ if (!class_exists('Skywin_Admin_Settings')):
 							'sanitize_callback' => $sanitize_callback,
 						)
 					);
-
 					if (isset($setting['custom_attributes']) && !empty($setting['custom_attributes'])) {
 						foreach ($setting['custom_attributes'] as $key => $value) {
 							$custom_attributes .= "{$key}={$value} ";
 						}
 					}
 					$default_value = $setting['default'] ?? null;
-
 					$value = get_option($setting['id'] ?? null);
-
 					if (!isset($value) || empty($value)) {
 						$value = $default_value;
 					}
-
 					add_settings_field(
 						$setting['id'] ?? '',
 						$setting['name'] ?? '',
@@ -234,31 +196,17 @@ if (!class_exists('Skywin_Admin_Settings')):
 			if (!current_user_can($this->user_capability)) {
 				return;
 			}
-			if (isset($_GET['code']) || isset($_GET['settings-updated'])) {
+			if ( isset($_GET['settings-updated'])) {
+				add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Settings is saved.'), 'success');
 				if ($this->option_page == 'skywin_hub_db' || $this->option_page == 'skywin_hub_api') {
 					if (get_option("{$this->option_page}_is_authorized")) {
-						add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.'), 'updated');
+						//add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection success.'), 'success');
 					} else {
-						add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.'), 'error');
+						//add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', esc_html__('Connection failed.'), 'error');
 					}
 				}
 			}
 			wp_enqueue_script('admin-skywin-hub-js', plugin_dir_url(SW_PLUGIN_FILE) . 'admin/assets/js/index.js', array('jquery'), null, true);
-			wp_localize_script('admin-skywin-hub-js', 'ajax_get_skywin_db_status_params', array(
-				'ajax_url' => admin_url('admin-ajax.php'),
-				'action' => 'get_db_status',
-				'_ajax_nonce' => wp_create_nonce('ajax_get_skywin_db_status_nonce'),
-			));
-			wp_localize_script('admin-skywin-hub-js', 'ajax_get_skywin_api_status_params', array(
-				'ajax_url' => admin_url('admin-ajax.php'),
-				'action' => 'get_api_status',
-				'_ajax_nonce' => wp_create_nonce('ajax_get_skywin_api_status_nonce'),
-			));
-			wp_localize_script('admin-skywin-hub-js', 'ajax_get_google_api_status_params', array(
-				'ajax_url' => admin_url('admin-ajax.php'),
-				'action' => 'get_google_api_status',
-				'_ajax_nonce' => wp_create_nonce('ajax_get_google_api_status_nonce'),
-			));
 			$url = add_query_arg(array(
 				'tab' => $this->current_tab()
 			), admin_url('options.php'));
@@ -315,25 +263,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 		{
 			$this->render_password_field($args);
 		}
-		public function render_skywin_hub_api_remove_connection_field($args)
-		{
-			$user = get_option("{$this->option_page}_username");
-			$host = get_option("{$this->option_page}_host");
-			$connected_as = $user . '@' . $host;
-				
-			$nonce = wp_create_nonce("{$this->option_page}_remove_nonce");
-			$url = add_query_arg(array(
-				'page' => $this->menu_slug,
-				'tab' => $this->current_tab,
-				'_wpnonce' => $nonce,
-			), admin_url('admin.php'));
-			?>
-			<div class="sw-admin-setting-field">
-				<a href="<?php echo $url; ?>" class="sw-btn-danger">Remove Connection</a>
-				<span class="connected-as">Connected as <?php echo $connected_as ?></span>
-			</div>
-			<?php
-		}
 		public function render_skywin_hub_db_password_field($args)
 		{
 			$this->render_password_field($args);
@@ -356,76 +285,55 @@ if (!class_exists('Skywin_Admin_Settings')):
 			</div>
 			<?php
 		}
-		public function render_skywin_hub_google_api_remove_connection_field($args)
-		{
-			$user = get_option("{$this->option_page}_username");
-			$host = get_option("{$this->option_page}_host");
-			$connected_as = $user . '@' . $host;
-			$nonce = wp_create_nonce("{$this->option_page}_remove_nonce");
-			$url = add_query_arg(array(
-				'page' => $this->menu_slug,
-				'tab' => $this->current_tab,
-				'_wpnonce' => $nonce,
-			), admin_url('admin.php'));
-
-			//skywin_hub_google_api()->authenticate();
-			$email = skywin_hub_google_api()->get_user_email();
-			?>
-			<div class="sw-admin-setting-field">
-				<a href="<?php echo $url; ?>" class="sw-btn-danger">Remove Connection</a>
-				<span class="connected-as">Connected as <?php echo $email ?></span>
-			</div>
-			<?php
-		}
 		public function sanitize_skywin_hub_api_host_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_api_port_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_api_path_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_api_username_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_api_password_field($data)
 		{
 			if (isset($_POST["{$this->option_page}_password"]) && !empty($_POST["{$this->option_page}_password"])) {
 				$data = encrypt_decrypt($_POST["{$this->option_page}_password"], 'e');
 			}
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_db_host_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_db_port_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_db_name_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_db_username_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_skywin_hub_db_password_field($data)
 		{
 			if (isset($_POST["{$this->option_page}_password"]) && !empty($_POST["{$this->option_page}_password"])) {
 				$data = encrypt_decrypt($_POST["{$this->option_page}_password"], 'e');
 			}
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_text_field($data)
 		{
-			return $data;
+			return sanitize_text_field($data);
 		}
 		public function sanitize_checkbox_field($value = '', $field_args = [])
 		{
@@ -434,39 +342,26 @@ if (!class_exists('Skywin_Admin_Settings')):
 		public function sanitize_select_field($value = '', $field_args = [])
 		{
 			$choices = $field_args['choices'] ?? [];
-			if (array_key_exists($value, $choices)) {
+			if ( array_key_exists($value, $choices) ) {
 				return $value;
 			}
 		}
 		private function validate_connection()
 		{
-			$connected = false;
 			if ($this->option_page === 'skywin_hub_api') {
 				$skywin_api_status = skywin_hub_api()->status();
 				if (!is_wp_error($skywin_api_status)) {
-					$connected = true;
-					update_option("{$this->option_page}_is_authorized", true);
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', 'Connection success.', 'success');
 				} else {
-					error_log(json_encode($skywin_api_status));
 					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', $skywin_api_status->get_error_message(), 'error');
-					update_option("{$this->option_page}_is_authorized", false);
-					update_option("{$this->option_page}_password", null);
 				}
 			}
 			if ($this->option_page === 'skywin_hub_db') {
-				if (!is_wp_error(skywin_hub_db()->status())) {
-					$connected = true;
-					update_option("{$this->option_page}_is_authorized", true);
+				$skywin_db_status = skywin_status();
+				if( $skywin_db_status ){
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', 'Connection success.', 'success');
 				}else{
-					update_option("{$this->option_page}_is_authorized", true);
-					update_option("{$this->option_page}_password", null);
-				}
-			}
-			if ($this->option_page === 'skywin_hub_google_api') {
-				skywin_hub_google_api()->authenticate();
-				if (get_option('skywin_hub_google_api_token')) {
-					$connected = true;
-					update_option("{$this->option_page}_is_authorized", true);
+					add_settings_error($this->option_page . '_mesages', $this->option_page . '_message', 'Connection failed', 'error');
 				}
 			}
 		}
@@ -526,12 +421,6 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'desc_tip' => __('SkywinOne password'),
 						'sanitize_callback' => [$this, "sanitize_{$this->option_page}_password_field"],
 						'custom_attributes' => array("autocomplete" => "off")
-					];
-				elseif (get_option("{$this->option_page}_is_authorized")):
-					$settings[] = [
-						'name' => __('Authorization'),
-						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization'),
 					];
 				endif;
 
@@ -596,70 +485,12 @@ if (!class_exists('Skywin_Admin_Settings')):
 						'custom_attributes' => array('autocomplete' => 'off'),
 						'sanitize_callback' => [$this, "sanitize_{$this->option_page}_password_field"],
 					];
-				elseif (get_option("{$this->option_page}_is_authorized")):
-					$settings[] = [
-						'name' => __('Authorization'),
-						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization'),
-					];
 				endif;
 				$settings[] = [
 					'name' => __('Skywin Database Settings'),
 					'type' => 'sectionend',
 					'desc' => __('Skywin Database Section'),
 					'desc_tip' => __('Skywin Database Section'),
-				];
-			elseif ("skywin_hub_google_api" === $this->option_page):
-				$settings[] = [
-					'name' => __('Google Api Settings'),
-					'type' => 'title',
-				];
-				if (!get_option("{$this->option_page}_is_authorized")):
-					$settings[] = [
-						'id' => "{$this->option_page}_client_id",
-						'name' => __('Client Id'),
-						'type' => 'text',
-						'desc' => __('Google client id'),
-						'desc_tip' => __('Google client id'),
-						'custom_attributes' => array('autocomplete' => 'off')
-					];
-					$settings[] = [
-						'id' => "{$this->option_page}_client_secret",
-						'name' => __('Client Secret'),
-						'type' => 'text',
-						'desc' => __('Google client secret'),
-						'desc_tip' => __('Google client secret'),
-						'custom_attributes' => array('autocomplete' => 'off')
-					];
-
-					$redirect_url = add_query_arg(array(
-						'page' => $this->menu_slug,
-						'tab' => $current_tab
-					), admin_url('admin.php'));
-
-					$settings[] = [
-						'id' => "{$this->option_page}_redirect_uri",
-						'name' => __('Redirect uri'),
-						'value' => $redirect_url,
-						'type' => 'text',
-						'desc' => __('Google redirect uri'),
-						'desc_tip' => __('Google redirect uri'),
-						'default' => $redirect_url,
-						'custom_attributes' => array('readonly' => true),
-					];
-				elseif (get_option("{$this->option_page}_is_authorized")):
-					$settings[] = [
-						'name' => __('Authorization'),
-						'type' => "{$this->option_page}_remove_connection",
-						'desc' => __('Authorization'),
-					];
-				endif;
-
-				$settings[] = [
-					'name' => __('Google Api Settings'),
-					'type' => 'sectionend',
-					'desc' => __('Google Api Section'),
-					'desc_tip' => __('Google Api Section'),
 				];
 			elseif ("skywin_hub_deposit" === $this->option_page):
 				$settings[] = [

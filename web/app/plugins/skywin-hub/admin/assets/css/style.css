@@ -16,3 +16,6 @@
 .sw-admin-setting-field .connected-as{
     margin-left: 30px;
 }
+button.notice-dismiss{
+    padding: 9px!important;
+}

@@ -20,7 +20,7 @@ class Skywin_Hub_API {
 		$port     = get_option('skywin_hub_api_port');
 		$path     = get_option('skywin_hub_api_path');
 		$password = encrypt_decrypt($password, 'd');
-
+		
 		$endpoint 	= "{$host}";
 		if( $port ){
 			$endpoint .= ":{$port}";
@@ -58,19 +58,25 @@ class Skywin_Hub_API {
 		}
 		
 		$results = curl_exec($curl);
-		$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		$curl_info = curl_getinfo($curl);
+		$info = [
+			'http_code'  => $curl_info['http_code'] ?? null,
+			'dns'        => $curl_info['namelookup_time'] ?? null,
+			'connect'    => $curl_info['connect_time'] ?? null,
+			'tls'        => $curl_info['appconnect_time'] ?? null,
+			'ttfb'       => $curl_info['starttransfer_time'] ?? null,
+			'total'      => $curl_info['total_time'] ?? null,
+		];
+		$httpCode = $curl_info['http_code'];
 		if ( curl_errno( $curl )  ){
 			error_log('curlerr: ' . json_encode( curl_error( $curl ) ) );
 			return new WP_Error( 'curlerr', curl_error( $curl ) );
 		}
-		curl_close($curl);
-		if ($httpCode === 404 || $httpCode === 500) {
+		if ( $httpCode >= 400 || $httpCode == 0) {
 			error_log('curlerr: ' . 'Internal server error: ' . $httpCode );
-			return new WP_Error( 'curlerr', 'Internal server error: ' . $httpCode );
 		}
 		$results = json_decode($results, true);
-
-		if ( is_array( $results ) && array_key_exists('error', $results) ) {
+		if ( !is_array( $results ) || array_key_exists('error', $results) ) {
 			error_log('sw_err: ' . json_encode( $results ) );
 			return new WP_Error('sw_err', $results['error'] );
 		}
@@ -92,9 +98,11 @@ class Skywin_Hub_API {
 		$result = $this->apiCall( 'POST', 'members/checkin', $body );		
 		return $result;
 	}
-	public function update_skywin_account( $body, $id = null )
+	public function update_skywin_account( $body = null, $id = null )
 	{
-		error_log('Skywin_Hub_API::update_skywin_account');
+		if( !$body || !$id ){
+			return new WP_Error('sw_err', 'You are not doing it right!');
+		}
 		$result = $this->apiCall( 'PUT', "members/checkin/$id", $body );		
 		return $result;
 	}

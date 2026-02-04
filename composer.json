@@ -49,9 +49,7 @@
     "wpackagist-plugin/animations-for-blocks": "*",
     "google/apiclient": "*",
     "wpackagist-plugin/wordpress-importer": "*",
-    "wpackagist-plugin/wpforms-lite": "^1.9",
     "wpackagist-plugin/easy-accordion-block": "*",
-    "wpackagist-plugin/cloudflare": "*",
     "wpackagist-plugin/user-role-editor": "*",
     "wpackagist-plugin/ultimate-addons-for-gutenberg": "*"
   },

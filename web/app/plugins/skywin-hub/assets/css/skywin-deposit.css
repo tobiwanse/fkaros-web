@@ -143,72 +143,7 @@ form.cart .wp-element-button:disabled {
   box-shadow: 0 0 0 4px rgba(226, 128, 43, 0.18);
   outline: none;
 }
-.skywin_hub-checkout-modal {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 99999;
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0);
-  transition: background 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
-}
-.skywin_hub-checkout-modal.open {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-  background: rgba(0, 0, 0, 0.45);
-}
-.skywin_hub-checkout-modal-box {
-  box-sizing: border-box;
-  width: 80%;
-  max-width: 1200px;
-  max-height: 90vh;
-  overflow: auto;
-  padding: 2rem;
-  position: relative;
-  transform: translateY(40px);
-  opacity: 0;
-  transition: transform .42s cubic-bezier(.2,.9,.2,1), opacity .28s ease;
-  will-change: transform, opacity;
-  background: var(--wp--preset--color--custom-color-1);
-  border-radius: 8px;
-}
-.skywin_hub-checkout-modal.open .skywin_hub-checkout-modal-box {
-  transform: translateY(0);
-  opacity: 1;
-}
-.skywin_hub-checkout-modal .skywin_hub-close-checkout-modal {
-  position: absolute;
-  cursor: pointer;
-  width: 45px;
-  height: 45px;
-  top: 2%;
-  right: 2%;
-  z-index: 200;
-}
-.skywin_hub-close-checkout-modal:hover {
-  opacity: 0.8;
-}
-.skywin_hub-checkout-modal.open #dibs-order-review {
-  display: none!important;
-}
 @media (max-width: 960px) {
-  .skywin_hub-checkout-modal-box {
-    width: calc(100% - 2rem);
-    max-width: none;
-    height: calc(100vh - 2rem);
-    max-height: calc(100vh - 2rem);
-    padding: 1rem;
-    transform: translateY(24px);
-    border-radius: 6px;
-  }
-  .skywin_hub-checkout-modal.open .skywin_hub-checkout-modal-box {
-    transform: translateY(0);
-  }
 }
 
 

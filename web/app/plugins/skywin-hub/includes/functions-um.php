@@ -7,11 +7,22 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 function before_form( $args ) {
+    if ( (defined('REST_REQUEST') && REST_REQUEST) || (defined('DOING_AJAX') && DOING_AJAX) ) return;
     add_filter( 'woocommerce_enqueue_styles', '__return_empty_array' );
-    $admin_email = get_option('admin_email');
     if( is_wp_error(skywin_hub_api()->status()) || is_wp_error(skywin_hub_db()->status()) ){
-        wp_safe_redirect( home_url() . '/error/' );
-        exit;
+        wp_redirect( home_url() . '/error/' );
+        die();
+    }
+    if( is_user_logged_in() ){
+        $user_id = get_current_user_id();
+        if( isset($_REQUEST['um_action']) && $_REQUEST['um_action'] != 'edit' ){
+            return;
+        }
+        if( is_page('user') ){
+            $result = update_wordpress_user($user_id);
+            UM()->user()->remove_cache( $user_id );
+            UM()->form()->add_error('heading', 'message');
+        }
     }
     if( isset( UM()->form()->errors['heading'] ) ){
          if( is_array( UM()->form()->errors['heading'] ) && !empty( UM()->form()->errors['heading'] ) ){
@@ -30,9 +41,12 @@ function before_form( $args ) {
          }
     }
 }
-add_action( 'um_before_form', 'before_form', 10, 1 );
+add_action( 'um_before_form', 'before_form', 1, 1 );
 function create_wordpress_user( $skywin_account ) {
-    error_log('create_wordpress_user');
+    $instructorType = explode(' ',$skywin_account['InstructorText']);
+    $certificateType = explode(' ', $skywin_account['CertificateText']);
+    $infoViaEmail = $skywin_account['InfoViaEmail'] == 'Y' ? ['Yes'] : ['No'];
+    $verifiedLicense = $skywin_account['VerifiedLicense'] == 'Y' ? ['Yes'] : ['No'];
     $userdata = [
         'user_login'           => $skywin_account['Emailaddress'],
         'user_email'           => $skywin_account['Emailaddress'], 
@@ -59,16 +73,17 @@ function create_wordpress_user( $skywin_account ) {
             'repackDate'        => $skywin_account['RepackDate'],
             'memberNo'          => $skywin_account['MemberNo'],
             'externalMemberNo'  => $skywin_account['ExternalMemberNo'],
-            'instructType'      => explode(' ',$skywin_account['InstructorText']),
+            'instructType'      => $instructorType,
             'licenseType'       => $skywin_account['LicenseType'],
-            'certificateType'   => explode(' ', $skywin_account['CertificateText']),
+            'certificateType'   => $certificateType,
             'year'              => $skywin_account['Year'],
             'club'              => $skywin_account['Club'],
-            'infoViaEmail'      => $skywin_account['InfoViaEmail'],
+            'infoViaEmail'      => $infoViaEmail,
             'internalNo'        => $skywin_account['InternalNo'],
             'accountNo'         => $skywin_account['AccountNo'],
             'comment'           => $skywin_account['Comment'],
-        ],
+            'verifiedLicense'   => $verifiedLicense
+        ]
     ];
     
     $user = get_user_by('email', $skywin_account['Emailaddress'] );
@@ -84,13 +99,13 @@ function update_wordpress_user( $user_id ) {
     um_fetch_user( $user_id );
     $internalNo = get_user_meta( $user_id, 'internalNo', true );
     $skywin_account = skywin_hub_db()->get_account_by_id( $internalNo );
-    if( is_wp_error($skywin_account) ){
-        wp_safe_redirect( home_url() . '/error/' );
-        exit;
-    }
-    if(!isset($skywin_account['InternalNo']) || empty($skywin_account['InternalNo']) ){
+    if( !is_user_logged_in() || !isset($skywin_account['InternalNo']) || empty($skywin_account['InternalNo']) ){
         return false;
     }
+    $instructorType = explode(' ', $skywin_account['InstructorText']) ?? [];
+    $certificateType = explode(' ', $skywin_account['CertificateText']) ?? [];
+    $infoViaEmail = $skywin_account['InfoViaEmail'] == 'Y' ? ['Yes'] : ['No'];
+    $verifiedLicense = $skywin_account['VerifiedLicense'] == 'Y' ? ['Yes'] : ['No'];
     update_user_meta( $user_id, 'nickname', $skywin_account['NickName'] );
     update_user_meta( $user_id, 'address1', $skywin_account['Address1'] );
     update_user_meta( $user_id, 'postCode', $skywin_account['Postcode'] );
@@ -108,15 +123,16 @@ function update_wordpress_user( $user_id ) {
     update_user_meta( $user_id, 'comment', $skywin_account['Comment'] );
     update_user_meta( $user_id, 'memberNo', $skywin_account['MemberNo'] );
     update_user_meta( $user_id, 'externalMemberNo', $skywin_account['ExternalMemberNo'] );
-    update_user_meta( $user_id, 'instructType', explode(' ',$skywin_account['InstructorText']) );
+    update_user_meta( $user_id, 'instructType', $instructorType );
     update_user_meta( $user_id, 'licenseType', $skywin_account['LicenseType'] );
-    update_user_meta( $user_id, 'certificateType', explode(' ', $skywin_account['CertificateText']) );
+    update_user_meta( $user_id, 'certificateType',  $certificateType );
     update_user_meta( $user_id, 'year', $skywin_account['Year'] );
     update_user_meta( $user_id, 'club', $skywin_account['Club'] );
-    $infoViaEmail = $skywin_account['InfoViaEmail'] == 'Y' ? ['Yes'] : ['No'];
     update_user_meta( $user_id, 'infoViaEmail', $infoViaEmail );
     update_user_meta( $user_id, 'internalNo', $skywin_account['InternalNo'] );
     update_user_meta( $user_id, 'accountNo', $skywin_account['AccountNo'] );
+    update_user_meta( $user_id, 'verifiedLicense', $verifiedLicense );
+    return true;
 }
 function create_skywin_user( $user_id ) {
     um_fetch_user( $user_id );
@@ -124,6 +140,9 @@ function create_skywin_user( $user_id ) {
     $certificateTypeText = um_user('certificateType');
     $instructType = is_array($instructTypeText) ? implode(" ",$instructTypeText) : "";
     $certificateType = is_array( $certificateTypeText) ? implode(" ", $certificateTypeText) : "";
+    $infoViaEmail = um_user('infoViaEmail');
+    $infoViaEmail = isset($infoViaEmail) && um_user('infoViaEmail')[0] == 'Yes' ? true : false;
+
     $body = array(
         'firstName'         => um_user('first_name') ? um_user('first_name') : '',
         'lastName'          => um_user('last_name') ? um_user('last_name') : '',
@@ -153,11 +172,11 @@ function create_skywin_user( $user_id ) {
         'contactPhone'      => um_user('contactPhone') ? um_user('contactPhone') : '',
 
         'comment'           => um_user('comment') ? um_user('comment') : '',
-        'infoViaEmail'      => (um_user('infoViaEmail')[0] ?? '') == 'Yes' ? 'Y' : 'N',
+        'infoViaEmail'      => $infoViaEmail,
     );
 
     $skywin_account = skywin_hub_api()->create_skywin_account( $body );
-    if( isset( $skywin_account['errors'] ) ){
+    if( is_wp_error( $skywin_account ) ){
         foreach( $skywin_account['errors'] as $error ){
             UM()->form()->add_error( $error['field'], $error['message'] );
         }
@@ -169,12 +188,19 @@ function create_skywin_user( $user_id ) {
     return $skywin_account;
 }
 function update_skywin_user($args) {
+    if( !is_user_logged_in() || is_admin()){
+        return; //silens;
+    }
     um_fetch_user( $args['user_id'] );
+    $instructorText = isset($args["instructType"]) ? implode(" ", $args["instructType"]) : '';
+    $certificateText = isset($args["certificateType"]) ? implode(" ", $args["certificateType"]) : '';
+    $infoViaEmail = isset($args["infoViaEmail"]) && $args["infoViaEmail"][0] == 'Yes' ? true : false;
+    $verifiedLicense = isset($args["verifiedLicense"]) && $args["verifiedLicense"][0] == 'Yes' ? true : false;
+
     $body = array(
         'firstName'         => $args["first_name"],
         'lastName'          => $args["last_name"],
         'nickName'          => $args["nickname"],
-        'emailAddress'      => $args["user_email"],
         'address1'          => $args["address1"],
         'postCode'          => $args["postCode"],
         'postTown'          => $args["postTown"],
@@ -190,28 +216,25 @@ function update_skywin_user($args) {
         'year'              => $args["year"],
         'club'              => $args["club"],
         'homeDz'            => $args["homeDz"],
-        'instructorText'    => isset($args["instructType"]) ? implode(" ", $args["instructType"]) : '',
-        'certificateText'   => isset($args["certificateType"]) ? implode(" ", $args["certificateType"]) : '',
+        'instructorText'    => $instructorText,
+        'certificateText'   => $certificateText,
         'licenseType'       => $args["licenseType"],
         'contactName'       => $args["contactName"],
         'contactPhone'      => $args["contactPhone"],
-        'infoViaEmail'      => isset($args["infoViaEmail"]) && $args["infoViaEmail"][0] == 'Yes' ? true : false,
+        'infoViaEmail'      => $infoViaEmail,
+        'verifiedLicense'   => $verifiedLicense
     );
     $skywin_account = skywin_hub_api()->update_skywin_account( $body, um_user('internalNo') );
-    if( isset( $skywin_account['errors'] ) ){
-        foreach( $skywin_account['errors'] as $error ){
-            UM()->form()->add_error( $error['field'], $error['message'] );
+    if( is_wp_error( $skywin_account ) ){
+        if( isset($skywin_account->errors) ){
+            foreach( $skywin_account->errors as $error ){
+                UM()->form()->add_error( $error['field'], $error['message'] );
+            }
         }
     }
     return $skywin_account;
 }
-function user_login($submitted_data){
-    $user_id = isset( UM()->login()->auth_id ) ? UM()->login()->auth_id : '';
-     if ( empty( $user_id ) ) {
-        return;
-    }
-    update_wordpress_user( $user_id );
-}
+function user_login($submitted_data){}
 add_action( 'um_user_login', 'user_login' );
 function reset_password_errors( $submission_data, $form_data ) {
     $skywin_account = skywin_hub_db()->get_account_by_email( $submission_data['username_b'] );
@@ -222,79 +245,38 @@ function reset_password_errors( $submission_data, $form_data ) {
     if( isset($skywin_account['InternalNo']) && !empty($skywin_account['InternalNo']) ){
         create_wordpress_user($skywin_account);
     }else{
-        UM()->form()->add_error( 'username_b', 'Could not find emailaddress please contact the administration' );
+        UM()->form()->add_error( 'username_b', 'Could not find emailaddress please contact the admin' );
     }
 }
 add_action( 'um_reset_password_errors_hook', 'reset_password_errors', 10, 2 );
 function um_custom_validate( $args ) {
-    error_log('um_custom_validate');
-    if(isset($_REQUEST['um_action']) && $_REQUEST['um_action'] == 'edit'){
-        $skywin_account = update_skywin_user($args);
-        error_log('Skywin_Hub_API::update_skywin_user' . print_r($skywin_account, true));
-        return $skywin_account;
+    if( is_user_logged_in() && isset($_REQUEST['um_action']) && $_REQUEST['um_action'] == 'edit' ){
+        $result = update_skywin_user($args);
+        if( is_wp_error($result) || array_key_exists('errors', $result)){
+            $admin_email = get_bloginfo( 'admin_email' );
+            UM()->form()->add_error('heading', "Something whent wrong. Please contact $admin_email");
+            return false;
+        }
+        return true;
     }
-    $admin_email = get_option('admin_email');
-    $pid_exists = skywin_hub_db()->get_account_by_pid($args['pid']);
-    if( is_wp_error($pid_exists) ){
-        wp_safe_redirect( home_url() . '/error/' );
-        exit;
-    }
-    if( $args['nationalityCode'] == 'SE' && $pid_exists ){
+    $pid_exists = skywin_hub_db()->pid_exists($args['pid']);
+    if( $args['nationalityCode'] == 'SE' && $pid_exists){
         UM()->form()->add_error( 'pid', 'Social security number is already registered' );
     }
-    if(isset($args['pid']) && !empty($args['pid']) ){
-        $pid_exists = get_users(array(
-            'meta_key' => 'pid',
-            'meta_value' => $args['pid'],
-            'number' => 1
-        ));
-        if( $args['nationalityCode'] == 'SE' && $pid_exists ){
-            UM()->form()->add_error( 'pid', 'Social security number is already registered' );
-        }
-    }
     $memberNo_exists = skywin_hub_db()->get_account_by_MemberNo($args['memberNo']);
-    if( is_wp_error($memberNo_exists) ){
-        wp_safe_redirect( home_url() . '/error/' );
-        exit;
-    }
-    if( $args['nationalityCode'] == 'SE' && $memberNo_exists ){
-        UM()->form()->add_error( 'memberNo', 'Member number is already registered' );
-    }
-    if(isset($args['memberNo']) && !empty($args['memberNo']) ){
-        $memberNo_exists = get_users(array(
-            'meta_key' => 'memberNo',
-            'meta_value' => $args['memberNo'],
-            'number' => 1
-        ));
-        if( $args['nationalityCode'] == 'SE' && $memberNo_exists ){
-            UM()->form()->add_error( 'memberNo', 'Member number is already registered' );
-        }
+    if( $args['nationalityCode'] == 'SE' && isset($memberNo_exists['MemberNo']) ){
+        UM()->form()->add_error( 'memberNo', 'License number is already registered' );
     }
     $email_exists = skywin_hub_db()->get_account_by_email($args['user_email']);
-    if(is_wp_error($email_exists)){
-        wp_safe_redirect( home_url() . '/error/' );
-        exit;
+    if ( $email_exists ){
+        UM()->form()->add_error( 'user_email', __('Email is already registered.') );
     }
-    if ( isset( $args['user_email'] ) ) {
-		if ( isset( UM()->form()->errors['user_email'] ) ) {
-			unset( UM()->form()->errors['user_email'] );
-		}
-		if ( empty( $args['user_email'] ) ) {
-			UM()->form()->add_error( 'user_email', __( 'E-mail address is required', 'ultimate-member' ) );
-		} elseif ( ! is_email( $args['user_email'] ) ) {
-			UM()->form()->add_error( 'user_email', __( 'The email you entered is invalid', 'ultimate-member' ) );
-		} elseif ( email_exists( $args['user_email'] ) ) {
-			UM()->form()->add_error( 'user_email', __( 'The email you entered is already registered', 'ultimate-member' ) );
-		} elseif ( $email_exists ){
-            UM()->form()->add_error( 'user_email', __('Email is already registered.') );
-        }
-	} else {
-        UM()->form()->add_error( 'user_email', __( 'E-mail Address is required', 'ultimate-member' ) );
+    if ( !empty(UM()->form()->errors) ) {
+        return false;
     }
 }
 add_action('um_submit_form_errors_hook_', 'um_custom_validate', 10, 1);
 function before_user_is_approved($user_id){
-    error_log('before_user_is_approved');
     if( !isset($_REQUEST['_um_password_reset']) || $_REQUEST['_um_password_reset'] != true ){
         create_skywin_user( $user_id );
     }

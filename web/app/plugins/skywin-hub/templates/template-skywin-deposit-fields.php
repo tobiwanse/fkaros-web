@@ -3,10 +3,9 @@
 		<label for="search_account">
 			<h3>
 				<?php echo __('Account', 'skywin-hub'); ?>
-				(email)
 			</h3>
 			<input type="text" class="skywin_hub-input skywin_hub-input-text" name="search_account" placeholder="Search"
-			value="<?php echo $args['search_account'] ?>" autocomplete="off" required />
+			value="" autocomplete="off" required />
 		</label>
 	</div>
 	<div class="add-to-cart-wrapper">
@@ -15,7 +14,7 @@
 				<?php foreach ($args['quickAmounts'] as $value): ?>
 					<div class="wp-block-button">
 						<button type="submit" name="add-to-cart" value="<?php echo esc_attr($args['product_id']) ?>"
-							class="skywin_hub-button wp-block-button__link quick_add_to_cart_button wp-element-button"
+							class="wp-element-button wp-block-button__link skywin_hub-button quick_add_to_cart_button"
 							data-amount="<?php echo esc_attr($value) ?>"
 							data-product_id="<?php echo esc_attr($args['product_id']) ?>" disabled>
 							<?php echo esc_html($value) . ' ' . $args['currency']; ?>
@@ -40,7 +39,7 @@
 					?>)
 				</h3>
 				<input type="text" class="skywin_hub-input skywin_hub-input-text" name="amount" placeholder="0"
-				value="<?php echo $args['amount'] ?>" autocomplete="off" required disabled />
+				value="" autocomplete="off" required disabled />
 			</label>
 		</div>
 		<div>
@@ -51,6 +50,7 @@
 			</label>
 		</div>
 	</div>
-	<input type="hidden" name="accountNo" value="<?php echo $args['accountNo']; ?>" />
+	<input type="hidden" name="accountNo" value="" />
+	<input type="hidden" name="emailAddress" value="" />
 	<input type="hidden" name="product_id" value="<?php echo $args['product_id']; ?>" />
 </div>

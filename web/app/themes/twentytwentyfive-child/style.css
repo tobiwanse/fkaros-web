@@ -20,83 +20,217 @@ Template: twentytwentyfive
 
 /* Start General Styles */
 :where(.wp-site-blocks *:focus) {
-    outline: none;
+  outline: none;
 }
+
 .wp-block-navigation .wp-block-navigation-submenu {
   border-radius: 0.5rem;
 }
+
 .wp-block-navigation .wp-block-navigation-submenu .wp-block-navigation-item {
   margin-bottom: 0 !important;
 }
-.wp-block-navigation .has-modal-open{
-  background-color: var(--wp--preset--color--custom-color-4)!important;
+
+.wp-block-navigation .has-modal-open {
+  background-color: var(--wp--preset--color--custom-color-4) !important;
 }
 
-.wp-block-buttons > .wp-block-button {
+.nk-awb-wrap>.wp-block-buttons>.wp-block-button {
   flex-basis: 10rem;
   flex-grow: 0.5;
   text-wrap: nowrap;
 }
+
 footer {
   margin-top: 0px;
 }
-@media (max-width: 942px) {
+
+.is-order-first {
+  order: -9999;
+}
+
+.is-order-0 {
+  order: 0;
+}
+
+.is-order-1 {
+  order: 1;
+}
+
+.is-order-2 {
+  order: 2;
+}
+
+.is-order-3 {
+  order: 3;
+}
+
+.is-order-4 {
+  order: 4;
+}
+
+.is-order-5 {
+  order: 5;
+}
+
+.is-order-6 {
+  order: 6;
+}
+
+.is-order-7 {
+  order: 7;
+}
+
+.is-order-8 {
+  order: 8;
+}
+
+.is-order-9 {
+  order: 9;
+}
+
+.is-order-last {
+  order: 9999;
+}
+
+@media screen and (max-width: 942px) {
   header .wp-block-site-title {
     display: none !important;
   }
-}
-@media (max-width: 782px) {
-  .wp-block-navigation__responsive-container-open:not(.always-shown) {
-    display: flex;
-  }
-  .wp-block-navigation__responsive-container:not(.hidden-by-default):not(
-      .is-menu-open
-    ) {
-    display: none;
-  }
-  .is-align-left {
-    text-align: left !important;
-  }
-  .is-text-col {
-    order: 2;
-  }
-  .is-order-first {
+
+  .is-md-order-first {
     order: -9999;
   }
-  .is-order-0 {
+
+  .is-md-order-0 {
     order: 0;
   }
-  .is-order-1 {
+
+  .is-md-order-1 {
     order: 1;
   }
-  .is-order-2 {
+
+  .is-md-order-2 {
     order: 2;
   }
-  .is-order-3 {
+
+  .is-md-order-3 {
     order: 3;
   }
-  .is-order-4 {
+
+  .is-md-order-4 {
     order: 4;
   }
-  .is-order-last {
+
+  .is-md-order-5 {
+    order: 5;
+  }
+
+  .is-md-order-6 {
+    order: 6;
+  }
+
+  .is-md-order-7 {
+    order: 7;
+  }
+
+  .is-md-order-8 {
+    order: 8;
+  }
+
+  .is-md-order-9 {
+    order: 9;
+  }
+
+  .is-md-order-last {
     order: 9999;
   }
 }
+
+@media screen and (max-width: 782px) {
+  .wp-block-navigation__responsive-container-open:not(.always-shown) {
+    display: flex;
+  }
+
+  .wp-block-navigation__responsive-container:not(.hidden-by-default):not(.is-menu-open) {
+    display: none;
+  }
+
+  .is-align-left {
+    text-align: left !important;
+  }
+
+  .is-text-col {
+    order: 2;
+  }
+
+  .is-sm-order-first {
+    order: -9999;
+  }
+
+  .is-sm-order-0 {
+    order: 0;
+  }
+
+  .is-sm-order-1 {
+    order: 1;
+  }
+
+  .is-sm-order-2 {
+    order: 2;
+  }
+
+  .is-sm-order-3 {
+    order: 3;
+  }
+
+  .is-sm-order-4 {
+    order: 4;
+  }
+
+  .is-sm-order-5 {
+    order: 5;
+  }
+
+  .is-sm-order-6 {
+    order: 6;
+  }
+
+  .is-sm-order-7 {
+    order: 7;
+  }
+
+  .is-sm-order-8 {
+    order: 8;
+  }
+
+  .is-sm-order-9 {
+    order: 9;
+  }
+
+  .is-sm-order-last {
+    order: 9999;
+  }
+}
+
 /* End General Styles */
 
 
 /* Modern Event Calendar Styles */
-.mec-wrap{
+.mec-wrap {
   color: unset !important;
   background: var(--wp--preset--color--custom-color-1) !important;
   background-color: var(--wp--preset--color--custom-color-1) !important;
 }
-.mec-wrap *:not(input, textarea, select, button){
+
+.mec-wrap *:not(input, textarea, select, button) {
   color: unset !important;
 }
-.mec-wrap span[class^="mec-totalcal"]{
+
+.mec-wrap span[class^="mec-totalcal"] {
   background: var(--wp--preset--color--custom-color-1) !important;
 }
+
 .mec-wrap .mec-event-footer,
 .mec-wrap .mec-event-header,
 .mec-wrap .mec-event-details,
@@ -108,32 +242,40 @@ footer {
 .mec-wrap .mec-events-meta-group-booking,
 .mec-wrap .mec-booking-button,
 .mec-wrap .mec-booking-shortcode,
-.mec-wrap .mec-search-form{
-  background: var(--wp--preset--color--custom-color-1)!important;
+.mec-wrap .mec-search-form {
+  background: var(--wp--preset--color--custom-color-1) !important;
 }
-.mec-wrap .info-msg{
+
+.mec-wrap .info-msg {
   border: #3a30ff 1px solid !important;
 }
-.mec-wrap .mec-success{
+
+.mec-wrap .mec-success {
   border: #00ca07 1px solid !important;
 }
-.mec-wrap .warning-msg{
+
+.mec-wrap .warning-msg {
   border: #ffae00 1px solid !important;
 }
-.mec-wrap .mec-error{
+
+.mec-wrap .mec-error {
   background-color: unset !important;
   border: #ff0000 1px solid !important;
 }
-.mec-wrap dd{
+
+.mec-wrap dd {
   background: unset !important;
   background-color: unset !important;
 }
-.mec-wrap .mec-event-meta dd{
+
+.mec-wrap .mec-event-meta dd {
   padding-left: 0px !important;
 }
-.mec-wrap .mec-speakers-details ul{
-  padding-left: 0px!important;
+
+.mec-wrap .mec-speakers-details ul {
+  padding-left: 0px !important;
 }
+
 .mec-wrap .mec-modal-preloader {
   background: unset !important;
   position: fixed;
@@ -147,113 +289,131 @@ footer {
   align-items: center;
   justify-content: center;
 }
+
 .mec-wrap .mec-modal-preloader::before {
-  content:"";
+  content: "";
   display: block;
   width: 40px;
   height: 40px;
   background: no-repeat #ffffff00 url("assets/images/ring-spinner.svg") center center !important;
   background-size: contain;
 }
+
 .mec-wrap .mec-load-more-button {
   background-color: transparent !important;
 }
+
 .mec-wrap .mec-load-more-button.mec-load-more-loading {
   border-style: none !important;
   content: url("assets/images/ring-spinner.svg") !important;
 }
+
 .mec-wrap .mec-load-more-scroll-loading {
   position: unset !important;
   height: 40px !important;
   background: no-repeat #ffffff00 url("assets/images/ring-spinner.svg") center center !important;
 }
 
-.mec-wrap .mec-single-event .mec-booking-button{
-  margin:25px;
-}
-.mec-wrap .lity-wrap .mec-speaker-info{
-  background: var(--wp--preset--color--custom-color-1)!important;
-  color: unset!important;
-}
-.mec-wrap .mec-single-event-category{
-  display: none!important;
+.mec-wrap .mec-single-event .mec-booking-button {
+  margin: 25px;
 }
 
-.featherlight{
-  width: 100%!important;
-  height: 100%!important;
+.mec-wrap .lity-wrap .mec-speaker-info {
+  background: var(--wp--preset--color--custom-color-1) !important;
+  color: unset !important;
 }
-.featherlight.featherlight-loading{
+
+.mec-wrap .mec-single-event-category {
+  display: none !important;
+}
+
+.featherlight {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.featherlight.featherlight-loading {
   background: no-repeat rgba(0, 0, 0, 0.4) url("assets/images/ring-spinner.svg") center center !important;
-  background-size: 40px 40px !important;  
+  background-size: 40px 40px !important;
 }
-.featherlight.featherlight-iframe{
-  display:flex !important;
+
+.featherlight.featherlight-iframe {
+  display: flex !important;
   align-items: center !important;
 }
-.featherlight-iframe .featherlight-content{
-  display:flex !important;
+
+.featherlight-iframe .featherlight-content {
+  display: flex !important;
   justify-content: center !important;
-  width: 100%!important;
-  height: 600px!important;
+  width: 100% !important;
+  height: 600px !important;
 }
 
-.featherlight .featherlight-inner{
-  max-width:1024px!important;
+.featherlight .featherlight-inner {
+  max-width: 1024px !important;
   height: 100% !important;
   border-radius: 8px !important;
 }
+
 @media only screen and (max-width: 1024px) {
   .featherlight .featherlight-content {
-      width: 100%!important;
+    width: 100% !important;
   }
 }
 
-body.mec-booking-modal{
+body.mec-booking-modal {
   background: var(--wp--preset--color--custom-color-1) !important;
 }
 
 body .mec-booking-button,
-body .mec-modal-booking-button{
+body .mec-modal-booking-button {
   background-color: unset !important;
 }
 
-li.mec-active .progress-index{
+li.mec-active .progress-index {
   background: #fff !important;
   color: #000 !important;
 }
-li.mec-active:before,  li.mec-active:after{
-    background: #fff !important;
+
+li.mec-active:before,
+li.mec-active:after {
+  background: #fff !important;
 }
+
 @media only screen and (max-width: 960px) {
-  .mec-single-event .mec-events-meta-group-booking ul li{
-    width: 100%!important;
-    margin-left: 0px!important;
+  .mec-single-event .mec-events-meta-group-booking ul li {
+    width: 100% !important;
+    margin-left: 0px !important;
   }
 }
 
-.mec-book-form-btn-wrap button{
+.mec-book-form-btn-wrap button {
   background: transparent !important;
-  border: 1px solid #fff!important;
+  border: 1px solid #fff !important;
   box-shadow: none !important;
 }
-.mec-events-meta-group-booking *:not(input, textarea, select, .mec-error){
+
+.mec-events-meta-group-booking *:not(input, textarea, select, .mec-error) {
   color: unset !important;
 }
-.mec-events-meta-group-booking input[type=checkbox]:checked:before{
+
+.mec-events-meta-group-booking input[type=checkbox]:checked:before {
   background-color: unset !important;
 }
-.mec-events-meta-group-booking input[type=radio]{
+
+.mec-events-meta-group-booking input[type=radio] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
-.mec-events-meta-group-booking input[type=radio]:checked:before{
+
+.mec-events-meta-group-booking input[type=radio]:checked:before {
   box-shadow: 0 0 0 1px #ffffff !important;
   background: #ffffff !important;
   border-color: var(--wp--preset--color--custom-color-1) !important;
 }
-.mec-events-meta-group-booking input[type=radio]:before{
+
+.mec-events-meta-group-booking input[type=radio]:before {
   box-shadow: 0 0 0 1px #ffffff !important;
   background: transparent !important;
   border-color: var(--wp--preset--color--custom-color-1) !important;
@@ -262,147 +422,196 @@ li.mec-active:before,  li.mec-active:after{
   top: unset !important;
   left: unset !important;
 }
-.mec-wrap .mec-tile-into-content-link{
+
+.mec-wrap .mec-tile-into-content-link {
   z-index: 99;
 }
+
 .mec-event-excerpt-wrapper {
-    opacity: 0;
-    position: absolute;
-    display: flex;
-    width: 100%;
-    height: 100%;
-    align-items: center;
-    top: 0;
-    left: 0;
-    padding:24px;
-    
-    justify-content: center;
-    background-color: rgba(0, 0, 0, .6);
-    text-align: center;
-    transition: all .5s ease-out;
-    -moz-transition: all .5s ease-out;
-    -webkit-transition: all .5s ease-out;
-    -o-transition: all .5s ease-out;
+  opacity: 0;
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  top: 0;
+  left: 0;
+  padding: 24px;
+
+  justify-content: center;
+  background-color: rgba(0, 0, 0, .6);
+  text-align: center;
+  transition: all .5s ease-out;
+  -moz-transition: all .5s ease-out;
+  -webkit-transition: all .5s ease-out;
+  -o-transition: all .5s ease-out;
 }
-.mec-tile-into-content-link:hover .mec-event-excerpt-wrapper{
-    opacity: 1;
+
+.mec-tile-into-content-link:hover .mec-event-excerpt-wrapper {
+  opacity: 1;
 }
-.mec-event-excerpt-content{
+
+.mec-event-excerpt-content {
   transform: translateY(30px);
   transition: all .5s ease-out;
   -moz-transition: all .5s ease-out;
   -webkit-transition: all .5s ease-out;
-  -o-transition: all .5s ease-out;  
+  -o-transition: all .5s ease-out;
 }
-.mec-tile-into-content-link:hover .mec-event-excerpt-content{
-    opacity: 1;
-    top: 0px;
+
+.mec-tile-into-content-link:hover .mec-event-excerpt-content {
+  opacity: 1;
+  top: 0px;
 }
+
 .mec-wrap .mec-single-event-organizer img {
   max-width: 150px !important;
 }
-.mec-tile-item .mec-event-loc-place{
-  display:none !important;
+
+.mec-tile-item .mec-event-loc-place {
+  display: none !important;
 }
+
 .mec-booking .mec-event-tickets-list .mec-ticket-style-row input[type="number"] {
   color: unset !important;
   background-color: unset !important;
 }
-.mec-booking .mec-event-tickets-list .mec-ticket-style-row .plus{
-  height:14px;
+
+.mec-booking .mec-event-tickets-list .mec-ticket-style-row .plus {
+  height: 14px;
 }
-.mec-booking .mec-event-tickets-list .mec-ticket-style-row .minus{
-  height:14px;
+
+.mec-booking .mec-event-tickets-list .mec-ticket-style-row .minus {
+  height: 14px;
 }
-.mec-booking .mec-event-tickets-list .mec-ticket-style-row .plus:hover{
+
+.mec-booking .mec-event-tickets-list .mec-ticket-style-row .plus:hover {
   background-color: unset !important;
 }
-.mec-booking .mec-event-tickets-list .mec-ticket-style-row .minus:hover{
+
+.mec-booking .mec-event-tickets-list .mec-ticket-style-row .minus:hover {
   background-color: unset !important;
 }
+
 /* End Modern Event Calendar Styles */
 
 
 /* Start WooCommerce Styles */
-.wc-block-grid .wc-block-grid__product-image{
-  width:100%;
+.wc-block-grid .wc-block-grid__product-image {
+  width: 100%;
 }
-.wc-block-grid .wc-block-grid__product-add-to-cart{
-  margin:0 0 12px;
+
+.wc-block-grid .wc-block-grid__product-add-to-cart {
+  margin: 0 0 12px;
 }
-.wc-block-grid .add_to_cart_button{
-  padding-right: unset!important;
-  padding-left: unset!important;
+
+.wc-block-grid .add_to_cart_button {
+  padding-right: unset !important;
+  padding-left: unset !important;
 }
+
 .wc-block-product .add_to_cart_button,
 .wc-block-product .wp-block-button__link,
 .wc-block-components-product-button,
-.wc-block-grid .add_to_cart_button{
-  width: 100%!important;
+.wc-block-grid .add_to_cart_button {
+  width: 100% !important;
 }
+
 .woocommerce select {
   color: unset;
   background-color: unset;
 }
+
 .wc-block-components-notice-banner {
   background-color: unset !important;
   color: unset !important;
 }
+
 .wc-block-components-notice-banner a {
   color: unset !important;
 }
+
 .wc-block-components-notice-banner a .wc-forward {
   color: unset !important;
 }
-.wc-block-components-notice-banner
-  > .wc-block-components-notice-banner__content
-  .wc-forward {
+
+.wc-block-components-notice-banner>.wc-block-components-notice-banner__content .wc-forward {
   color: unset !important;
 }
+
 .woocommerce-checkout main .woocommerce {
   max-width: unset !important;
 }
+
+.woocommerce-checkout .wp-block-woocommerce-cart-items-block {
+  width: 100% !important;
+}
+
+.woocommerce-checkout .wp-block-woocommerce-cart-totals-block {
+  display: none !important;
+}
+
 .woocommerce-page table.shop_table {
   width: 100% !important;
 }
-.wc-block-add-to-cart-with-options .wcpay-express-checkout-wrapper{
+
+.wc-block-add-to-cart-with-options .wcpay-express-checkout-wrapper {
   margin-top: 32px !important;
 }
-.wc-block-components-address-card__address-section{
-  color: var(--wp--preset--color--accent-5)!important;
+
+.wc-block-components-address-card__address-section {
+  color: var(--wp--preset--color--accent-5) !important;
 }
+
 .wc-block-components-address-card address .wc-block-components-address-card__address-section--secondary {
-    /* color: var(--wp--preset--color--accent-5)!important;; */
-    color: unset !important;
+  color: unset !important;
 }
-.wc-block-components-address-form label{
-  color: rgba(17 17 17 1)!important;
+
+.wc-block-components-address-form label {
+  color: rgba(17 17 17 1) !important;
 }
-/* input {
-  background: var(--bg)!important;
-  color: var(--text)!important;
-} */
 /* End WooCommerce Styles */
-
-
-/* Start Dibs Styles */
-#dibs-wrapper {
-  flex-direction: column;
-}
-#dibs-order-review {
-  width: 100%;
-}
-/* End Dibs Styles */
-
 
 /* Start Ultimate Member Styles */
 .um:not(.um-admin) {
   font-size: unset !important;
   color: unset !important;
 }
+
 .um *:not(.um-admin, input, textarea, select, button) {
   font-size: unset !important;
   color: unset !important;
+}
+.um:not(.um-admin) .um-button{
+  background-color: var(--wp--preset--color--custom-color-4)!important;
+}
+.um .um-cover{
+  display: none!important;
+}
+.um .um-header{
+  /* display: none!important; */
+}
+.um .um-profile-navbar {
+  display: none!important;
+}
+.um .um-profile-nav{
+  display: none!important;
+}
+.um .um-dropdown{
+  background: #416b8799!important;
+}
+.um .um-dropdown ul{
+  background: #416b8799!important;
+}
+.um .um-account-side li {
+  background: #416b87!important;
+}
+
+.um-account-side li a:hover {
+  background: #274f69!important;
+}
+.um .um-profile-photo{
+  display: none!important;
 }
 /* End Ultimate Member Styles */
 
@@ -414,6 +623,7 @@ li.mec-active:before,  li.mec-active:after{
   float: right !important;
   margin: 0px !important;
 }
+
 .wpforms-page-prev {
   margin-right: 0px !important;
   width: 48% !important;
@@ -421,58 +631,56 @@ li.mec-active:before,  li.mec-active:after{
   margin: 0 !important;
   padding: 0 !important;
 }
+
 .wpforms-submit-container {
   width: 48% !important;
 }
+
 .wpforms-submit-container button {
   width: 100% !important;
 }
+
 .wpforms-page.last .wpforms-field-pagebreak {
   float: left !important;
   display: block !important;
   width: 48% !important;
   padding: 0 !important;
 }
+
 .wpforms-page.last .wpforms-pagebreak-left {
   width: 100% !important;
 }
+
 .wpforms-page.last .wpforms-page-prev {
   width: 100% !important;
 }
+
 @media (max-width: 782px) {
-  div.wpforms-container-full
-    .wpforms-form
-    .wpforms-page-indicator-page:not(.active) {
+  div.wpforms-container-full .wpforms-form .wpforms-page-indicator-page:not(.active) {
     display: none;
   }
-  div.wpforms-container
-    .wpforms-form
-    .wpforms-page-indicator-page:not(.active) {
+
+  div.wpforms-container .wpforms-form .wpforms-page-indicator-page:not(.active) {
     display: none;
   }
-  div.wpforms-container-full
-    .wpforms-form
-    .wpforms-page-indicator-page.active
-    .wpforms-page-indicator-page-title {
+
+  div.wpforms-container-full .wpforms-form .wpforms-page-indicator-page.active .wpforms-page-indicator-page-title {
     display: block;
   }
-  div.wpforms-container
-    .wpforms-form
-    .wpforms-page-indicator-page.active
-    .wpforms-page-indicator-page-number {
+
+  div.wpforms-container .wpforms-form .wpforms-page-indicator-page.active .wpforms-page-indicator-page-number {
     display: block;
   }
-  div.wpforms-container
-    .wpforms-form
-    .wpforms-page-indicator.connector
-    .wpforms-page-indicator-page.active {
+
+  div.wpforms-container .wpforms-form .wpforms-page-indicator.connector .wpforms-page-indicator-page.active {
     display: block;
     width: 100% !important;
   }
 }
+
 /* End WPForms Styles */
 
 /* Start Easy Accordion Styles */
-.esab__icon svg{
+.esab__icon svg {
   fill: white !important;
 }

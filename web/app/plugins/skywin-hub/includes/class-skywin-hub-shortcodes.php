@@ -3,7 +3,6 @@ defined( 'ABSPATH' ) || exit;
 if ( !class_exists('Skywin_Hub_Shortcodes') ):
 class Skywin_Hub_Shortcodes {
     protected static $_instance = null;
-    private $templates_dir = null;
     public static function instance() {
 		if ( self::$_instance === null ) {
 			self::$_instance = new self();
@@ -11,13 +10,11 @@ class Skywin_Hub_Shortcodes {
 		return self::$_instance;
 	}
     public function __construct(){
-        $this->templates_dir = plugin_dir_path( SW_PLUGIN_FILE ) . 'templates/';
         $this->init();
     }
     private function init(){
         $shortcodes = array(
             'skywin_hub_deposit_product_fields' => array( $this, 'skywin_hub_deposit_product_fields' ),
-            'skywin_hub_deposit_product_form' => array( $this, 'skywin_hub_deposit_product_form' ),
         );
         foreach ( $shortcodes as $shortcode => $function ) {
 			add_shortcode( $shortcode, $function );
@@ -25,9 +22,6 @@ class Skywin_Hub_Shortcodes {
     }
     public function skywin_hub_deposit_product_fields( $args ){
         return Skywin_Hub_Shortcode_Deposit::output_fields( $args );
-    }
-    public function skywin_hub_deposit_product_form( $args ){
-        return Skywin_Hub_Shortcode_Deposit::output_form( $args );
     }
 }
 function skywin_hub_shortcodes() {

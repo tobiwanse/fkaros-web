@@ -50,6 +50,7 @@ function enqueue_parent_styles() {
 	foreach ( $um_css as $css ) :
 		//wp_dequeue_style( $css );
 	endforeach;
+	
 }
 add_action( 'wp_enqueue_scripts', 'enqueue_parent_styles', 9999);
 
@@ -61,9 +62,7 @@ function add_file_types_to_uploads($file_types){
 }
 add_filter( 'big_image_size_threshold', '__return_false' );
 add_filter( 'image_resize_dimensions', '__return_false' );
-add_filter( 'wp_calculate_image_srcset', '__return_false' );
-add_filter( 'wp_calculate_image_sizes', '__return_false' );
+//add_filter( 'wp_calculate_image_srcset', '__return_false' );
+//add_filter( 'wp_calculate_image_sizes', '__return_false' );
 
 add_filter('upload_mimes', 'add_file_types_to_uploads');
-
-
