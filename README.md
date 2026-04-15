@@ -59,3 +59,50 @@ See the [Bedrock installation documentation](https://roots.io/bedrock/docs/insta
 - Follow [@rootswp on Twitter](https://twitter.com/rootswp)
 - Read the [Roots Blog](https://roots.io/blog/)
 - Subscribe to the [Roots Newsletter](https://roots.io/newsletter/)
+
+## Deploy med Capistrano
+
+Projektet använder [Capistrano](https://capistranorb.com/) för deployment.
+
+### Förutsättningar
+
+- Ruby (hanteras via rbenv)
+- Bundler: `gem install bundler`
+- Installera gems: `bundle install`
+
+### Första gången
+
+Skapa `/var/www/fkaros/shared/.env` på servern med produktionsvärden (se `.env.example`).
+
+### Deploya
+
+```bash
+bundle exec cap production deploy
+```
+
+### Rollback
+
+```bash
+bundle exec cap production deploy:rollback
+```
+
+### Konfiguration
+
+| Fil | Beskrivning |
+|-----|-------------|
+| `Capfile` | Laddar plugins och tasks |
+| `config/deploy.rb` | Gemensam konfiguration (repo, sökvägar, etc.) |
+| `config/deploy/production.rb` | Produktionsserverns IP och branch |
+| `config/deploy/staging.rb` | Stagingserverns IP och branch |
+
+Capistrano deployar till `/var/www/fkaros/` med följande struktur:
+
+```
+/var/www/fkaros/
+├── current/      → symlink till senaste release
+├── releases/     → de 5 senaste releaserna
+├── repo/         → git mirror
+└── shared/
+    ├── .env      → miljövariabler (skapas manuellt)
+    └── web/app/uploads/
+```

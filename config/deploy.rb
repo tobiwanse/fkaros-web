@@ -5,7 +5,7 @@ lock '~> 3.18'
 set :application, 'fkaros-web'
 set :repo_url, 'git@github.com:tobiwanse/fkaros-web.git' # Byt ut mot ditt repo
 
-set :deploy_to, '/Users/admin/fkaros-web-test'
+#set :deploy_to, '/Users/admin/fkaros-web-test'
 
 # Behåll 5 senaste releases (rollback: cap production deploy:rollback)
 set :keep_releases, 5
