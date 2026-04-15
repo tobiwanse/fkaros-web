@@ -12,7 +12,7 @@ namespace :composer do
   task :install do
     on roles(:all) do
       within release_path do
-        execute '/usr/local/bin/composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction'
+        execute '/usr/local/bin/php', '/usr/local/bin/composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction'
       end
     end
   end
