@@ -68,6 +68,18 @@ if (!env('WP_ENVIRONMENT_TYPE') && in_array(WP_ENV, ['production', 'staging', 'd
 }
 
 /**
+ * Detect HTTPS correctly behind reverse proxies and Cloudflare.
+ */
+if (
+    (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strpos((string) $_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) ||
+    (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on') ||
+    (!empty($_SERVER['HTTP_CF_VISITOR']) && strpos((string) $_SERVER['HTTP_CF_VISITOR'], '"https"') !== false)
+) {
+    $_SERVER['HTTPS'] = 'on';
+    $_SERVER['SERVER_PORT'] = 443;
+}
+
+/**
  * URLs
  */
 Config::define('WP_HOME', env('WP_HOME'));
@@ -86,6 +98,14 @@ Config::define('WP_SITEURL', $home . '/wp');
 Config::define('CONTENT_DIR', '/app');
 Config::define('WP_CONTENT_DIR', $webroot_dir . Config::get('CONTENT_DIR'));
 Config::define('WP_CONTENT_URL', Config::get('WP_HOME') . Config::get('CONTENT_DIR'));
+
+// Bedrock lives in /wp, but wp-admin is exposed as /wp-admin via rewrite.
+// Use site-wide cookie paths so admin auth survives that rewritten entrypoint.
+Config::define('COOKIEPATH', '/');
+Config::define('SITECOOKIEPATH', '/');
+Config::define('ADMIN_COOKIE_PATH', '/');
+Config::define('PLUGINS_COOKIE_PATH', '/');
+Config::define('FORCE_SSL_ADMIN', true);
 
 /**
  * DB settings
@@ -148,14 +168,6 @@ Config::define('WP_DEBUG_DISPLAY', false);
 Config::define('WP_DEBUG_LOG', false);
 Config::define('SCRIPT_DEBUG', false);
 ini_set('display_errors', '0');
-
-/**
- * Allow WordPress to detect HTTPS when used behind a reverse proxy or a load balancer
- * See https://codex.wordpress.org/Function_Reference/is_ssl#Notes
- */
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
-}
 
 $env_config = __DIR__ . '/environments/' . WP_ENV . '.php';
 
