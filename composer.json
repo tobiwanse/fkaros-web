@@ -51,7 +51,9 @@
     "wpackagist-plugin/wordpress-importer": "*",
     "wpackagist-plugin/easy-accordion-block": "*",
     "wpackagist-plugin/user-role-editor": "*",
-    "wpackagist-plugin/ultimate-addons-for-gutenberg": "*"
+    "wpackagist-plugin/ultimate-addons-for-gutenberg": "*",
+    "wpackagist-plugin/really-simple-ssl": "^9.5",
+    "minishlink/web-push": "^10.0"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",

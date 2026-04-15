@@ -73,6 +73,13 @@ if (!env('WP_ENVIRONMENT_TYPE') && in_array(WP_ENV, ['production', 'staging', 'd
 Config::define('WP_HOME', env('WP_HOME'));
 Config::define('WP_SITEURL', env('WP_SITEURL'));
 
+$home = Config::get('WP_HOME');
+if (!empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '172.19.2.132') !== false) {
+    $home = 'http://' . $_SERVER['HTTP_HOST'];
+}
+Config::define('WP_HOME', $home);
+Config::define('WP_SITEURL', $home . '/wp');
+
 /**
  * Custom Content Directory
  */
@@ -120,7 +127,7 @@ Config::define('NONCE_SALT', env('NONCE_SALT'));
  * Custom Settings
  */
 Config::define('AUTOMATIC_UPDATER_DISABLED', true);
-Config::define('DISABLE_WP_CRON', env('DISABLE_WP_CRON') ?: false);
+Config::define('DISABLE_WP_CRON', env('DISABLE_WP_CRON') ?: true);
 
 // Disable the plugin and theme file editor in the admin
 Config::define('DISALLOW_FILE_EDIT', true);

@@ -66,3 +66,16 @@ add_filter( 'image_resize_dimensions', '__return_false' );
 //add_filter( 'wp_calculate_image_sizes', '__return_false' );
 
 add_filter('upload_mimes', 'add_file_types_to_uploads');
+
+add_filter( 'show_admin_bar', function ( $show ) {
+	if ( is_page( 'skyview-full' ) ) {
+		return false;
+	}
+	return $show;
+} );
+
+add_action( 'wp_head', function () {
+	if ( is_page( 'skyview-full' ) ) {
+		echo '<style>html,body{scrollbar-width:none!important;-ms-overflow-style:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none!important}</style>';
+	}
+} );

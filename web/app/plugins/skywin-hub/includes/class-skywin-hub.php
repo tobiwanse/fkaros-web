@@ -61,6 +61,7 @@ if (!class_exists('Skywin_Hub')):
 				if( function_exists('skywin_hub_deposit') ){
 					skywin_hub_deposit()->remove_product();
 				}
+				Skywin_Hub_Push::deactivate();
 			}
 		}
 		public function add_plugin_action_links($plugin_actions, $plugin_file)
@@ -82,6 +83,7 @@ if (!class_exists('Skywin_Hub')):
 
 			include_once SW_ABSPATH . 'includes/class-skywin-hub-shortcodes.php';
 			include_once SW_ABSPATH . 'includes/shortcodes/class-skywin-hub-shortcode-deposit.php';
+			include_once SW_ABSPATH . 'includes/shortcodes/class-skywin-hub-shortcode-skyview.php';
 
 			include_once SW_ABSPATH . 'includes/functions-wc.php';
 			include_once SW_ABSPATH . 'includes/functions-um.php';
@@ -89,6 +91,9 @@ if (!class_exists('Skywin_Hub')):
 			//include_once SW_ABSPATH . 'includes/functions-mec.php';
 
 			include_once SW_ABSPATH . 'includes/admin/class-skywin-settings.php';
+
+			include_once SW_ABSPATH . 'includes/class-skywin-hub-push.php';
+			Skywin_Hub_Push::init();
 		}
 	}
 endif;

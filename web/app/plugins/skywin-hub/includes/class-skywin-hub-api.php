@@ -12,6 +12,10 @@ class Skywin_Hub_API {
 		}
 		return self::$_instance;
 	}
+	public function __construct() {
+		// Constructor code if needed
+		
+	}
 	private function apiCall($requestMethod, $entity='', $body = null)
 	{
 		$username = get_option('skywin_hub_api_username');
@@ -20,65 +24,66 @@ class Skywin_Hub_API {
 		$port     = get_option('skywin_hub_api_port');
 		$path     = get_option('skywin_hub_api_path');
 		$password = encrypt_decrypt($password, 'd');
-		
+
 		$endpoint 	= "{$host}";
 		if( $port ){
 			$endpoint .= ":{$port}";
 		}
 		$endpoint .= "{$path}{$entity}";
+		
 		if( !$username || !$password || !$host){
 			$error = new WP_Error('error', __('Api Credentials can not be empty.', 'skywin_hub') );
 			error_log('Api error: ' . json_encode($error));
 			return $error;
 		}
-		$curl = curl_init();
-		
-		$headers = array(
-			'Content-Type: plain/text',
-			'Accept: application/json'
+		$args = array(
+			'method'      => $requestMethod,
+			'headers'     => array(
+				'Content-Type'  => 'application/json',
+				'Accept'        => 'application/json'
+			),
+			'timeout'     => 10,
+			'redirection' => 5,
+			'user-agent'  => 'WordPress/' . get_bloginfo('version'),
 		);
-		curl_setopt($curl, CURLOPT_URL, $endpoint);
-		curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true); 
-		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-		curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $requestMethod);
-		curl_setopt($curl, CURLOPT_ENCODING, '');
-		curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
-		curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($curl, CURLOPT_USERPWD, "$username:$password");
-
-		if ($requestMethod == 'POST' || $requestMethod == 'PUT') {
-			curl_setopt($curl, CURLOPT_POSTFIELDS,  json_encode($body)  );
+		$args['headers']['Authorization'] = 'Basic ' . base64_encode( "$username:$password" );
+		if ( $requestMethod === 'POST' || $requestMethod === 'PUT' ) {
+			$args['body'] = json_encode( $body );
 		}
-		
-		if ($requestMethod == 'HEAD') {
-			curl_setopt($curl, CURLOPT_NOBODY, true);
+		$response = wp_remote_request( $endpoint, $args );
+		if ( is_wp_error( $response ) ) {
+			$error_msg = $response->get_error_message();
+			error_log( 'HTTP Request Error: ' . $error_msg );
+			return new WP_Error( 'http_error', __('Connection failed. Please try again.', 'skywin_hub') );
 		}
-		
-		$results = curl_exec($curl);
-		$curl_info = curl_getinfo($curl);
-		$info = [
-			'http_code'  => $curl_info['http_code'] ?? null,
-			'dns'        => $curl_info['namelookup_time'] ?? null,
-			'connect'    => $curl_info['connect_time'] ?? null,
-			'tls'        => $curl_info['appconnect_time'] ?? null,
-			'ttfb'       => $curl_info['starttransfer_time'] ?? null,
-			'total'      => $curl_info['total_time'] ?? null,
-		];
-		$httpCode = $curl_info['http_code'];
-		if ( curl_errno( $curl )  ){
-			error_log('curlerr: ' . json_encode( curl_error( $curl ) ) );
-			return new WP_Error( 'curlerr', curl_error( $curl ) );
+		$http_code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$results = json_decode( $body, true );
+		if ( $http_code >= 400 ) {
+			error_log( 'HTTP ' . $http_code . ': ' . $body );
+			if ( $http_code === 401 || $http_code === 403 ) {
+				return new WP_Error( 'auth_error', __('Authentication failed', 'skywin_hub') );
+			}
+			if ( $http_code === 404 ) {
+				return new WP_Error( 'not_found', __('Resource not found', 'skywin_hub') );
+			}
+			if ( is_array( $results ) && ( isset( $results['errors'] ) || isset( $results['error'] ) ) ) {
+				$error_data = $results['errors'] ?? $results['error'];
+				return new WP_Error( 'api_error', $error_data  );
+			}
+			return new WP_Error( 'http_error', __('An error occurred. Please try again later.', 'skywin_hub') );
 		}
-		if ( $httpCode >= 400 || $httpCode == 0) {
-			error_log('curlerr: ' . 'Internal server error: ' . $httpCode );
+		if ( $results === null ) {
+			error_log( 'JSON decode error: Invalid JSON response' );
+			return new WP_Error( 'json_error', __('An error occurred processing the response.', 'skywin_hub') );
 		}
-		$results = json_decode($results, true);
-		if ( !is_array( $results ) || array_key_exists('error', $results) ) {
-			error_log('sw_err: ' . json_encode( $results ) );
-			return new WP_Error('sw_err', $results['error'] );
+		if ( is_array( $results ) && isset( $results['errors'] ) ) {
+			error_log( 'API Errors: ' . json_encode( $results['errors'] ) );
+			return new WP_Error( 'api_error', __('Request failed. Please check your information.', 'skywin_hub'), $results['errors'] );
+		}
+		if ( is_array( $results ) && isset( $results['error'] ) ) {
+			error_log( 'API Error: ' . json_encode( $results['error'] ) );
+			return new WP_Error( 'api_error', __('Request failed. Please check your information.', 'skywin_hub'), $results['error'] );
 		}
 		return $results;
 	}
@@ -94,16 +99,16 @@ class Skywin_Hub_API {
 	}
 	public function create_skywin_account( $body )
 	{
-		error_log('Skywin_Hub_API::create_skywin_account');
 		$result = $this->apiCall( 'POST', 'members/checkin', $body );		
 		return $result;
 	}
 	public function update_skywin_account( $body = null, $id = null )
 	{
 		if( !$body || !$id ){
-			return new WP_Error('sw_err', 'You are not doing it right!');
+			error_log('skywin_api_error: You are not doing it right!');
+			return new WP_Error('skywin_api_error', 'You are not doing it right!');
 		}
-		$result = $this->apiCall( 'PUT', "members/checkin/$id", $body );		
+		$result = $this->apiCall( 'PUT', "members/checkin/$id", $body );
 		return $result;
 	}
 	public function add_members_phone($body, $id)
@@ -118,7 +123,15 @@ class Skywin_Hub_API {
 	}	
 	public function skyview($date = null)
 	{
+		if($date){
+			$date = '?jumpDate=' . $date;
+		}
 		$result = $this->apiCall('GET', 'skyview', $date);
+		return $result;
+	}
+	public function loads($date = null)
+	{
+		$result = $this->apiCall('GET', 'loads', $date);
 		return $result;
 	}
 	public function skywish($date = null)

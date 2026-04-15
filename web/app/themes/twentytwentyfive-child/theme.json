@@ -27,22 +27,22 @@
 					"slug": "contrast"
 				},
 				{
-					"color": "#FFEE58",
+					"color": "#f07820",
 					"name": "Accent 1",
 					"slug": "accent-1"
 				},
 				{
-					"color": "#F6CFF4",
+					"color": "#dceef8",
 					"name": "Accent 2",
 					"slug": "accent-2"
 				},
 				{
-					"color": "#503AA8",
+					"color": "#1a65b8",
 					"name": "Accent 3",
 					"slug": "accent-3"
 				},
 				{
-					"color": "#686868",
+					"color": "#5a7a9a",
 					"name": "Accent 4",
 					"slug": "accent-4"
 				},
@@ -57,32 +57,32 @@
 					"slug": "accent-6"
 				},
 				{
-					"color": "#173e58",
+					"color": "#14456e",
 					"name": "Color 1",
 					"slug": "custom-color-1"
 				},
 				{
-					"color": "#113047",
+					"color": "#0d3060",
 					"name": "Color 2",
 					"slug": "custom-color-2"
 				},
 				{
-					"color": "#416b87",
+					"color": "#2a78c0",
 					"name": "Color 3",
 					"slug": "custom-color-3"
 				},
 				{
-					"color": "#0c293c",
+					"color": "#081c3a",
 					"name": "Color 4",
 					"slug": "custom-color-4"
 				},
 				{
-					"color": "#dd3095",
+					"color": "#f07820",
 					"name": "Event bar 1",
 					"slug": "custom-event-bar-1"
 				},
 				{
-					"color": "#1e3dea",
+					"color": "#1a65b8",
 					"name": "Event bar 2",
 					"slug": "custom-event-bar-2"
 				},

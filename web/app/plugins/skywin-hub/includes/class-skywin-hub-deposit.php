@@ -62,15 +62,14 @@ if (!class_exists('Skywin_Hub_Deposit')):
 		public function ajax_get_skywin_accounts()
 		{
 			check_ajax_referer('ajax_get_skywin_accounts_nonce', 'nonce');
+			$results = [];
 			if ( !isset($_POST['terms']) || empty($_POST['terms']) ) {
-				wp_send_json_success([]);
-				die();
+				wp_send_json($results);
 			}
 			$terms = sanitize_text_field($_POST['terms']);
-
-			$results = [];
 			if ( current_user_can('manage_options') ) {
-				$results = skywin_hub_db()->accounts($terms);
+				//$results = skywin_hub_db()->accounts($terms);
+				$results = skywin_hub_db()->groups_and_accounts($terms);
 			} else {
 				$is_email = filter_var($terms, FILTER_VALIDATE_EMAIL);
 				if ($is_email) {
@@ -78,8 +77,7 @@ if (!class_exists('Skywin_Hub_Deposit')):
 				}
 			}
 			if ( is_wp_error($results) || !$results) {
-				wp_send_json_success($results);
-				die();
+				wp_send_json($results);
 			}
 			
 			$accounts = [];
@@ -98,14 +96,22 @@ if (!class_exists('Skywin_Hub_Deposit')):
 					$club = 'N/A';
 				}
 
-				$accounts[] = array(
-					'value' => $item['AccountNo'],
-					'label' => $club . ' ' . $memberno . ' ' . $item['FirstName'] . ' ' . $item['LastName'],
-					'emailAddress' => $item['Emailaddress'],
-				);
+				if(isset($item['AccountNo'])){
+					$accounts[] = array(
+						'value' => $item['AccountNo'],
+						'label' => $club . ' ' . $memberno . ' ' . $item['FirstName'] . ' ' . $item['LastName'],
+						'emailAddress' => $item['Emailaddress'],
+					);
+				}
+				if(isset($item['GroupNo'])){
+					$accounts[] = array(
+						'value' => $item['GroupNo'],
+						'label' => $item['GroupName'],
+						'emailAddress' => '',
+					);
+				}
 			}
-			wp_send_json_success($accounts);
-			die();
+			wp_send_json($accounts);
 		}
 		public function get_id()
 		{

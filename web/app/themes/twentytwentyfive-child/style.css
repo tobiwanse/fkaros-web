@@ -3,28 +3,44 @@ Theme Name: Twenty Twenty-Five Child
 Theme URI: https://skycloud.nu/themes/twentytwentyfive-child/
 Author: Tobiwan
 Author URI: https://wordpress.org
-Description: Twenty Twenty-Five Child Theme.
+Description: Twenty Twenty-Five Child Theme — Fallskärmsklubben Aros.
 Version: 1.0
 Template: twentytwentyfive
 */
 /* Add your custom styles here */
 /*
---wp--preset--color--custom-color-1: #173e58;
---wp--preset--color--custom-color-2: #113047;
---wp--preset--color--custom-color-3: #416b87;
---wp--preset--color--custom-color-4: #0c293c;
---wp--preset--color--custom-event-bar-1
---wp--preset--color--custom-event-bar-2
---wp--preset--color--accent-5: #FBFAF3;
+--wp--preset--color--accent-1: #f07820;   -- action orange
+--wp--preset--color--accent-2: #dceef8;   -- pale sky blue
+--wp--preset--color--accent-3: #1a65b8;   -- sky blue
+--wp--preset--color--custom-color-1: #14456e;
+--wp--preset--color--custom-color-2: #0d3060;
+--wp--preset--color--custom-color-3: #2a78c0;
+--wp--preset--color--custom-color-4: #081c3a;
+--wp--preset--color--custom-event-bar-1: #f07820;
+--wp--preset--color--custom-event-bar-2: #1a65b8;
+--wp--preset--color--accent-5: #f2f7fc;
 */
+
+/* ── Aros brand CSS variables ─────────────────────────────── */
+/* :root {
+  --aros-orange: #f07820;
+  --aros-orange-hover: #d46515;
+  --aros-sky: #14456e;
+  --aros-sky-bright: #2a78c0;
+  --aros-sky-pale: #dceef8;
+  --aros-navy: #081c3a;
+} */
 
 /* Start General Styles */
 :where(.wp-site-blocks *:focus) {
   outline: none;
 }
 
-.wp-block-navigation .wp-block-navigation-submenu {
-  border-radius: 0.5rem;
+.wp-block-navigation__submenu-container.wp-block-navigation-submenu {
+  border-radius: 0.2rem!important;
+  border-color: #fff!important;
+  overflow: hidden!important;
+  z-index: 9999 !important;
 }
 
 .wp-block-navigation .wp-block-navigation-submenu .wp-block-navigation-item {
@@ -570,6 +586,7 @@ li.mec-active:after {
 .wc-block-components-address-form label {
   color: rgba(17 17 17 1) !important;
 }
+
 /* End WooCommerce Styles */
 
 /* Start Ultimate Member Styles */
@@ -577,41 +594,63 @@ li.mec-active:after {
   font-size: unset !important;
   color: unset !important;
 }
-
 .um *:not(.um-admin, input, textarea, select, button) {
-  font-size: unset !important;
   color: unset !important;
 }
-.um:not(.um-admin) .um-button{
-  background-color: var(--wp--preset--color--custom-color-4)!important;
+.um:not(.um-admin) .um-button {
+  background-color: var(--wp--preset--color--custom-color-4) !important;
 }
-.um .um-cover{
-  display: none!important;
-}
-.um .um-header{
-  /* display: none!important; */
+.um .um-cover {
+  /* display: none !important; */
 }
 .um .um-profile-navbar {
-  display: none!important;
+  /* display: none !important; */
 }
-.um .um-profile-nav{
-  display: none!important;
+.um .um-profile-nav {
+  /* display: none !important; */
 }
-.um .um-dropdown{
-  background: #416b8799!important;
+.um .um-profile-photo {
+  /* display: none !important; */
 }
-.um .um-dropdown ul{
-  background: #416b8799!important;
+.um .um-dropdown {
+  background: #416b8799 !important;
+  background-color: #416b8799 !important;
+}
+.um .um-dropdown ul {
+  background: #416b8799 !important;
 }
 .um .um-account-side li {
-  background: #416b87!important;
+  background: #416b87 !important;
 }
-
 .um-account-side li a:hover {
-  background: #274f69!important;
+  background: #274f69 !important;
 }
-.um .um-profile-photo{
-  display: none!important;
+.um .um-form input[type=text],
+.um .um-form input[type=search],
+.um .um-form input[type=tel],
+.um .um-form input[type=password],
+.um .um-form textarea {
+  font-size: 24px !important;
+  padding: 24px 12px 24px 12px !important;
+}
+.um-field .select2.select2-container .select2-selection--single {
+  min-height: 50px !important;
+  font-size: 24px !important;
+}
+.um-field .select2-container--default .select2-selection--single .select2-selection__rendered,
+.um-field .select2-container--default .select2-selection--single .select2-selection__clear,
+.um-field .select2.select2-container .select2-selection .select2-selection__arrow:before {
+  line-height: 50px !important;
+}
+.um-field .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  margin: 5px !important;
+}
+.um-field .select2-container--default .select2-selection--multiple .select2-selection__clear {
+  font-size: 24px !important;
+}
+.um-directory .um-members-wrapper .um-members.um-members-list .um-member,
+.um-directory .um-members-wrapper .um-members.um-members-grid .um-member{
+  background: none!important;
 }
 /* End Ultimate Member Styles */
 

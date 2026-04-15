@@ -65,7 +65,7 @@ jQuery(document).ready(function ($) {
     quick_add_to_cart_btn.prop("disabled", true);
   });
   const search_member = function (term, callback) {
-    jQuery
+    return jQuery
       .ajax({
         method: "POST",
         dataType: "json",
@@ -77,7 +77,8 @@ jQuery(document).ready(function ($) {
         },
       })
       .done(function (response) {
-        callback(response);
+        return response;
+        //return callback(response);
       })
       .fail(function (result) { })
       .always(function (result) {
@@ -85,12 +86,27 @@ jQuery(document).ready(function ($) {
       });
   };
   search_account.autocomplete({
-    delay: 800,
+    delay: 250,
     minLength: 2,
-    autoFocus: false,
     source: function (request, suggests) {
-      search_member(request.term, function (response) {
-        suggests(response.data);
+      jQuery.ajax({
+        method: "POST",
+        dataType: "json",
+        url: ajax_deposit_params.ajax_url,
+        data: {
+          _ajax_nonce: ajax_deposit_params._ajax_nonce,
+          action: ajax_deposit_params.action,
+          terms: request.term,
+        },
+      })
+      .done(function (response) {
+        suggests(response);
+      })
+      .fail(function (result) {
+        console.log('error');
+      })
+      .always(function (result) {
+        search_account.removeClass("ui-autocomplete-loading");
       });
     },
     change: function (event, ui) {
@@ -133,8 +149,7 @@ jQuery(document).ready(function ($) {
     focus: function (event, ui) { },
     close: function (event, ui) { },
     response: function (event, ui) {
-      console.log("autocomplete response", ui);
-      if (!ui.content.length) {
+      if (typeof undefined == ui.content || !ui.content.length) {
         var noResult = { value: 0, label: "No results found" };
         ui.content.push(noResult);
         custom_amount.prop("disabled", true);
