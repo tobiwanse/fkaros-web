@@ -1,0 +1,17 @@
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+
+# Bedrock: route core entrypoints to /wp/
+RewriteRule ^wp-admin/?(.*)$ wp/wp-admin/$1 [QSA,L]
+RewriteRule ^wp-login\.php$ wp/wp-login.php [QSA,L]
+
+# Preserve auth headers for APIs and authenticated requests
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
