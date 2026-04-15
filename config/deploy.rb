@@ -3,7 +3,7 @@
 lock '~> 3.18'
 
 set :application, 'fkaros-web'
-set :repo_url, 'git@github.com:tobiwanse/fkaros-web.git' # Byt ut mot ditt repo
+set :repo_url, 'https://github.com/tobiwanse/fkaros-web.git' # HTTPS undviker SSH-nyckelproblem på servern
 
 # deploy_to sätts per miljö i config/deploy/production.rb, staging.rb etc.
 

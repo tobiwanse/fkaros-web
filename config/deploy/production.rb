@@ -1,6 +1,6 @@
 # config/deploy/production.rb
 
-server '172.19.2.132', user: 'admin', roles: %w[app web db]
+server '172.19.2.132', user: 'admin', roles: %w[app web db], ssh_options: { forward_agent: true }
 
 set :branch, 'main'
 set :stage, :production
