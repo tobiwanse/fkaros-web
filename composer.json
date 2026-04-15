@@ -37,9 +37,9 @@
     "oscarotero/env": "^2.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
-    "roots/wordpress": "^6.8.3",
+    "roots/wordpress": "*",
     "roots/wp-config": "1.0.0",
-    "wpackagist-theme/twentytwentyfive": "^1.0",
+    "wpackagist-theme/twentytwentyfive": "*",
     "wpackagist-plugin/woocommerce": "*",
     "wpackagist-plugin/ultimate-member": "*",
     "wpackagist-plugin/dibs-easy-for-woocommerce": "*",
@@ -52,7 +52,7 @@
     "wpackagist-plugin/easy-accordion-block": "*",
     "wpackagist-plugin/user-role-editor": "*",
     "wpackagist-plugin/ultimate-addons-for-gutenberg": "*",
-    "wpackagist-plugin/really-simple-ssl": "^9.5",
+    "wpackagist-plugin/really-simple-ssl": "*",
     "minishlink/web-push": "^10.0"
   },
   "require-dev": {
