@@ -1745,8 +1745,8 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
-  // Pull-to-refresh for standalone / home-screen web app mode
-  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+  // Pull-to-refresh (custom, works everywhere incl. home-screen web app)
+  (function () {
     let ptrStartY = 0;
     let ptrDist = 0;
     let ptrActive = false;
@@ -1791,7 +1791,7 @@ function mountSkyview(root) {
       }
       ptrDist = 0;
     }, { passive: true });
-  }
+  })();
 
   // Sync push subscription on load if notifications are enabled.
   if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage) {
