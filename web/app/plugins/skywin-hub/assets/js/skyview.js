@@ -1745,59 +1745,61 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
-  // Pull-to-refresh (custom, works everywhere incl. home-screen web app)
-  (function () {
-    let ptrStartY = 0;
-    let ptrDist = 0;
-    let ptrActive = false;
-    let ptrRefreshing = false;
-    const PTR_THRESHOLD = 80;
+  // Pull-to-refresh for standalone / home-screen web app (no native pull-to-refresh)
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    (function () {
+      let ptrStartY = 0;
+      let ptrDist = 0;
+      let ptrActive = false;
+      let ptrRefreshing = false;
+      const PTR_THRESHOLD = 80;
 
-    const ptrIndicator = createEl('div', 'skyview-ptr');
-    ptrIndicator.innerHTML = '&#x21bb;';
-    root.prepend(ptrIndicator);
+      const ptrIndicator = createEl('div', 'skyview-ptr');
+      ptrIndicator.innerHTML = '&#x21bb;';
+      root.prepend(ptrIndicator);
 
-    document.addEventListener('touchstart', function (e) {
-      if (ptrRefreshing) return;
-      var scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      if (scrollTop <= 0) {
-        ptrStartY = e.touches[0].clientY;
-        ptrActive = true;
-        ptrDist = 0;
-      }
-    }, { passive: true });
+      document.addEventListener('touchstart', function (e) {
+        if (ptrRefreshing) return;
+        var scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        if (scrollTop <= 0) {
+          ptrStartY = e.touches[0].clientY;
+          ptrActive = true;
+          ptrDist = 0;
+        }
+      }, { passive: true });
 
-    document.addEventListener('touchmove', function (e) {
-      if (!ptrActive || ptrRefreshing) return;
-      ptrDist = e.touches[0].clientY - ptrStartY;
-      if (ptrDist <= 0) { ptrDist = 0; return; }
-      e.preventDefault();
-      var progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
-      ptrIndicator.style.transform = 'translateY(' + (ptrDist * 0.4) + 'px) rotate(' + (progress * 360) + 'deg)';
-      ptrIndicator.style.opacity = String(progress);
-    }, { passive: false });
+      document.addEventListener('touchmove', function (e) {
+        if (!ptrActive || ptrRefreshing) return;
+        ptrDist = e.touches[0].clientY - ptrStartY;
+        if (ptrDist <= 0) { ptrDist = 0; return; }
+        e.preventDefault();
+        var progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
+        ptrIndicator.style.transform = 'translateY(' + (ptrDist * 0.4) + 'px) rotate(' + (progress * 360) + 'deg)';
+        ptrIndicator.style.opacity = String(progress);
+      }, { passive: false });
 
-    document.addEventListener('touchend', function () {
-      if (!ptrActive || ptrRefreshing) return;
-      ptrActive = false;
-      if (ptrDist >= PTR_THRESHOLD) {
-        ptrRefreshing = true;
-        ptrIndicator.classList.add('skyview-ptr--loading');
-        ptrIndicator.style.transform = 'translateY(40px) rotate(0deg)';
-        ptrIndicator.style.opacity = '1';
-        fetchLoads().finally(function () {
-          ptrRefreshing = false;
-          ptrIndicator.classList.remove('skyview-ptr--loading');
+      document.addEventListener('touchend', function () {
+        if (!ptrActive || ptrRefreshing) return;
+        ptrActive = false;
+        if (ptrDist >= PTR_THRESHOLD) {
+          ptrRefreshing = true;
+          ptrIndicator.classList.add('skyview-ptr--loading');
+          ptrIndicator.style.transform = 'translateY(40px) rotate(0deg)';
+          ptrIndicator.style.opacity = '1';
+          fetchLoads().finally(function () {
+            ptrRefreshing = false;
+            ptrIndicator.classList.remove('skyview-ptr--loading');
+            ptrIndicator.style.transform = '';
+            ptrIndicator.style.opacity = '0';
+          });
+        } else {
           ptrIndicator.style.transform = '';
           ptrIndicator.style.opacity = '0';
-        });
-      } else {
-        ptrIndicator.style.transform = '';
-        ptrIndicator.style.opacity = '0';
-      }
-      ptrDist = 0;
-    }, { passive: true });
-  })();
+        }
+        ptrDist = 0;
+      }, { passive: true });
+    })();
+  }
 
   // Sync push subscription on load if notifications are enabled.
   if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage) {

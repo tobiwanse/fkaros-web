@@ -27,7 +27,6 @@
   min-height: 100vh;
   padding: 1rem 0.75rem 3rem;
   position: relative;
-  overscroll-behavior-y: none;
 }
 
 .skyview-ptr {
