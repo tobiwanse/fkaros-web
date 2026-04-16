@@ -1775,7 +1775,7 @@ function mountSkyview(root) {
     }, { passive: true });
 
     document.addEventListener('touchend', function (e) {
-      if (ptrRefreshing) return;
+      if (ptrRefreshing || state.settingsOpen || state.queueModalOpen) return;
       var dist = e.changedTouches[0].clientY - ptrStartY;
       var scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
       console.log('[ptr-touchend]', 'dist=' + Math.round(dist), 'scrollTop=' + scrollTop);
