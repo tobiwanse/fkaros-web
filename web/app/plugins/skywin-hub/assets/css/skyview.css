@@ -26,6 +26,31 @@
   color: var(--sv-text);
   min-height: 100vh;
   padding: 1rem 0.75rem 3rem;
+  position: relative;
+}
+
+.skyview-ptr {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: -18px;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  text-align: center;
+  font-size: 1.5rem;
+  color: var(--sv-accent, #2ec4f0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.skyview-ptr--loading {
+  animation: skyviewPtrSpin 0.8s linear infinite;
+}
+
+@keyframes skyviewPtrSpin {
+  to { transform: translateY(40px) rotate(360deg); }
 }
 
 .skyview-title {
