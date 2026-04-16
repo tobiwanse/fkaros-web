@@ -279,16 +279,14 @@ function renderJumperRow(jumper, groupColor, compact, showQuotedNameParts, isChi
   const altitudeText = String(jumper.altitude || '').trim();
   const studentJumpNo = jumper.student_jump_no != null ? String(jumper.student_jump_no) : '';
 
-  const label = createEl('span', 'skyview-jumper-label', formatDisplayName(jumper.label || '', showQuotedNameParts));
+  // Queue items (showAltitudeInline) use skyText as label — show as-is
+  const labelText = showAltitudeInline ? (jumper.label || '') : formatDisplayName(jumper.label || '', showQuotedNameParts);
+  const label = createEl('span', 'skyview-jumper-label', labelText);
 
-  if (!compact && (jumpTypeText || studentJumpNo || (showAltitudeInline && altitudeText))) {
+  if (!showAltitudeInline && !compact && (jumpTypeText || studentJumpNo)) {
     const meta = createEl('span', 'skyview-jumper-meta');
     if (jumpTypeText) {
       meta.appendChild(createEl('span', 'skyview-jumper-type', jumpTypeText));
-    }
-    if (showAltitudeInline && altitudeText) {
-      const altUnit = String(jumper.altitudeUnit || '').trim().toLowerCase();
-      meta.appendChild(createEl('span', 'skyview-jumper-altitude-inline', altUnit ? altitudeText + altUnit : altitudeText));
     }
     if (studentJumpNo) {
       meta.appendChild(createEl('span', 'skyview-jumper-student-no', `#${studentJumpNo}`));
@@ -300,7 +298,7 @@ function renderJumperRow(jumper, groupColor, compact, showQuotedNameParts, isChi
   return row;
 }
 
-function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = '', commentIsNew = false) {
+function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = '', commentIsNew = false, showCrew = true) {
   const card = createEl('div', 'skyview-card');
   if (isNext) {
     card.classList.add('skyview-card--next');
@@ -345,6 +343,13 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
 
   const jumpersWrap = createEl('div', 'skyview-jumpers');
   const segments = buildRenderSegments(jumpers);
+  segments.sort((a, b) => {
+    const altDiff = segmentAltitude(a) - segmentAltitude(b);
+    if (altDiff !== 0) return altDiff;
+    if (a.type === 'single' && b.type !== 'single') return -1;
+    if (a.type !== 'single' && b.type === 'single') return 1;
+    return 0;
+  });
   const groupColorMap = buildGroupColorMap(jumpers);
 
   let prevSegAlt = null;
@@ -409,6 +414,9 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
     String(load.minutesUntil).trim() !== '';
   const showTimeLeftFooter = showFooterForDate && !hideMinutesForStatus && (hasTimeLeftText || hasTimeLeftMinutes);
 
+  const loadPilot = formatDisplayName(String(load.pilot || '').trim(), state.showQuotedNameParts);
+  const loadJumpLeader = formatDisplayName(String(load.jumpLeader || '').trim(), state.showQuotedNameParts);
+
   if (showTimeLeftFooter) {
     const footer = createEl('div', 'skyview-card-footer');
     const rawDisplay = load.timeLeftText
@@ -455,6 +463,13 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
 
     footer.appendChild(infoRow);
     card.appendChild(footer);
+  }
+
+  if (showCrew && (loadPilot || loadJumpLeader)) {
+    const crewRow = createEl('div', 'skyview-card-crew');
+    if (loadPilot) crewRow.appendChild(createEl('span', 'skyview-card-crew-item', `Pilot: ${loadPilot}`));
+    if (loadJumpLeader) crewRow.appendChild(createEl('span', 'skyview-card-crew-item', `HL: ${loadJumpLeader}`));
+    card.appendChild(crewRow);
   }
 
   return card;
@@ -619,7 +634,7 @@ function mountSkyview(root) {
     queueList: [],
     queueLoading: false,
     showQuotedNameParts: typeof saved.showQuotedNameParts === 'boolean' ? saved.showQuotedNameParts : true,
-    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'].includes(saved.theme) ? saved.theme : 'dark',
+    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
     compactView: typeof saved.compactView === 'boolean' ? saved.compactView : false,
     notifyNewLoad: typeof saved.notifyNewLoad === 'boolean' ? saved.notifyNewLoad : (typeof saved.notificationsEnabled === 'boolean' ? saved.notificationsEnabled : false),
     notifyNewJumper: typeof saved.notifyNewJumper === 'boolean' ? saved.notifyNewJumper : (typeof saved.notifyWatchedJumper === 'boolean' ? saved.notifyWatchedJumper : false),
@@ -1368,15 +1383,10 @@ function mountSkyview(root) {
           return;
         }
 
-        const hasGroupSourceNo = segment.members.some((jumper) => {
-          const value = String(jumper?.jumper_from_group_no || '').trim();
-          return value !== '' && value.toLowerCase() !== 'null';
-        });
-
         const color = groupColorMap[segment.groupId] || 0;
         const groupContainer = createEl('div', `skyview-group-container skyview-group-container--color-${color}`);
 
-        if (hasGroupSourceNo) {
+        if (segment.groupTitle) {
           const title = createEl('div', `skyview-group-title skyview-group-title--color-${color}`);
           title.appendChild(createEl('span', 'skyview-group-title-text', segment.groupTitle));
           groupContainer.appendChild(title);
@@ -1390,11 +1400,66 @@ function mountSkyview(root) {
       });
 
       modal.appendChild(jumpersWrap);
+
+      const footer = createEl('div', 'skyview-queue-modal-footer');
+      footer.appendChild(createEl('span', 'skyview-queue-modal-count', `${state.queueList.length} i kön`));
+      modal.appendChild(footer);
     }
   }
 
   function render() {
     root.innerHTML = '';
+
+    function renderOverlays() {
+      const existingQueueModal = root.querySelector('.skyview-queue-modal-overlay');
+      if (existingQueueModal) existingQueueModal.remove();
+
+      const existingSettingsModal = root.querySelector('.skyview-settings-modal-overlay');
+      if (existingSettingsModal) existingSettingsModal.remove();
+
+      if (state.settingsOpen) {
+        const settingsOverlay = createEl('div', 'skyview-settings-modal-overlay');
+        const settingsPanel = renderSettingsPanel();
+        settingsOverlay.appendChild(settingsPanel);
+        settingsOverlay.addEventListener('click', (e) => {
+          if (e.target === settingsOverlay) {
+            state.settingsOpen = false;
+            render();
+          }
+        });
+        root.appendChild(settingsOverlay);
+      }
+
+      if (state.queueModalOpen) {
+        const overlay = createEl('div', 'skyview-queue-modal-overlay');
+
+        const modal = createEl('div', 'skyview-queue-modal');
+
+        const header = createEl('div', 'skyview-queue-modal-header');
+        header.appendChild(createEl('span', 'skyview-queue-modal-title', 'Kö'));
+        const closeBtn = createEl('button', 'skyview-queue-modal-close', '✕');
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', 'Stäng');
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.queueModalOpen = false;
+          render();
+        });
+        header.appendChild(closeBtn);
+        modal.appendChild(header);
+
+        buildQueueModalBody(modal);
+
+        overlay.appendChild(modal);
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            state.queueModalOpen = false;
+            render();
+          }
+        });
+        root.appendChild(overlay);
+      }
+    }
 
     const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'];
     allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
@@ -1491,7 +1556,6 @@ function mountSkyview(root) {
       year: 'numeric',
     });
     const clockText = `${String(state.clock.getHours()).padStart(2, '0')}:${String(state.clock.getMinutes()).padStart(2, '0')}`;
-    toolbarRight.appendChild(createEl('span', 'skyview-clock', `${dateText} ${clockText}`));
 
     toolbar.appendChild(toolbarLeft);
     toolbar.appendChild(toolbarRight);
@@ -1503,20 +1567,38 @@ function mountSkyview(root) {
 
     if (state.error) {
       root.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
+      renderOverlays();
       return;
     }
 
     if (state.loading) {
       root.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
+      renderOverlays();
       return;
     }
 
     if (!state.loads.length) {
+      if (state.jumpQueueCount !== null) {
+        const row = createEl('div', 'skyview-next-crew-row');
+        row.appendChild(createEl('span', 'skyview-next-crew-item skyview-clock', `${dateText} ${clockText}`));
+        const queueBtn = createEl('button', 'skyview-next-crew-item skyview-next-crew-item--right skyview-queue-badge');
+        queueBtn.type = 'button';
+        queueBtn.textContent = `${state.jumpQueueCount} i kön`;
+        queueBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.queueModalOpen = true;
+          fetchJumpQueue();
+        });
+        row.appendChild(queueBtn);
+        root.appendChild(row);
+      }
       root.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
+      renderOverlays();
       return;
     }
 
     const isSelectedDateToday = state.selectedDate === '' || state.selectedDate === todayDate();
+    const hasDateSelected = state.selectedDate !== '';
     const nextLoad = getNextUpcomingLoad(state.loads);
     const nextLoadId = nextLoad?.id || null;
     const crewSource = nextLoad || state.loads[state.loads.length - 1];
@@ -1524,8 +1606,10 @@ function mountSkyview(root) {
     const nextJumpLeader = formatDisplayName(String(crewSource?.jumpLeader || '').trim(), state.showQuotedNameParts);
     const hasNextCrew = nextPilot !== '' || nextJumpLeader !== '' || state.jumpQueueCount !== null;
 
-    if (hasNextCrew) {
+    const alwaysShowCrew = true;
+    if (hasNextCrew || alwaysShowCrew) {
       const row = createEl('div', 'skyview-next-crew-row');
+      row.appendChild(createEl('span', 'skyview-next-crew-item skyview-clock', `${dateText} ${clockText}`));
       if (nextPilot) row.appendChild(createEl('span', 'skyview-next-crew-item', `Pilot: ${nextPilot}`));
       if (nextJumpLeader) row.appendChild(createEl('span', 'skyview-next-crew-item', `Hoppledare: ${nextJumpLeader}`));
       if (state.jumpQueueCount !== null) {
@@ -1605,7 +1689,7 @@ function mountSkyview(root) {
       }
       const fadingComment = state.fadingOutComments.get(load.id) || '';
       const commentIsNew = newCommentIds.has(load.id);
-      wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew));
+      wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew, hasDateSelected));
       board.appendChild(wrap);
     });
     root.appendChild(board);
@@ -1617,56 +1701,7 @@ function mountSkyview(root) {
       state.newLoadIds = new Set();
     }
 
-    // Queue modal.
-    const existingModal = root.querySelector('.skyview-queue-modal-overlay');
-    if (existingModal) existingModal.remove();
-
-    // Settings modal.
-    const existingSettingsModal = root.querySelector('.skyview-settings-modal-overlay');
-    if (existingSettingsModal) existingSettingsModal.remove();
-
-    if (state.settingsOpen) {
-      const settingsOverlay = createEl('div', 'skyview-settings-modal-overlay');
-      const settingsPanel = renderSettingsPanel();
-      settingsOverlay.appendChild(settingsPanel);
-      settingsOverlay.addEventListener('click', (e) => {
-        if (e.target === settingsOverlay) {
-          state.settingsOpen = false;
-          render();
-        }
-      });
-      root.appendChild(settingsOverlay);
-    }
-
-    if (state.queueModalOpen) {
-      const overlay = createEl('div', 'skyview-queue-modal-overlay');
-
-      const modal = createEl('div', 'skyview-queue-modal');
-
-      const header = createEl('div', 'skyview-queue-modal-header');
-      header.appendChild(createEl('span', 'skyview-queue-modal-title', 'Kö'));
-      const closeBtn = createEl('button', 'skyview-queue-modal-close', '✕');
-      closeBtn.type = 'button';
-      closeBtn.setAttribute('aria-label', 'Stäng');
-      closeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        state.queueModalOpen = false;
-        render();
-      });
-      header.appendChild(closeBtn);
-      modal.appendChild(header);
-
-      buildQueueModalBody(modal);
-
-      overlay.appendChild(modal);
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          state.queueModalOpen = false;
-          render();
-        }
-      });
-      root.appendChild(overlay);
-    }
+    renderOverlays();
   }
 
   state.render = render;

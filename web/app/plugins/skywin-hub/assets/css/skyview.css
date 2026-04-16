@@ -435,6 +435,19 @@
   padding: 0.5rem 0.75rem 0.75rem;
 }
 
+.skyview-queue-modal-footer {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--sv-card-border);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.skyview-queue-modal-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sv-text-muted);
+}
+
 .skyview-next-crew-item--right {
   margin-left: auto;
 }
@@ -902,6 +915,23 @@
 
 
 
+/* ── Crew row (pilot / hoppledare) ────────────────────── */
+.skyview-card-crew {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem 0.8rem;
+  border-top: 1px solid var(--sv-card-border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.skyview-card-crew-item {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--sv-text-muted);
+  white-space: nowrap;
+}
+
 .skyview-card-footer {
   display: flex;
   justify-content: center;
@@ -1029,12 +1059,12 @@
 .skyview-time-left--urgent {
   color: #ff4444;
   border-color: rgba(255, 60, 60, 0.5);
-  animation: skyviewBlink 1s step-start infinite;
+  animation: skyviewBlink 2.5s ease-in-out infinite;
 }
 
 @keyframes skyviewBlink {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.45; }
+  50%       { opacity: 0.35; }
 }
 
 .skyview-load-preview {
@@ -2131,7 +2161,7 @@
   color: #ff4040;
   border-color: rgba(255, 60, 60, 0.5);
   text-shadow: 0 0 18px rgba(255, 60, 60, 0.6);
-  animation: skyviewBlink 1s step-start infinite;
+  animation: skyviewBlink 2.5s ease-in-out infinite;
 }
 
 /* Grupptitel */
@@ -2267,6 +2297,15 @@
   border-top: 1px solid #cccccc;
 }
 
+.skyview-page--classic .skyview-card-crew {
+  background: #f8f8f8;
+  border-top-color: #cccccc;
+}
+
+.skyview-page--classic .skyview-card-crew-item {
+  color: #444444;
+}
+
 /* Time-left på vit footer */
 .skyview-page--classic .skyview-time-left {
   background: #f8f8f8;
@@ -2306,7 +2345,7 @@
   text-shadow: none;
   box-shadow: none;
   background: #fdf0f0;
-  animation: skyviewBlink 1s step-start infinite;
+  animation: skyviewBlink 2.5s ease-in-out infinite;
 }
 
 /* Grupper */
@@ -2392,6 +2431,33 @@
 /* Time-left urgency — text i hopparlistan */
 .skyview-page--classic .skyview-jumper-meta {
   color: #555555;
+}
+
+/* Datumväljare — hover synlig på vit bakgrund */
+.skyview-page--classic .skyview-datepicker-day:hover {
+  background: #e8ecf1;
+  color: #111111;
+}
+
+.skyview-page--classic .skyview-datepicker-day--sunday:hover {
+  color: #c0000a;
+}
+
+/* Knappar — synlig text på ljus bakgrund */
+.skyview-page--classic .skyview-logout-button {
+  background: #e8ecf1;
+  color: #444444;
+  border: 1px solid #cccccc;
+}
+
+.skyview-page--classic .skyview-compact-toggle:hover {
+  background: #e8ecf1;
+  color: #111111;
+}
+
+.skyview-page--classic .skyview-datepicker-header {
+  background: #f4f5f7;
+  border-bottom-color: #cccccc;
 }
 
 /* Drop-target */

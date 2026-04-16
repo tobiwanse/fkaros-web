@@ -5,7 +5,6 @@ if (!class_exists('Skywin_Hub_DB')) :
 	{
 		protected static $_instance = null;
 		private $db;
-		private $errors;
 
 		public static function instance()
 		{
@@ -120,7 +119,7 @@ if (!class_exists('Skywin_Hub_DB')) :
 		public function email_exists($search = NULL)
 		{
 			if( is_wp_error($this->db) || !$search )
-				return new WP_Error('skywin_sql_error', 'You are not doing it right!');;
+				return new WP_Error('skywin_sql_error', 'You are not doing it right!');
 
 			$sql = "SELECT Emailaddress FROM member WHERE Emailaddress LIKE :search";
 			try {
@@ -138,7 +137,7 @@ if (!class_exists('Skywin_Hub_DB')) :
 		public function memberno_exists($search = NULL)
 		{
 			if( is_wp_error($this->db) || !$search )
-				return new WP_Error('skywin_sql_error', 'You are not doing it right!');;
+				return new WP_Error('skywin_sql_error', 'You are not doing it right!');
 
 			$sql = "SELECT MemberNo FROM member WHERE MemberNo LIKE :search";
 			try {
@@ -156,7 +155,7 @@ if (!class_exists('Skywin_Hub_DB')) :
 		public function internalNo_exists($search = NULL)
 		{
 			if( is_wp_error($this->db) || !$search )
-				return new WP_Error('skywin_sql_error', 'You are not doing it right!');;
+				return new WP_Error('skywin_sql_error', 'You are not doing it right!');
 
 			$sql = "SELECT InternalNo FROM member WHERE InternalNo LIKE :search";
 			try {
@@ -173,13 +172,14 @@ if (!class_exists('Skywin_Hub_DB')) :
 		}
 		public function groups($search = NULL, $inUse = 'Y'){
 			if( is_wp_error($this->db) ) return [];
-			$sql = "SELECT GroupNo, GroupName FROM `group` WHERE InUse LIKE :inUse AND (GroupNo LIKE :search OR GroupName LIKE :search) ORDER BY GroupName";
+			$sql = "SELECT GroupNo, GroupName FROM `group` WHERE InUse LIKE :inUse AND (GroupNo LIKE :search1 OR GroupName LIKE :search2) ORDER BY GroupName";
 			$results = [];
 			try {
 				$stmt = $this->db->prepare($sql);
 				$searchValue = "%{$search}%";
 				$stmt->bindParam(':inUse', $inUse, PDO::PARAM_STR);
-				$stmt->bindParam(':search', $searchValue, PDO::PARAM_STR);
+				$stmt->bindParam(':search1', $searchValue, PDO::PARAM_STR);
+				$stmt->bindParam(':search2', $searchValue, PDO::PARAM_STR);
 				$stmt->execute();
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			} catch (PDOException $exception) {
@@ -280,7 +280,7 @@ if (!class_exists('Skywin_Hub_DB')) :
 				$stmt->bindParam(':member', $searchValue, PDO::PARAM_STR);
 				$stmt->bindParam(':emember', $searchValue, PDO::PARAM_STR);
 				$stmt->execute();
-				$results = $stmt->fetch(PDO::FETCH_ASSOC);
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 				foreach($results as $key => $result){
 					if( isset($result['InternalNo']) && !empty($result['InternalNo']) ){
 						$phone = $this->memberphone($result['InternalNo'], 'One');
@@ -294,11 +294,10 @@ if (!class_exists('Skywin_Hub_DB')) :
 		}
 		public function get_transactions_by_accountNo($accountNo = NULL, $perPage = NULL, $offset = NULL)
 		{
-			$conn = $this->db_connect();
+			if( is_wp_error($this->db) || !$accountNo ) return [];
 			$sql = "SELECT * FROM trans WHERE AccountNo LIKE ?";
 			try {
-				$accountNo = esc_sql($accountNo);
-				$stmt = $conn->prepare($sql);
+				$stmt = $this->db->prepare($sql);
 				$stmt->execute(array($accountNo));
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			} catch (PDOException $exception) {
@@ -310,9 +309,10 @@ if (!class_exists('Skywin_Hub_DB')) :
 		public function get_inttypepayments($InUse = 'Y')
 		{
 			if( is_wp_error($this->db) ) return [];
-			$sql = "SELECT PaymentType FROM inttypepayments WHERE InUse = $InUse ORDER BY PaymentTypeOrder";
+			$sql = "SELECT PaymentType FROM inttypepayments WHERE InUse = :inUse ORDER BY PaymentTypeOrder";
 			try {
 				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':inUse', $InUse, PDO::PARAM_STR);
 				$stmt->execute();
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			} catch (PDOException $exception) {
@@ -324,9 +324,10 @@ if (!class_exists('Skywin_Hub_DB')) :
 		public function get_typepayments($InUse = 'Y')
 		{
 			if( is_wp_error($this->db) ) return [];
-			$sql = "SELECT PaymentType FROM typepayments WHERE InUse = $InUse ORDER BY PaymentTypeOrder";
+			$sql = "SELECT PaymentType FROM typepayments WHERE InUse = :inUse ORDER BY PaymentTypeOrder";
 			try {
 				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':inUse', $InUse, PDO::PARAM_STR);
 				$stmt->execute();
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			} catch (PDOException $exception) {
@@ -472,6 +473,172 @@ if (!class_exists('Skywin_Hub_DB')) :
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			} catch (PDOException $exception) {
 				error_log('skywin_sql_error: ' . json_encode($exception) );
+				$results = [];
+			}
+			return $results;
+		}
+		public function get_jump_queue()
+		{
+			if ( is_wp_error($this->db) ) return [];
+			$sql = "SELECT
+				ljr.RequestNo,
+				ljr.InternalNo,
+				ljr.Jumptype,
+				ljr.Altitude,
+				ljr.ReqAsGroup,
+				ljr.Captain,
+				ljr.StudentJumpNo,
+				ljr.Comment,
+				m.FirstName,
+				m.LastName,
+				m.NickName,
+				m.MemberNo,
+				m.Club,
+				tj.JumptypeName,
+				tj.JumptypeGroup,
+				tj.ExitOrder,
+				ta.AltitudeUnit,
+				g.GroupName
+			FROM loadjumprequest AS ljr
+			LEFT JOIN member AS m ON m.InternalNo = ljr.InternalNo
+			LEFT JOIN typejumps AS tj ON tj.Jumptype = ljr.Jumptype
+			LEFT JOIN typealtitudes AS ta ON ta.Altitude = ljr.Altitude
+			LEFT JOIN `group` AS g ON g.GroupNo = ljr.InternalNo
+			ORDER BY ljr.ReqAsGroup, ljr.RequestNo";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
+				$results = [];
+			}
+			return $results;
+		}
+		public function get_group_members( $group_no )
+		{
+			if ( is_wp_error($this->db) || !$group_no ) return [];
+			$sql = "SELECT
+				gm.InternalNo,
+				gm.Captain,
+				m.FirstName,
+				m.LastName,
+				m.NickName,
+				m.MemberNo,
+				m.Club
+			FROM groupmember AS gm
+			LEFT JOIN member AS m ON m.InternalNo = gm.InternalNo
+			WHERE gm.GroupNo = :groupNo
+			ORDER BY gm.Captain DESC, m.FirstName";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':groupNo', $group_no, PDO::PARAM_STR);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
+				$results = [];
+			}
+			return $results;
+		}
+		public function get_loads( $date )
+		{
+			if ( is_wp_error($this->db) || !$date ) return [];
+			$sql = "SELECT
+				l.LoadNo,
+				l.PlaneReg,
+				l.LoadStatus,
+				ls.LoadStatusName,
+				l.MaxPass,
+				l.LiftedAt,
+				l.DroppedAt,
+				l.LandedAt,
+				l.Call30min,
+				l.Call15min,
+				l.Comment,
+				l.Regdate,
+				l.BoogieNo,
+				p.Name AS PlaneName
+			FROM `load` AS l
+			LEFT JOIN inttypeloadstatus AS ls ON ls.LoadStatus = l.LoadStatus
+			LEFT JOIN plane AS p ON p.PlaneReg = l.PlaneReg
+			WHERE l.Regdate = :regdate
+			ORDER BY l.PlaneReg, l.LoadNo";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':regdate', $date, PDO::PARAM_STR);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
+				$results = [];
+			}
+			return $results;
+		}
+		public function get_load_jumpers( $date )
+		{
+			if ( is_wp_error($this->db) || !$date ) return [];
+			$sql = "SELECT
+				lj.LoadNo,
+				lj.PlaneReg,
+				lj.JumpNo,
+				lj.GroupNo,
+				lj.Captain,
+				lj.InternalNo,
+				lj.Altitude,
+				lj.Jumptype,
+				lj.StudentJumpNo,
+				lj.JumperFromGroupNo,
+				lj.Comment,
+				m.FirstName,
+				m.LastName,
+				m.NickName,
+				m.MemberNo,
+				tj.JumptypeName,
+				tj.JumptypeGroup,
+				tj.ExitOrder,
+				ta.AltitudeUnit,
+				g.GroupName
+			FROM loadjump AS lj
+			LEFT JOIN member AS m ON m.InternalNo = lj.InternalNo
+			LEFT JOIN typejumps AS tj ON tj.Jumptype = lj.Jumptype
+			LEFT JOIN typealtitudes AS ta ON ta.Altitude = lj.Altitude
+			LEFT JOIN `group` AS g ON g.GroupNo = lj.JumperFromGroupNo
+			WHERE lj.Regdate = :regdate
+			ORDER BY lj.PlaneReg, lj.LoadNo, lj.JumpNo";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':regdate', $date, PDO::PARAM_STR);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
+				$results = [];
+			}
+			return $results;
+		}
+		public function get_load_roles( $date )
+		{
+			if ( is_wp_error($this->db) || !$date ) return [];
+			$sql = "SELECT
+				lr.LoadNo,
+				lr.PlaneReg,
+				lr.RoleType,
+				lr.InternalNo,
+				m.FirstName,
+				m.LastName,
+				m.NickName
+			FROM loadrole AS lr
+			LEFT JOIN member AS m ON m.InternalNo = lr.InternalNo
+			WHERE lr.Regdate = :regdate
+			ORDER BY lr.PlaneReg, lr.LoadNo, lr.RoleType";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->bindParam(':regdate', $date, PDO::PARAM_STR);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
 				$results = [];
 			}
 			return $results;
