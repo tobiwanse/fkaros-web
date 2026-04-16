@@ -1,8 +1,0 @@
-{
-  "name": "SkyView – FKAROS",
-  "short_name": "SkyView",
-  "start_url": "/skyview-full",
-  "display": "standalone",
-  "background_color": "#0d1b2a",
-  "theme_color": "#0d1b2a"
-}

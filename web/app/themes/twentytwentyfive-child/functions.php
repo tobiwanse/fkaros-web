@@ -77,11 +77,5 @@ add_filter( 'show_admin_bar', function ( $show ) {
 add_action( 'wp_head', function () {
 	if ( is_page( 'skyview-full' ) ) {
 		echo '<style>html,body{scrollbar-width:none!important;-ms-overflow-style:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none!important}</style>';
-		$manifest_url = plugins_url( 'skywin-hub/assets/skyview-manifest.json', WP_PLUGIN_DIR . '/skywin-hub' );
-		echo '<meta name="apple-mobile-web-app-capable" content="yes">';
-		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">';
-		echo '<meta name="mobile-web-app-capable" content="yes">';
-		echo '<meta name="theme-color" content="#0d1b2a">';
-		echo '<link rel="manifest" href="' . esc_url( $manifest_url ) . '">';
 	}
 } );
