@@ -1780,11 +1780,7 @@ function mountSkyview(root) {
       console.log('[ptr-touchend]', 'dist=' + Math.round(dist), 'scrollTop=' + scrollTop);
       if (scrollTop <= 0 && dist >= PTR_THRESHOLD) {
         console.log('[ptr] refreshing!');
-        ptrRefreshing = true;
-        fetchLoads().finally(function () {
-          ptrRefreshing = false;
-          console.log('[ptr] refresh done');
-        });
+        location.reload();
       }
     }, { passive: true });
   }
