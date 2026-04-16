@@ -1745,6 +1745,19 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
+  // DEBUG: log overscroll pull-down
+  var _dbgStartY = 0;
+  document.addEventListener('touchstart', function (e) {
+    _dbgStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    var scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    var dist = e.touches[0].clientY - _dbgStartY;
+    if (scrollTop <= 0 && dist > 10) {
+      console.log('[overscroll]', 'scrollTop=' + scrollTop, 'dist=' + Math.round(dist), 'standalone=' + !!window.navigator.standalone, 'displayMode=' + window.matchMedia('(display-mode: standalone)').matches);
+    }
+  }, { passive: true });
+
   // Sync push subscription on load if notifications are enabled.
   if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage) {
     syncPushSubscription(vapidPublicKey, pushEndpoint, state);
