@@ -1745,7 +1745,7 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
-  // Pull-to-refresh for standalone home-screen web app (uses native rubber-band)
+  // Pull-to-refresh for standalone home-screen web app
   if (window.navigator.standalone) {
     var ptrStartY = 0;
     var ptrRefreshing = false;
