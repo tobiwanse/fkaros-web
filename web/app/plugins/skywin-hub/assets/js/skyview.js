@@ -1745,6 +1745,54 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
+  // Pull-to-refresh for standalone / home-screen web app mode
+  if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    let ptrStartY = 0;
+    let ptrDist = 0;
+    let ptrActive = false;
+    const PTR_THRESHOLD = 80;
+
+    const ptrIndicator = createEl('div', 'skyview-ptr');
+    ptrIndicator.innerHTML = '&#x21bb;';
+    root.prepend(ptrIndicator);
+
+    root.addEventListener('touchstart', function (e) {
+      if (window.scrollY === 0 && document.documentElement.scrollTop === 0) {
+        ptrStartY = e.touches[0].clientY;
+        ptrActive = true;
+        ptrDist = 0;
+      }
+    }, { passive: true });
+
+    root.addEventListener('touchmove', function (e) {
+      if (!ptrActive) return;
+      ptrDist = e.touches[0].clientY - ptrStartY;
+      if (ptrDist < 0) { ptrDist = 0; return; }
+      const progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
+      ptrIndicator.style.transform = 'translateY(' + (ptrDist * 0.4) + 'px) rotate(' + (progress * 360) + 'deg)';
+      ptrIndicator.style.opacity = progress;
+    }, { passive: true });
+
+    root.addEventListener('touchend', function () {
+      if (!ptrActive) return;
+      ptrActive = false;
+      if (ptrDist >= PTR_THRESHOLD) {
+        ptrIndicator.classList.add('skyview-ptr--loading');
+        ptrIndicator.style.transform = 'translateY(40px) rotate(0deg)';
+        ptrIndicator.style.opacity = '1';
+        fetchLoads().finally(function () {
+          ptrIndicator.classList.remove('skyview-ptr--loading');
+          ptrIndicator.style.transform = '';
+          ptrIndicator.style.opacity = '0';
+        });
+      } else {
+        ptrIndicator.style.transform = '';
+        ptrIndicator.style.opacity = '0';
+      }
+      ptrDist = 0;
+    }, { passive: true });
+  }
+
   // Sync push subscription on load if notifications are enabled.
   if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage) {
     syncPushSubscription(vapidPublicKey, pushEndpoint, state);
