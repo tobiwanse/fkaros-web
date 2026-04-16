@@ -1745,57 +1745,33 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
-  // Pull-to-refresh for standalone home-screen web app
+  // Pull-to-refresh for standalone home-screen web app (uses native rubber-band)
   if (window.navigator.standalone) {
     var ptrStartY = 0;
-    var ptrDist = 0;
-    var ptrActive = false;
     var ptrRefreshing = false;
     var PTR_THRESHOLD = 80;
-
-    var ptrIndicator = createEl('div', 'skyview-ptr');
-    ptrIndicator.textContent = '\u21bb';
-    root.prepend(ptrIndicator);
 
     document.addEventListener('touchstart', function (e) {
       if (ptrRefreshing) return;
       var scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
       if (scrollTop <= 0) {
         ptrStartY = e.touches[0].clientY;
-        ptrActive = true;
-        ptrDist = 0;
       }
     }, { passive: true });
 
-    document.addEventListener('touchmove', function (e) {
-      if (!ptrActive || ptrRefreshing) return;
-      ptrDist = e.touches[0].clientY - ptrStartY;
-      if (ptrDist <= 0) { ptrDist = 0; ptrActive = false; return; }
-      e.preventDefault();
-      var progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
-      ptrIndicator.style.transform = 'translateY(' + (ptrDist * 0.4) + 'px) rotate(' + (progress * 360) + 'deg)';
-      ptrIndicator.style.opacity = String(progress);
-    }, { passive: false });
-
-    document.addEventListener('touchend', function () {
-      if (!ptrActive || ptrRefreshing) return;
-      ptrActive = false;
-      if (ptrDist >= PTR_THRESHOLD) {
+    document.addEventListener('touchend', function (e) {
+      if (ptrRefreshing) return;
+      var dist = e.changedTouches[0].clientY - ptrStartY;
+      var scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      console.log('[ptr-touchend]', 'dist=' + Math.round(dist), 'scrollTop=' + scrollTop);
+      if (scrollTop <= 0 && dist >= PTR_THRESHOLD) {
+        console.log('[ptr] refreshing!');
         ptrRefreshing = true;
-        ptrIndicator.classList.add('skyview-ptr--loading');
-        ptrIndicator.style.transform = 'translateY(40px) rotate(0deg)';
-        ptrIndicator.style.opacity = '1';
         fetchLoads().finally(function () {
           ptrRefreshing = false;
-          ptrIndicator.classList.remove('skyview-ptr--loading');
-          ptrIndicator.style.transform = '';
-          ptrIndicator.style.opacity = '0';
+          console.log('[ptr] refresh done');
         });
-      } else {
-        ptrIndicator.style.transform = '';
-        ptrIndicator.style.opacity = '0';
       }
-      ptrDist = 0;
     }, { passive: true });
   }
 
