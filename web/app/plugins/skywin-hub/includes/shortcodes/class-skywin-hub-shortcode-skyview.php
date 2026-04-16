@@ -38,7 +38,7 @@ class Skywin_Hub_Shortcode_Skyview {
 		if ( '' !== $aircraft ) {
 			$endpoint = add_query_arg( 'aircraft', $aircraft, $endpoint );
 		}
-
+		echo 'hello';
 		return sprintf(
 			'<div class="skyview-page" data-skyview-endpoint="%s" data-skyview-title="%s" data-skyview-date="%s" data-skyview-refresh="%d" data-skyview-logged-in="%s" data-skyview-sw="%s" data-skyview-vapid="%s" data-skyview-push-endpoint="%s" data-skyview-login-url="%s" data-skyview-logout-url="%s" data-skyview-queue-endpoint="%s"></div>',
 			esc_attr( $endpoint ),
