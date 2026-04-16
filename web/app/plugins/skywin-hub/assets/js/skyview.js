@@ -1750,37 +1750,43 @@ function mountSkyview(root) {
     let ptrStartY = 0;
     let ptrDist = 0;
     let ptrActive = false;
+    let ptrRefreshing = false;
     const PTR_THRESHOLD = 80;
 
     const ptrIndicator = createEl('div', 'skyview-ptr');
     ptrIndicator.innerHTML = '&#x21bb;';
     root.prepend(ptrIndicator);
 
-    root.addEventListener('touchstart', function (e) {
-      if (window.scrollY === 0 && document.documentElement.scrollTop === 0) {
+    document.addEventListener('touchstart', function (e) {
+      if (ptrRefreshing) return;
+      var scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      if (scrollTop <= 0) {
         ptrStartY = e.touches[0].clientY;
         ptrActive = true;
         ptrDist = 0;
       }
     }, { passive: true });
 
-    root.addEventListener('touchmove', function (e) {
-      if (!ptrActive) return;
+    document.addEventListener('touchmove', function (e) {
+      if (!ptrActive || ptrRefreshing) return;
       ptrDist = e.touches[0].clientY - ptrStartY;
-      if (ptrDist < 0) { ptrDist = 0; return; }
-      const progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
+      if (ptrDist <= 0) { ptrDist = 0; return; }
+      e.preventDefault();
+      var progress = Math.min(ptrDist / PTR_THRESHOLD, 1);
       ptrIndicator.style.transform = 'translateY(' + (ptrDist * 0.4) + 'px) rotate(' + (progress * 360) + 'deg)';
-      ptrIndicator.style.opacity = progress;
-    }, { passive: true });
+      ptrIndicator.style.opacity = String(progress);
+    }, { passive: false });
 
-    root.addEventListener('touchend', function () {
-      if (!ptrActive) return;
+    document.addEventListener('touchend', function () {
+      if (!ptrActive || ptrRefreshing) return;
       ptrActive = false;
       if (ptrDist >= PTR_THRESHOLD) {
+        ptrRefreshing = true;
         ptrIndicator.classList.add('skyview-ptr--loading');
         ptrIndicator.style.transform = 'translateY(40px) rotate(0deg)';
         ptrIndicator.style.opacity = '1';
         fetchLoads().finally(function () {
+          ptrRefreshing = false;
           ptrIndicator.classList.remove('skyview-ptr--loading');
           ptrIndicator.style.transform = '';
           ptrIndicator.style.opacity = '0';
