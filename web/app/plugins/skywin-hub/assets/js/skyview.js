@@ -1467,6 +1467,7 @@ function mountSkyview(root) {
     root.classList.toggle('skyview-page--compact', state.compactView);
     const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', classic: '#ffffff' };
     document.body.style.backgroundColor = themeBg[state.theme] || '';
+    document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
 
     const toolbar = createEl('div', 'skyview-toolbar');
     const toolbarLeft = createEl('div', 'skyview-toolbar-left');
