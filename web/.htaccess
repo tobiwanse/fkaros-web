@@ -4,6 +4,9 @@ RewriteEngine On
 RewriteBase /
 RewriteRule ^index\.php$ - [L]
 
+# Canonicalize wp-admin root URL so relative admin links resolve under /wp-admin/
+RewriteRule ^wp-admin$ /wp-admin/ [R=301,L]
+
 # Bedrock: route core entrypoints to /wp/
 RewriteRule ^wp-admin/?(.*)$ wp/wp-admin/$1 [QSA,L]
 RewriteRule ^wp-login\.php$ wp/wp-login.php [QSA,L]
