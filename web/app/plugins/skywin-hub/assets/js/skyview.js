@@ -1745,6 +1745,20 @@ function mountSkyview(root) {
   render();
   fetchLoads();
 
+  // DEBUG: always log overscroll regardless of standalone
+  console.log('[ptr-init]', 'standalone=' + !!window.navigator.standalone);
+  var _dbgPtrY = 0;
+  document.addEventListener('touchstart', function (e) {
+    _dbgPtrY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    var dist = e.changedTouches[0].clientY - _dbgPtrY;
+    var scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    if (dist > 10) {
+      console.log('[ptr-touchend]', 'dist=' + Math.round(dist), 'scrollTop=' + scrollTop, 'standalone=' + !!window.navigator.standalone);
+    }
+  }, { passive: true });
+
   // Pull-to-refresh for standalone home-screen web app
   if (window.navigator.standalone) {
     var ptrStartY = 0;
