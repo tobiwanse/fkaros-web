@@ -99,9 +99,6 @@ class Skywin_Hub_Push {
 	}
 
 	public static function pwa_meta_tags(): void {
-		if ( ! is_page( 'skyview-full' ) ) {
-			return;
-		}
 		echo '<link rel="manifest" href="' . esc_url( home_url( '/skyview-manifest.json?start=' . rawurlencode( $_SERVER['REQUEST_URI'] ) ) ) . '">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
