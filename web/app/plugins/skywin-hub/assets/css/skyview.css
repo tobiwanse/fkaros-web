@@ -783,6 +783,12 @@
   flex-shrink: 0;
 }
 
+.skyview-jumper-meta--inline {
+  margin-left: 0.4rem;
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
 @media (max-width: 760px) {
   .skyview-jumper-row {
     align-items: center;

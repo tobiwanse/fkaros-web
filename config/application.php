@@ -86,7 +86,8 @@ Config::define('WP_HOME', env('WP_HOME'));
 Config::define('WP_SITEURL', env('WP_SITEURL'));
 
 $home = Config::get('WP_HOME');
-if (!empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '172.19.2.132') !== false) {
+$isLocalIp = !empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], '172.19.2.132') !== false;
+if ($isLocalIp) {
     $home = 'http://' . $_SERVER['HTTP_HOST'];
 }
 Config::define('WP_HOME', $home);
@@ -105,7 +106,7 @@ Config::define('COOKIEPATH', '/');
 Config::define('SITECOOKIEPATH', '/');
 Config::define('ADMIN_COOKIE_PATH', '/');
 Config::define('PLUGINS_COOKIE_PATH', '/');
-Config::define('FORCE_SSL_ADMIN', true);
+Config::define('FORCE_SSL_ADMIN', !$isLocalIp);
 
 /**
  * DB settings
@@ -148,6 +149,10 @@ Config::define('NONCE_SALT', env('NONCE_SALT'));
  */
 Config::define('AUTOMATIC_UPDATER_DISABLED', true);
 Config::define('DISABLE_WP_CRON', env('DISABLE_WP_CRON') ?: true);
+
+// Increase PHP memory limit
+Config::define('WP_MEMORY_LIMIT', '512M');
+Config::define('WP_MAX_MEMORY_LIMIT', '512M');
 
 // Disable the plugin and theme file editor in the admin
 Config::define('DISALLOW_FILE_EDIT', true);

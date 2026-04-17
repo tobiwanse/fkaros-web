@@ -294,6 +294,12 @@ function renderJumperRow(jumper, groupColor, compact, showQuotedNameParts, isChi
     label.appendChild(meta);
   }
 
+  if (showAltitudeInline && (jumpTypeText || altitudeText)) {
+    const parts = [jumpTypeText, altitudeText].filter(Boolean);
+    const inlineMeta = createEl('span', 'skyview-jumper-meta skyview-jumper-meta--inline', parts.join(' · '));
+    label.appendChild(inlineMeta);
+  }
+
   row.appendChild(label);
   return row;
 }
@@ -637,7 +643,7 @@ function mountSkyview(root) {
     queueModalOpen: false,
     queueList: [],
     queueLoading: false,
-    showQuotedNameParts: typeof saved.showQuotedNameParts === 'boolean' ? saved.showQuotedNameParts : true,
+    showQuotedNameParts: typeof saved.showQuotedNameParts === 'boolean' ? saved.showQuotedNameParts : false,
     theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
     compactView: typeof saved.compactView === 'boolean' ? saved.compactView : false,
     notifyNewLoad: typeof saved.notifyNewLoad === 'boolean' ? saved.notifyNewLoad : (typeof saved.notificationsEnabled === 'boolean' ? saved.notificationsEnabled : false),
