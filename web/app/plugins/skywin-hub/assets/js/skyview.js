@@ -1690,7 +1690,7 @@ function mountSkyview(root) {
       }
       const fadingComment = state.fadingOutComments.get(load.id) || '';
       const commentIsNew = newCommentIds.has(load.id);
-      wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew, hasDateSelected));
+      wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew, true));
       board.appendChild(wrap);
     });
     root.appendChild(board);
