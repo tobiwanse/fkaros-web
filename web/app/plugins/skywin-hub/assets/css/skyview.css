@@ -612,7 +612,7 @@
 }
 
 .skyview-text {
-  font-size: 1.05rem;  font-weight: 500;
+  font-size: 1.05rem;
   color: var(--sv-text);
   white-space: nowrap;
   overflow: hidden;
