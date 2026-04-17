@@ -69,10 +69,11 @@ class Skywin_Hub_Push {
 		if ( empty( $wp->query_vars['skyview_manifest'] ) ) {
 			return;
 		}
+		$start = isset( $_GET['start'] ) ? esc_url_raw( wp_unslash( $_GET['start'] ) ) : '/skyview-full/';
 		$manifest = [
 			'name'             => 'SkyView',
 			'short_name'       => 'SkyView',
-			'start_url'        => '.',
+			'start_url'        => $start,
 			'display'          => 'standalone',
 			'background_color' => '#1a1a2e',
 			'theme_color'      => '#1a1a2e',
@@ -101,7 +102,7 @@ class Skywin_Hub_Push {
 		if ( ! is_page( 'skyview-full' ) ) {
 			return;
 		}
-		echo '<link rel="manifest" href="' . esc_url( home_url( '/skyview-manifest.json' ) ) . '">' . "\n";
+		echo '<link rel="manifest" href="' . esc_url( home_url( '/skyview-manifest.json?start=' . rawurlencode( $_SERVER['REQUEST_URI'] ) ) ) . '">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
 		echo '<meta name="theme-color" content="#1a1a2e">' . "\n";
