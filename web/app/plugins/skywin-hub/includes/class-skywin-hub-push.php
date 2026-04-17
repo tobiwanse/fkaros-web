@@ -73,7 +73,7 @@ class Skywin_Hub_Push {
 		$manifest = [
 			'name'             => 'SkyView',
 			'short_name'       => 'SkyView',
-			'start_url'        => $start,
+			// 'start_url'        => $start,
 			'display'          => 'standalone',
 			'background_color' => '#1a1a2e',
 			'theme_color'      => '#1a1a2e',
