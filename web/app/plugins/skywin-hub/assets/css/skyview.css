@@ -29,7 +29,7 @@
 }
 
 .skyview-title {
-  font-size: 1.7rem;  font-weight: 700;
+  font-size: 1.9rem;  font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--sv-accent);
   margin: 0;
@@ -59,7 +59,7 @@
   color: var(--sv-text);
   border-radius: 10px;
   padding: 0 0.5rem;
-  font-size: 0.95rem;  font-weight: 600;
+  font-size: 1.06rem;  font-weight: 600;
   line-height: 1.65rem;
   min-width: 9rem;
   height: 1.65rem;
@@ -87,7 +87,7 @@
   cursor: pointer;
   transition: color 0.15s, opacity 0.15s;
   opacity: 0.75;
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   font-weight: 600;
 }
 
@@ -147,7 +147,7 @@
 .skyview-datepicker-month {
   text-align: center;
   color: var(--sv-accent);
-  font-size: 1.1rem;
+  font-size: 1.23rem;
   font-weight: 700;
   text-transform: capitalize;
 }
@@ -159,7 +159,7 @@
   border-radius: 8px;
   height: 1.8rem;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.23rem;
   line-height: 1;
 }
 
@@ -179,7 +179,7 @@
 .skyview-datepicker-weekday {
   text-align: center;
   color: var(--sv-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -196,7 +196,7 @@
   color: var(--sv-text);
   height: 2.2rem;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   font-weight: 600;
   transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
@@ -234,7 +234,7 @@
   background: var(--sv-card-bg);
   color: var(--sv-text);
   padding: 0.28rem 0.5rem;
-  font-size: 0.95rem;  font-weight: 600;
+  font-size: 1.06rem;  font-weight: 600;
   cursor: pointer;
   min-height: 1.65rem;
 }
@@ -243,7 +243,7 @@
   border: none;
   background: none;
   color: var(--sv-text);
-  font-size: 1.1rem;
+  font-size: 1.23rem;
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
@@ -281,7 +281,7 @@
   padding: 0.75rem 1rem;
   border-radius: 8px;
   color: var(--sv-text-muted);
-  font-size: 1.15rem;}
+  font-size: 1.29rem;}
 .skyview-notice-error {
   background: rgba(224, 92, 92, 0.15);
   border: 1px solid #e05c5c;
@@ -297,7 +297,7 @@
   border-radius: 8px;
   padding: 0.5rem 1rem;
   margin-bottom: 0.75rem;
-  font-size: 1.1rem;}
+  font-size: 1.23rem;}
 .skyview-next-crew-row {
   background: rgba(240, 162, 46, 0.14);
   border: 1px solid rgba(240, 162, 46, 0.38);
@@ -345,7 +345,7 @@
   border: 1px solid rgba(240, 162, 46, 0.45);
   background: rgba(240, 162, 46, 0.14);
   color: #ffd79a;
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -398,7 +398,7 @@
 }
 
 .skyview-queue-modal-title {
-  font-size: 1.05rem;
+  font-size: 1.18rem;
   font-weight: 700;
   color: var(--sv-accent, #2ec4f0);
   letter-spacing: 0.03em;
@@ -409,7 +409,7 @@
   border: none;
   color: var(--sv-text-muted, #7a9bbf);
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.23rem;
   line-height: 1;
   padding: 0.2rem 0.4rem;
   border-radius: 6px;
@@ -426,7 +426,7 @@
   padding: 1.5rem 1rem;
   text-align: center;
   color: var(--sv-text-muted, #7a9bbf);
-  font-size: 0.95rem;
+  font-size: 1.06rem;
 }
 
 .skyview-queue-jumpers {
@@ -443,7 +443,7 @@
 }
 
 .skyview-queue-modal-count {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--sv-text-muted);
 }
@@ -591,7 +591,7 @@
 
 .skyview-card-comment {
   padding: 0.4rem 0.8rem;
-  font-size: 1.02rem;  border-bottom: 1px solid var(--sv-card-border);
+  font-size: 1.14rem;  border-bottom: 1px solid var(--sv-card-border);
   background: rgba(255, 255, 255, 0.02);
   text-align: center;
 }
@@ -605,14 +605,14 @@
 }
 
 .skyview-label {
-  font-size: 0.85rem;  text-transform: uppercase;
+  font-size: 0.95rem;  text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--sv-text-muted);
   line-height: 1.2;
 }
 
 .skyview-text {
-  font-size: 1.05rem;
+  font-size: 1.18rem;
   color: var(--sv-text);
   white-space: nowrap;
   overflow: hidden;
@@ -628,7 +628,7 @@
 
 .skyview-empty-drop {
   padding: 0.5rem 0.8rem;
-  font-size: 0.98rem;  color: var(--sv-text-muted);
+  font-size: 1.1rem;  color: var(--sv-text-muted);
   font-style: italic;
   text-align: center;
 }
@@ -670,7 +670,7 @@
   display: flex;
   align-items: center;
   padding: 0.15rem 0.8rem 0.05rem;
-  font-size: 0.75rem;
+  font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   opacity: 0.45;
@@ -694,7 +694,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.25rem 0.8rem;
-  font-size: 1.02rem;  cursor: grab;
+  font-size: 1.14rem;  cursor: grab;
   font-weight: 500;
   border-left: 3px solid transparent;
   transition: background 0.12s;
@@ -761,7 +761,7 @@
 .skyview-drag-handle {
   flex-shrink: 0;
   color: var(--sv-text-muted);
-  font-size: 1.1rem;  line-height: 1;
+  font-size: 1.23rem;  line-height: 1;
 }
 
 .skyview-jumper-label {
@@ -814,7 +814,7 @@
 }
 
 .skyview-jumper-type {
-  font-size: 0.92rem;  font-weight: 600;
+  font-size: 1.03rem;  font-weight: 600;
   color: var(--sv-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -822,19 +822,19 @@
 }
 
 .skyview-jumper-student-no {
-  font-size: 0.92rem;  font-weight: 600;
+  font-size: 1.03rem;  font-weight: 600;
   color: var(--sv-text-muted);
   opacity: 0.8;
 }
 
 .skyview-jumper-altitude {
-  font-size: 0.92rem;  font-weight: 500;
+  font-size: 1.03rem;  font-weight: 500;
   color: var(--sv-text-muted);
   opacity: 0.7;
 }
 
 .skyview-jumper-altitude-inline {
-  font-size: 0.88rem;
+  font-size: 0.99rem;
   font-weight: 500;
   color: var(--sv-accent);
   opacity: 0.85;
@@ -845,7 +845,7 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.35rem 0.8rem 0.25rem;
-  font-size: 0.95rem;  font-weight: 700;
+  font-size: 1.06rem;  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--sv-text-primary);
@@ -902,7 +902,7 @@
 
 .skyview-group-drag-handle {
   flex-shrink: 0;
-  font-size: 1.1rem;  opacity: 0.6;
+  font-size: 1.23rem;  opacity: 0.6;
 }
 
 .skyview-group-title-text {
@@ -926,7 +926,7 @@
 }
 
 .skyview-card-crew-item {
-  font-size: 0.78rem;
+  font-size: 0.87rem;
   font-weight: 600;
   color: var(--sv-text-muted);
   white-space: nowrap;
@@ -959,7 +959,7 @@
 }
 
 .skyview-lift-info-label {
-  font-size: 0.6rem;
+  font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -968,7 +968,7 @@
 }
 
 .skyview-lift-info-value {
-  font-size: 0.9rem;
+  font-size: 1.01rem;
   font-weight: 600;
   color: var(--sv-text);
   white-space: nowrap;
@@ -980,7 +980,7 @@
   background: rgba(240, 180, 30, 0.18);
   border: 1px solid rgba(240, 180, 30, 0.45);
   border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: 0.81rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -994,7 +994,7 @@
   background: #f5c842;
   color: #111;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1017,7 +1017,7 @@
   border-radius: 3px;
   background: #0d0f08;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 3.5rem;
+  font-size: 3.92rem;
   font-weight: 800;
   line-height: 1;
   color: #f5c842;
@@ -1083,12 +1083,12 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  font-size: 1.1rem;}
+  font-size: 1.23rem;}
 .skyview-load-preview-meta {
   display: flex;
   gap: 1rem;
   padding: 0.4rem 0.8rem;
-  font-size: 0.98rem;  color: var(--sv-text-muted);
+  font-size: 1.1rem;  color: var(--sv-text-muted);
 }
 
 
@@ -1122,7 +1122,7 @@
   color: var(--sv-text);
   border-radius: 10px;
   padding: 0.28rem 1.8rem 0.28rem 0.5rem;
-  font-size: 0.95rem;  font-weight: 500;
+  font-size: 1.06rem;  font-weight: 500;
   min-height: 1.9rem;
   min-width: 10rem;
   box-shadow: var(--sv-shadow);
@@ -1149,7 +1149,7 @@
   border: none;
   color: var(--sv-text-muted);
   cursor: pointer;
-  font-size: 0.9rem;  padding: 0.2rem;
+  font-size: 1.01rem;  padding: 0.2rem;
   line-height: 1;
 }
 
@@ -1171,7 +1171,7 @@
 }
 
 .skyview-clock {
-  font-size: 1.3rem;  font-weight: 600;
+  font-size: 1.46rem;  font-weight: 600;
   color: var(--sv-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1248,7 +1248,7 @@
   border: none;
   color: var(--sv-text-muted, #7a9bbf);
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.23rem;
   line-height: 1;
   padding: 0.2rem 0.4rem;
   border-radius: 6px;
@@ -1262,7 +1262,7 @@
 
 .skyview-settings-title {
   color: var(--sv-accent);
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   font-weight: 700;
 }
 
@@ -1274,7 +1274,7 @@
 
 .skyview-settings-item {
   color: var(--sv-text);
-  font-size: 0.9rem;
+  font-size: 1.01rem;
   padding: 0.3rem 0.4rem;
   border-radius: 8px;
   background: var(--sv-card-header-bg);
@@ -1289,7 +1289,7 @@
 }
 
 .skyview-settings-label {
-  font-size: 0.88rem;
+  font-size: 0.99rem;
   color: var(--sv-text-muted);
 }
 
@@ -1310,7 +1310,7 @@
   background: var(--sv-accent);
   color: #fff;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.01rem;
   font-weight: 600;
   text-decoration: none;
   transition: opacity 0.15s;
@@ -1331,7 +1331,7 @@
   color: var(--sv-text);
   border-radius: 8px;
   padding: 0.2rem 0.35rem;
-  font-size: 0.84rem;
+  font-size: 0.94rem;
   min-height: 1.6rem;
 }
 
@@ -1348,7 +1348,7 @@
   background: var(--sv-card-bg);
   color: var(--sv-text);
   padding: 0.28rem 0.5rem;
-  font-size: 0.95rem;  font-weight: 600;
+  font-size: 1.06rem;  font-weight: 600;
   cursor: pointer;
   min-height: 1.9rem;
   transition: border-color 0.15s, background 0.15s;
@@ -1980,7 +1980,7 @@
 /* ── Compact view ────────────────────────────────────────── */
 .skyview-page--compact .skyview-jumper-row {
   padding: 0.1rem 0.6rem;
-  font-size: 0.9rem;
+  font-size: 1.01rem;
 }
 
 .skyview-page--compact .skyview-card-header {
@@ -1990,12 +1990,12 @@
 
 .skyview-page--compact .skyview-group-title {
   padding: 0.15rem 0.6rem 0.1rem;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .skyview-page--compact .skyview-card-comment {
   padding: 0.2rem 0.6rem;
-  font-size: 0.9rem;
+  font-size: 1.01rem;
 }
 
 .skyview-page--compact .skyview-card-footer {
@@ -2003,15 +2003,15 @@
 }
 
 .skyview-page--compact .skyview-label {
-  font-size: 0.75rem;
+  font-size: 0.84rem;
 }
 
 .skyview-page--compact .skyview-text {
-  font-size: 0.92rem;
+  font-size: 1.03rem;
 }
 
 .skyview-page--compact .skyview-time-left {
-  font-size: 1.6rem;
+  font-size: 1.79rem;
   min-width: 3rem;
   padding: 0.15rem 0.4rem;
 }
@@ -2023,7 +2023,7 @@
   background: rgba(240, 162, 46, 0.18);
   border: 1px solid rgba(240, 162, 46, 0.45);
   color: #ffd79a;
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   font-weight: 600;
   text-align: center;
   margin-bottom: 0.75rem;
@@ -2062,7 +2062,7 @@
 /* Överskrift */
 .skyview-page--airport .skyview-title {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 1.5rem;
+  font-size: 1.68rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--sv-accent);
@@ -2087,7 +2087,7 @@
 /* Kortets header — radformat som på en FIDS-skärm */
 .skyview-page--airport .skyview-card-header {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9rem;
+  font-size: 1.01rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border-bottom: 1px solid rgba(200, 155, 30, 0.18);
@@ -2097,7 +2097,7 @@
 /* Etikett → liten versal rubrik */
 .skyview-page--airport .skyview-label {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.65rem;
+  font-size: 0.73rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
@@ -2112,7 +2112,7 @@
 /* Hoppare */
 .skyview-page--airport .skyview-jumper-row {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.95rem;
+  font-size: 1.06rem;
   letter-spacing: 0.03em;
   border-left: 3px solid transparent;
 }
@@ -2130,7 +2130,7 @@
 /* Timer-bricka */
 .skyview-page--airport .skyview-time-left {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 3.5rem;
+  font-size: 3.92rem;
   font-weight: 400;
   letter-spacing: 0.08em;
   color: var(--sv-accent);
@@ -2268,7 +2268,7 @@
 
 .skyview-page--classic .skyview-label {
   color: #aaaaaa;
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
