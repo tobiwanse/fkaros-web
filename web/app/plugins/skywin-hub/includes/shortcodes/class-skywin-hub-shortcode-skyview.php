@@ -38,6 +38,7 @@ class Skywin_Hub_Shortcode_Skyview {
 		if ( '' !== $aircraft ) {
 			$endpoint = add_query_arg( 'aircraft', $aircraft, $endpoint );
 		}
+
 		return sprintf(
 			'<div class="skyview-page" data-skyview-endpoint="%s" data-skyview-title="%s" data-skyview-date="%s" data-skyview-refresh="%d" data-skyview-logged-in="%s" data-skyview-sw="%s" data-skyview-vapid="%s" data-skyview-push-endpoint="%s" data-skyview-login-url="%s" data-skyview-logout-url="%s" data-skyview-queue-endpoint="%s"></div>',
 			esc_attr( $endpoint ),
@@ -176,127 +177,68 @@ class Skywin_Hub_Shortcode_Skyview {
 	}
 
 	public static function rest_get_jump_queue( WP_REST_Request $request ) {
-		$db   = skywin_hub_db();
-		$rows = $db->get_jump_queue();
+		$date = sanitize_text_field( (string) $request->get_param( 'date' ) );
+		if ( empty( $date ) ) {
+			$date = wp_date( 'Y-m-d' );
+		}
 
-		if ( empty( $rows ) || ! is_array( $rows ) ) {
+		$api_url = get_option( 'skywin_hub_skyview_api_url', '' );
+		if ( empty( $api_url ) ) {
+			$api_url = self::build_default_skyview_url();
+		}
+
+		if ( empty( $api_url ) ) {
 			return new WP_REST_Response( [ 'items' => [] ], 200 );
 		}
 
-		// Expand rows: if a row has no member name but matches a group, expand to individual members.
-		$expanded = [];
-		foreach ( $rows as $row ) {
-			$has_name = '' !== trim( (string) ( $row['FirstName'] ?? '' ) )
-			         || '' !== trim( (string) ( $row['LastName'] ?? '' ) );
-
-			if ( ! $has_name && ! empty( $row['GroupName'] ) ) {
-				// InternalNo is actually a GroupNo – fetch group members.
-				$group_members = $db->get_group_members( $row['InternalNo'] );
-				if ( ! empty( $group_members ) ) {
-					foreach ( $group_members as $gm ) {
-						$expanded[] = array_merge( $row, [
-							'FirstName'  => $gm['FirstName'],
-							'LastName'   => $gm['LastName'],
-							'NickName'   => $gm['NickName'],
-							'MemberNo'   => $gm['MemberNo'],
-							'Club'       => $gm['Club'],
-							'Captain'    => $gm['Captain'] === 'Y' ? 1 : 0,
-							'InternalNo' => $gm['InternalNo'],
-							'_groupName' => $row['GroupName'],
-						]);
-					}
-					continue;
-				}
-			}
-
-			$expanded[] = $row;
+		$endpoint_url = self::build_upstream_jump_queue_url( $api_url );
+		if ( '' === $endpoint_url ) {
+			return new WP_REST_Response( [ 'items' => [] ], 200 );
 		}
 
-		// Group rows by ReqAsGroup.
-		$groups = [];
-		foreach ( $expanded as $row ) {
-			$gid = (string) ( $row['ReqAsGroup'] ?? '0' );
-			$groups[ $gid ][] = $row;
+		$url = add_query_arg(
+			[
+				'jumpDate' => $date,
+				'date'     => $date,
+			],
+			$endpoint_url
+		);
+
+		$headers = [ 'Accept' => 'application/json' ];
+		$auth    = self::build_auth_header();
+		if ( '' !== $auth ) {
+			$headers['Authorization'] = $auth;
 		}
 
-		$normalized = [];
-		$position   = 0;
+		$response = wp_remote_get(
+			$url,
+			[
+				'headers'   => $headers,
+				'timeout'   => 15,
+				'sslverify' => true,
+			]
+		);
 
-		foreach ( $groups as $group_key => $members ) {
-			$is_group    = count( $members ) > 1;
-			$group_id    = $is_group ? self::build_scoped_group_id( 'queue', $group_key ) : null;
-			$group_title = null;
-
-			if ( $is_group ) {
-				$first           = $members[0];
-				$jumptype_group  = $first['JumptypeGroup'] ?? '';
-				// Use stored group name if available, otherwise jumptype.
-				if ( ! empty( $first['_groupName'] ) ) {
-					$group_title = $first['_groupName'];
-				} elseif ( in_array( $jumptype_group, [ 'TY', 'TN' ], true ) ) {
-					$group_title = 'Tandem';
-				} else {
-					$group_title = $first['JumptypeName'] ?? $first['Jumptype'] ?? '';
-				}
-				$group_title .= ' (' . count( $members ) . ')';
-			}
-
-			foreach ( $members as $row ) {
-				++$position;
-
-				$label = self::build_queue_label( $row );
-				if ( '' === $label ) {
-					$label = $row['JumptypeName'] ?? $row['Jumptype'] ?? '?';
-				}
-
-				$normalized[] = [
-					'id'                   => wp_generate_uuid4(),
-					'bookingId'            => sanitize_text_field( (string) ( $row['RequestNo'] ?? '' ) ),
-					'position'             => $position,
-					'label'                => sanitize_text_field( $label ),
-					'internalNo'           => sanitize_text_field( (string) ( $row['InternalNo'] ?? '' ) ),
-					'jump_type_name'       => sanitize_text_field( (string) ( $row['JumptypeName'] ?? '' ) ),
-					'jump_type'            => sanitize_text_field( (string) ( $row['Jumptype'] ?? '' ) ),
-					'altitude'             => sanitize_text_field( (string) ( $row['Altitude'] ?? '' ) ),
-					'altitudeUnit'         => sanitize_text_field( (string) ( $row['AltitudeUnit'] ?? '' ) ),
-					'student_jump_no'      => ! empty( $row['StudentJumpNo'] ) ? intval( $row['StudentJumpNo'] ) : null,
-					'jumper_from_group_no' => null,
-					'captain'              => ! empty( $row['Captain'] ),
-					'jumptype_group'       => sanitize_text_field( (string) ( $row['JumptypeGroup'] ?? '' ) ),
-					'group_id'             => $group_id,
-					'group_title'          => $group_title,
-				];
-			}
+		if ( is_wp_error( $response ) ) {
+			return new WP_REST_Response( [ 'error' => $response->get_error_message() ], 500 );
 		}
 
-		return new WP_REST_Response( [ 'items' => $normalized ], 200 );
-	}
-
-	private static function build_queue_label( array $row ): string {
-		$first    = trim( (string) ( $row['FirstName'] ?? '' ) );
-		$last     = trim( (string) ( $row['LastName'] ?? '' ) );
-		$nick     = trim( (string) ( $row['NickName'] ?? '' ) );
-		$jumptype = trim( (string) ( $row['JumptypeName'] ?? $row['Jumptype'] ?? '' ) );
-		$altitude = trim( (string) ( $row['Altitude'] ?? '' ) );
-
-		$parts = [];
-
-		if ( '' !== $first || '' !== $last ) {
-			$name = trim( $first . ' ' . $last );
-			if ( '' !== $nick && $nick !== $first && $nick !== $last ) {
-				$name .= ' "' . $nick . '"';
-			}
-			$parts[] = $name;
+		$code = wp_remote_retrieve_response_code( $response );
+		if ( $code < 200 || $code >= 300 ) {
+			return new WP_REST_Response( [ 'error' => "HTTP {$code}" ], 500 );
 		}
 
-		if ( '' !== $jumptype ) {
-			$parts[] = $jumptype;
-		}
-		if ( '' !== $altitude ) {
-			$parts[] = $altitude;
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( ! is_array( $data ) ) {
+			return new WP_REST_Response( [ 'items' => [] ], 200 );
 		}
 
-		return implode( ' ', $parts );
+		return new WP_REST_Response(
+			[ 'items' => self::normalize_jump_queue( $data ) ],
+			200
+		);
 	}
 
 	public static function rest_add_skywish( WP_REST_Request $request ) {
@@ -452,225 +394,73 @@ class Skywin_Hub_Shortcode_Skyview {
 	// ── Data pipeline ────────────────────────────────────────────────────────
 
 	public static function build_payload( string $date, string $aircraft = '', bool $filter_active_only = false ): array|WP_Error {
-		$db = skywin_hub_db();
-
-		$raw_loads  = $db->get_loads( $date );
-		$raw_jumps  = $db->get_load_jumpers( $date );
-		$raw_roles  = $db->get_load_roles( $date );
-		$raw_queue  = $db->get_jump_queue();
-
-		// Index jumpers and roles by PlaneReg::LoadNo.
-		$jumpers_by_load = [];
-		foreach ( $raw_jumps as $j ) {
-			$key = $j['PlaneReg'] . '::' . $j['LoadNo'];
-			$jumpers_by_load[ $key ][] = $j;
+		// Prefer dedicated skyview URL, but fall back to the plugin's global API settings.
+		$api_url = get_option( 'skywin_hub_skyview_api_url', '' );
+		if ( empty( $api_url ) ) {
+			$api_url = self::build_default_skyview_url();
 		}
 
-		$roles_by_load = [];
-		foreach ( $raw_roles as $r ) {
-			$key = $r['PlaneReg'] . '::' . $r['LoadNo'];
-			$roles_by_load[ $key ][] = $r;
+		if ( empty( $api_url ) ) {
+			return [ 'loads' => [], 'message' => 'SkyView API är inte konfigurerad.' ];
 		}
 
-		$loads = [];
+		// The upstream SkyView endpoint filters by jumpDate (not date).
+		$query_args = [
+			'jumpDate' => $date,
+			'date'     => $date,
+		];
 
-		foreach ( $raw_loads as $load ) {
-			$load_status = intval( $load['LoadStatus'] );
-
-			// Filter by active status (1=Planerad, 2=Bokad, 3=Lyft).
-			if ( $filter_active_only && $load_status > 3 ) {
-				continue;
-			}
-
-			// Filter by aircraft if specified.
-			if ( '' !== $aircraft && false === stripos( $load['PlaneReg'], $aircraft ) ) {
-				continue;
-			}
-
-			$load_no  = intval( $load['LoadNo'] );
-			$load_key = $load['PlaneReg'] . '::' . $load_no;
-			$load_id  = self::build_scoped_id( 'load', $load['PlaneReg'] . '-' . $load_no );
-
-			// Crew roles.
-			$pilot       = '';
-			$jump_leader = '';
-			$roles       = $roles_by_load[ $load_key ] ?? [];
-			foreach ( $roles as $role ) {
-				$role_name = self::build_member_display_name( $role );
-				if ( 'PILOT' === $role['RoleType'] && '' === $pilot ) {
-					$pilot = $role_name;
-				} elseif ( 'JUMPLEADER' === $role['RoleType'] && '' === $jump_leader ) {
-					$jump_leader = $role_name;
-				}
-			}
-
-			// Time calculations – DB stores local time; extract HH:MM directly (no tz conversion).
-			$lifted_at  = $load['LiftedAt'] ?? '';
-			$dropped_at = $load['DroppedAt'] ?? '';
-			$landed_at  = $load['LandedAt'] ?? '';
-			$time       = strlen( $lifted_at ) >= 16 ? substr( $lifted_at, 11, 5 ) : '';
-
-			$minutes_until = null;
-			if ( '' !== $time ) {
-				$minutes_until = self::minutes_until( $time, $date );
-			}
-
-			// Seats.
-			$max_pass    = intval( $load['MaxPass'] );
-			$jumper_rows = $jumpers_by_load[ $load_key ] ?? [];
-			$booked      = count( $jumper_rows );
-			$seats_text  = $booked . '/' . $max_pass;
-
-			// Build jumpers array.
-			$jumpers = self::build_jumpers_from_db( $jumper_rows, $load_id, $db );
-
-			$loads[] = [
-				'id'             => $load_id,
-				'loadNo'         => $load_no,
-				'loadStatus'     => $load_status,
-				'loadStatusName' => sanitize_text_field( $load['LoadStatusName'] ?? '' ),
-				'lift'           => sanitize_text_field( trim( $load['PlaneReg'] ) . ' #' . $load_no ),
-				'seats'          => $seats_text,
-				'chief'          => '',
-				'pilot'          => sanitize_text_field( $pilot ),
-				'jumpLeader'     => sanitize_text_field( $jump_leader ),
-				'time'           => $time,
-				'minutesUntil'   => $minutes_until,
-				'timeLeftText'   => '',
-				'liftTime'       => strlen( $lifted_at ) >= 16 ? substr( $lifted_at, 11, 5 ) : '',
-				'droppedAt'      => strlen( $dropped_at ) >= 16 ? substr( $dropped_at, 11, 5 ) : '',
-				'landedAt'       => strlen( $landed_at ) >= 16 ? substr( $landed_at, 11, 5 ) : '',
-				'onlyFlying'     => false,
-				'comment'        => sanitize_text_field( $load['Comment'] ?? '' ),
-				'jumpers'        => $jumpers,
-			];
+		// When a date is explicitly selected we request all statuses upstream.
+		if ( ! $filter_active_only ) {
+			$query_args['includeAllStatuses'] = 'true';
 		}
 
-		$loads = self::sort_normalized_loads( $loads );
+		$url = add_query_arg( $query_args, $api_url );
+		
+		$headers = [ 'Accept' => 'application/json' ];
 
-		// Count individual jumpers (expand group entries).
-		$jump_queue_count = 0;
-		foreach ( $raw_queue as $qr ) {
-			$has_name = '' !== trim( (string) ( $qr['FirstName'] ?? '' ) )
-			         || '' !== trim( (string) ( $qr['LastName'] ?? '' ) );
-			if ( ! $has_name && ! empty( $qr['GroupName'] ) ) {
-				$gm = $db->get_group_members( $qr['InternalNo'] );
-				$jump_queue_count += max( 1, count( $gm ) );
-			} else {
-				++$jump_queue_count;
-			}
+		$auth_header = self::build_auth_header();
+		if ( ! empty( $auth_header ) ) {
+			$headers['Authorization'] = $auth_header;
+		}
+		$response = wp_remote_get(
+			$url,
+			[
+				'headers'   => $headers,
+				'timeout'   => 15,
+				'sslverify' => true,
+			]
+		);
+		
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'api_error', $response->get_error_message() );
 		}
 
+		$code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+
+		if ( $code < 200 || $code >= 300 ) {
+			return new WP_Error( 'api_http_error', "HTTP {$code}: {$body}" );
+		}
+
+		$data = json_decode( $body, true );
+		
+		if ( null === $data ) {
+			return new WP_Error( 'api_json_error', 'Ogiltigt JSON-svar från API.' );
+		}
+
+		$api_message = self::extract_api_message( $data );
+		$loads       = self::normalize_loads( $data, $date, $aircraft, $filter_active_only );
+		$jump_queue_count = self::extract_jump_queue_count( $data );
+		$altitude_unit    = sanitize_text_field( $data['altitudeUnit'] ?? $data['altitude_unit'] ?? $data['altUnit'] ?? 'm' );
+		$skywish_list     = self::fetch_skywish_list( $api_url, $date, $headers );
 		return [
 			'loads'          => $loads,
-			'message'        => '',
+			'message'        => $api_message,
 			'jumpQueueCount' => $jump_queue_count,
-			'altitudeUnit'   => 'm',
-			'skywishList'    => [],
+			'altitudeUnit'   => $altitude_unit,
+			'skywishList'    => $skywish_list,
 		];
-	}
-
-	private static function build_member_display_name( array $row ): string {
-		$first = trim( (string) ( $row['FirstName'] ?? '' ) );
-		$last  = trim( (string) ( $row['LastName'] ?? '' ) );
-		$nick  = trim( (string) ( $row['NickName'] ?? '' ) );
-
-		if ( '' === $first && '' === $last ) {
-			return '';
-		}
-
-		$name = trim( $first . ' ' . $last );
-		if ( '' !== $nick && $nick !== $first && $nick !== $last ) {
-			$name .= ' "' . $nick . '"';
-		}
-		return $name;
-	}
-
-	private static function build_jumpers_from_db( array $rows, string $load_id, $db ): array {
-		// Group jumpers by GroupNo for proper group display.
-		$by_group    = [];
-		$no_group    = [];
-
-		foreach ( $rows as $row ) {
-			$group_no = (string) ( $row['GroupNo'] ?? '0' );
-			if ( '0' !== $group_no && '' !== $group_no ) {
-				$by_group[ $group_no ][] = $row;
-			} else {
-				$no_group[] = $row;
-			}
-		}
-
-		$jumpers = [];
-
-		// Grouped jumpers.
-		foreach ( $by_group as $group_no => $members ) {
-			$group_id    = self::build_scoped_group_id( $load_id, (string) $group_no );
-			$first       = $members[0];
-			$group_name  = trim( (string) ( $first['GroupName'] ?? '' ) );
-			$jumptype_group = $first['JumptypeGroup'] ?? '';
-
-			if ( '' === $group_name ) {
-				if ( in_array( $jumptype_group, [ 'TY', 'TN' ], true ) ) {
-					$group_name = 'Tandem';
-				} else {
-					$group_name = $first['JumptypeName'] ?? $first['Jumptype'] ?? '';
-				}
-			}
-			$group_title = $group_name . ' (' . count( $members ) . ')';
-
-			foreach ( $members as $row ) {
-				$has_name = '' !== trim( (string) ( $row['FirstName'] ?? '' ) )
-				         || '' !== trim( (string) ( $row['LastName'] ?? '' ) );
-				$label = $has_name
-					? self::build_member_display_name( $row )
-					: ( $row['JumptypeName'] ?? $row['Jumptype'] ?? '?' );
-
-				$jumpers[] = [
-					'id'                   => wp_generate_uuid4(),
-					'bookingId'            => '',
-					'label'                => sanitize_text_field( $label ),
-					'internalNo'           => sanitize_text_field( (string) ( $row['InternalNo'] ?? '' ) ),
-					'jump_type_name'       => sanitize_text_field( (string) ( $row['JumptypeName'] ?? '' ) ),
-					'jump_type'            => sanitize_text_field( (string) ( $row['Jumptype'] ?? '' ) ),
-					'altitude'             => sanitize_text_field( (string) ( $row['Altitude'] ?? '' ) ),
-					'altitudeUnit'         => sanitize_text_field( (string) ( $row['AltitudeUnit'] ?? '' ) ),
-					'student_jump_no'      => ! empty( $row['StudentJumpNo'] ) ? intval( $row['StudentJumpNo'] ) : null,
-					'jumper_from_group_no' => ! empty( $row['JumperFromGroupNo'] ) ? (string) $row['JumperFromGroupNo'] : null,
-					'captain'              => ( $row['Captain'] ?? '' ) === 'Y',
-					'jumptype_group'       => sanitize_text_field( (string) ( $row['JumptypeGroup'] ?? '' ) ),
-					'group_id'             => $group_id,
-					'group_title'          => $group_title,
-				];
-			}
-		}
-
-		// Ungrouped jumpers.
-		foreach ( $no_group as $row ) {
-			$has_name = '' !== trim( (string) ( $row['FirstName'] ?? '' ) )
-			         || '' !== trim( (string) ( $row['LastName'] ?? '' ) );
-			$label = $has_name
-				? self::build_member_display_name( $row )
-				: ( $row['JumptypeName'] ?? $row['Jumptype'] ?? '?' );
-
-			$jumpers[] = [
-				'id'                   => wp_generate_uuid4(),
-				'bookingId'            => '',
-				'label'                => sanitize_text_field( $label ),
-				'internalNo'           => sanitize_text_field( (string) ( $row['InternalNo'] ?? '' ) ),
-				'jump_type_name'       => sanitize_text_field( (string) ( $row['JumptypeName'] ?? '' ) ),
-				'jump_type'            => sanitize_text_field( (string) ( $row['Jumptype'] ?? '' ) ),
-				'altitude'             => sanitize_text_field( (string) ( $row['Altitude'] ?? '' ) ),
-				'altitudeUnit'         => sanitize_text_field( (string) ( $row['AltitudeUnit'] ?? '' ) ),
-				'student_jump_no'      => ! empty( $row['StudentJumpNo'] ) ? intval( $row['StudentJumpNo'] ) : null,
-				'jumper_from_group_no' => ! empty( $row['JumperFromGroupNo'] ) ? (string) $row['JumperFromGroupNo'] : null,
-				'captain'              => ( $row['Captain'] ?? '' ) === 'Y',
-				'jumptype_group'       => sanitize_text_field( (string) ( $row['JumptypeGroup'] ?? '' ) ),
-				'group_id'             => null,
-				'group_title'          => null,
-			];
-		}
-
-		return $jumpers;
 	}
 
 	// ── Normalisation ────────────────────────────────────────────────────────
@@ -865,42 +655,7 @@ class Skywin_Hub_Shortcode_Skyview {
 		// If items carry childType (same nested format as loads), reuse the children extractor.
 		$first = reset( $raw_items );
 		if ( is_array( $first ) && isset( $first['childType'] ) ) {
-			$jumpers = self::extract_jumpers_from_children( $raw_items, 'queue' );
-			// Override label with skyText when available (raw items are flat for JUMP children).
-			foreach ( $jumpers as &$j ) {
-				// Find original raw item by bookingId to get skyText.
-				foreach ( $raw_items as $raw ) {
-					if ( ! is_array( $raw ) ) {
-						continue;
-					}
-					$raw_id = (string) ( $raw['id'] ?? $raw['loadJumpRequestId'] ?? '' );
-					if ( '' !== $raw_id && $raw_id === ( $j['bookingId'] ?? '' ) ) {
-						$sky = isset( $raw['skyText'] ) ? trim( (string) $raw['skyText'] ) : '';
-						if ( '' !== $sky ) {
-							$j['label'] = sanitize_text_field( $sky );
-						}
-						break;
-					}
-					// Also check nested children for groups.
-					if ( isset( $raw['children'] ) && is_array( $raw['children'] ) ) {
-						foreach ( $raw['children'] as $rc ) {
-							if ( ! is_array( $rc ) ) {
-								continue;
-							}
-							$rc_id = (string) ( $rc['id'] ?? $rc['loadJumpRequestId'] ?? '' );
-							if ( '' !== $rc_id && $rc_id === ( $j['bookingId'] ?? '' ) ) {
-								$sky = isset( $rc['skyText'] ) ? trim( (string) $rc['skyText'] ) : '';
-								if ( '' !== $sky ) {
-									$j['label'] = sanitize_text_field( $sky );
-								}
-								break 2;
-							}
-						}
-					}
-				}
-			}
-			unset( $j );
-			return $jumpers;
+			return self::extract_jumpers_from_children( $raw_items, 'queue' );
 		}
 
 		$normalized = [];
@@ -910,8 +665,6 @@ class Skywin_Hub_Shortcode_Skyview {
 			if ( ! is_array( $item ) ) {
 				continue;
 			}
-
-			$sky_text = isset( $item['skyText'] ) ? trim( (string) $item['skyText'] ) : '';
 
 			$name = (string) (
 				$item['member']['name']
@@ -923,11 +676,9 @@ class Skywin_Hub_Shortcode_Skyview {
 			);
 			$name = self::strip_quoted_name_parts( $name );
 
-			if ( '' === $name && '' === $sky_text ) {
+			if ( '' === $name ) {
 				continue;
 			}
-
-			$display_label = '' !== $sky_text ? $sky_text : $name;
 
 			++$position;
 
@@ -944,7 +695,7 @@ class Skywin_Hub_Shortcode_Skyview {
 				'id'                   => wp_generate_uuid4(),
 				'bookingId'            => sanitize_text_field( (string) ( $item['id'] ?? $item['queueId'] ?? $item['loadJumpRequestId'] ?? '' ) ),
 				'position'             => $position,
-				'label'                => sanitize_text_field( $display_label ),
+				'label'                => sanitize_text_field( $name ),
 				'internalNo'           => sanitize_text_field( (string) ( $item['internalNo'] ?? '' ) ),
 				'jump_type_name'       => sanitize_text_field( (string) ( $item['jumpTypeName'] ?? $item['jumptypeName'] ?? $item['jumpType'] ?? '' ) ),
 				'jump_type'            => sanitize_text_field( (string) ( $item['jumpType'] ?? $item['activity'] ?? $item['type'] ?? '' ) ),
@@ -1306,12 +1057,10 @@ class Skywin_Hub_Shortcode_Skyview {
 
 				// Empty group with a name → show as a standalone placeholder row.
 				if ( empty( $members ) && '' !== $group_title ) {
-					$sky_text = isset( $child['skyText'] ) ? trim( (string) $child['skyText'] ) : '';
-					$display  = '' !== $sky_text ? sanitize_text_field( $sky_text ) : $group_title;
 					$jumpers[] = [
 						'id'                   => wp_generate_uuid4(),
 						'bookingId'            => sanitize_text_field( (string) ( $child['id'] ?? '' ) ),
-						'label'                => $display,
+						'label'                => $group_title,
 						'internalNo'           => '',
 						'jump_type_name'       => '',
 						'jump_type'            => '',
