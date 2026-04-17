@@ -1134,6 +1134,7 @@ function mountSkyview(root) {
         state.selectedDate = dayString;
         state.calendarOpen = false;
         state.calendarMonth = startOfMonth(date);
+        state.hasFetchedOnce = false;
         state.loading = true;
         scheduleRefresh();
         render();
@@ -1585,6 +1586,7 @@ function mountSkyview(root) {
           state.selectedDate = '';
           state.calendarOpen = false;
           state.calendarMonth = startOfMonth(new Date());
+          state.hasFetchedOnce = false;
           state.loading = true;
           scheduleRefresh();
           render();
