@@ -23,24 +23,42 @@ class Skywin_Hub_Push {
 	/* ── Bootstrap ─────────────────────────────────────────────────── */
 
 	public static function init() {
-		add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_schedule' ] );
-
 		self::ensure_vapid_keys();
 
 		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
-		add_action( self::CRON_HOOK, [ __CLASS__, 'cron_check' ] );
+		add_action( 'init', [ __CLASS__, 'register_sw_rewrite' ] );
+		add_action( 'parse_request', [ __CLASS__, 'serve_sw_file' ] );
+	}
 
-		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time(), 'skyview_push_interval', self::CRON_HOOK );
+	public static function register_sw_rewrite(): void {
+		add_rewrite_rule( '^skyview-sw\.js$', 'index.php?skyview_sw=1', 'top' );
+		add_rewrite_tag( '%skyview_sw%', '1' );
+
+		// Flush once so the rewrite rule takes effect.
+		if ( get_option( 'skyview_sw_rewrite_version' ) !== '1' ) {
+			flush_rewrite_rules( false );
+			update_option( 'skyview_sw_rewrite_version', '1', true );
 		}
 	}
 
-	public static function add_cron_schedule( array $schedules ): array {
-		$schedules['skyview_push_interval'] = [
-			'interval' => 15,
-			'display'  => __( 'Every 15 seconds (SkyView push)', 'skywin-hub' ),
-		];
-		return $schedules;
+	public static function serve_sw_file( WP $wp ): void {
+		if ( empty( $wp->query_vars['skyview_sw'] ) ) {
+			return;
+		}
+		$file = plugin_dir_path( SW_PLUGIN_FILE ) . 'assets/js/skyview-sw.js';
+		if ( ! file_exists( $file ) ) {
+			status_header( 404 );
+			exit;
+		}
+		header( 'Content-Type: application/javascript' );
+		header( 'Service-Worker-Allowed: /' );
+		header( 'Cache-Control: no-cache' );
+		readfile( $file );
+		exit;
+	}
+
+	public static function get_sw_url(): string {
+		return home_url( '/skyview-sw.js' );
 	}
 
 	/* ── VAPID keys ────────────────────────────────────────────────── */
@@ -101,6 +119,52 @@ class Skywin_Hub_Push {
 			'methods'             => 'POST',
 			'callback'            => [ __CLASS__, 'rest_test' ],
 			'permission_callback' => '__return_true',
+		] );
+
+		register_rest_route( 'skywin-hub/v1', '/push/cron', [
+			'methods'             => 'GET',
+			'callback'            => [ __CLASS__, 'rest_cron' ],
+			'permission_callback' => '__return_true',
+		] );
+
+		register_rest_route( 'skywin-hub/v1', '/push/debug', [
+			'methods'             => 'GET',
+			'callback'            => [ __CLASS__, 'rest_debug' ],
+			'permission_callback' => '__return_true',
+		] );
+	}
+
+	public static function rest_cron(): WP_REST_Response {
+		$result = self::cron_check();
+		return new WP_REST_Response( array_merge( [ 'ok' => true, 'time' => wp_date( 'H:i:s' ) ], $result ) );
+	}
+
+	public static function rest_debug(): WP_REST_Response {
+		$subs  = get_option( self::OPTION_SUBS, [] );
+		$prev  = get_option( self::OPTION_LAST_STATE, false );
+		$date  = wp_date( 'Y-m-d' );
+
+		$payload_result = Skywin_Hub_Shortcode_Skyview::build_payload( $date );
+		$payload_ok     = ! is_wp_error( $payload_result );
+		$load_count     = $payload_ok ? count( $payload_result['loads'] ?? [] ) : 0;
+		$payload_error  = is_wp_error( $payload_result ) ? $payload_result->get_error_message() : null;
+
+		$sub_types = array_map( fn( $s ) => $s['types'] ?? [], is_array( $subs ) ? $subs : [] );
+
+		return new WP_REST_Response( [
+			'subscribers'    => count( is_array( $subs ) ? $subs : [] ),
+			'sub_types'      => $sub_types,
+			'now'            => wp_date( 'Y-m-d H:i:s' ),
+			'last_state'     => $prev ? [
+				'date'       => $prev['date'] ?? null,
+				'loads'      => count( $prev['loadIds'] ?? [] ),
+				'jumpers'    => count( $prev['jumperKeys'] ?? [] ),
+			] : null,
+			'current_fetch'  => [
+				'ok'         => $payload_ok,
+				'error'      => $payload_error,
+				'loads'      => $load_count,
+			],
 		] );
 	}
 
@@ -189,10 +253,10 @@ class Skywin_Hub_Push {
 
 	/* ── Cron: detect changes & push ───────────────────────────────── */
 
-	public static function cron_check(): void {
+	public static function cron_check(): array {
 		$subs = get_option( self::OPTION_SUBS, [] );
 		if ( ! is_array( $subs ) || empty( $subs ) ) {
-			return;
+			return [ 'skipped' => 'no_subs' ];
 		}
 
 		$date = wp_date( 'Y-m-d' );
@@ -200,7 +264,7 @@ class Skywin_Hub_Push {
 		// Fetch current data using the same method as the REST endpoint.
 		$result = Skywin_Hub_Shortcode_Skyview::build_payload( $date );
 		if ( is_wp_error( $result ) ) {
-			return;
+			return [ 'skipped' => 'fetch_error', 'error' => $result->get_error_message() ];
 		}
 
 		$loads  = $result['loads'] ?? [];
@@ -260,17 +324,17 @@ class Skywin_Hub_Push {
 
 		// Clear previous state if date changed.
 		if ( isset( $prev['date'] ) && $prev['date'] !== $date ) {
-			return; // Don't notify on date rollover.
+			return [ 'skipped' => 'date_rollover' ];
 		}
 
 		// Skip first run (no previous state at all).
 		if ( $is_first_run ) {
-			return;
+			return [ 'skipped' => 'first_run' ];
 		}
 
 		// Nothing new? Bail.
 		if ( empty( $new_loads ) && empty( $new_jumper_labels ) ) {
-			return;
+			return [ 'skipped' => 'no_changes', 'loads' => count( $current_load_ids ), 'prev_loads' => count( $prev_load_ids ) ];
 		}
 
 		// Build messages per notification type.
@@ -286,14 +350,14 @@ class Skywin_Hub_Push {
 		}
 
 		if ( ! empty( $new_jumper_labels ) ) {
-			if ( count( $new_jumper_labels ) === 1 ) {
-				$messages['newJumper'] = $new_jumper_labels[0] . ' har lagts till!';
-			} else {
-				$messages['newJumper'] = count( $new_jumper_labels ) . ' nya hoppare tillagda!';
-			}
+			$c = count( $new_jumper_labels );
+			$messages['newJumper'] = $c === 1
+				? 'Ny hoppare tillagd!'
+				: $c . ' nya hoppare tillagda!';
 		}
 
 		self::send_push( $subs, $messages );
+		return [ 'sent' => $messages, 'subs' => count( $subs ) ];
 	}
 
 	/* ── Send push notifications ───────────────────────────────────── */
@@ -358,6 +422,11 @@ class Skywin_Hub_Push {
 		$timestamp = wp_next_scheduled( self::CRON_HOOK );
 		if ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CRON_HOOK );
+		}
+
+		// Clean up legacy Action Scheduler jobs if present.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::CRON_HOOK, [], 'skywin-hub' );
 		}
 	}
 }

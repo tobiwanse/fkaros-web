@@ -1,5 +1,5 @@
 /* SkyView Service Worker — push notifications */
-
+console.log('SkyView Service Worker registered');
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -27,18 +27,12 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      if (!clients || clients.length === 0) {
-        return;
-      }
-
-      return self.registration.showNotification(title, {
-        body,
-        tag,
-        renotify: true,
-        vibrate: [100, 50, 100],
-        data,
-      });
+    self.registration.showNotification(title, {
+      body,
+      tag,
+      renotify: true,
+      vibrate: [100, 50, 100],
+      data,
     })
   );
 });

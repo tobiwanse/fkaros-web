@@ -46,7 +46,7 @@ class Skywin_Hub_Shortcode_Skyview {
 			esc_attr( $date ),
 			$refresh,
 			esc_attr( $logged_in ),
-			esc_attr( trailingslashit( plugins_url( '', SW_PLUGIN_FILE ) ) . 'assets/js/skyview-sw.js' ),
+			esc_attr( class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_sw_url() : '' ),
 			esc_attr( class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_vapid_public_key() : '' ),
 			esc_attr( rest_url( 'skywin-hub/v1/push' ) ),
 			esc_attr( wp_login_url( get_permalink() ) ),
@@ -1049,18 +1049,23 @@ class Skywin_Hub_Shortcode_Skyview {
 				$group_id     = '' !== $raw_group_id ? self::build_scoped_group_id( $load_id, $raw_group_id ) : '';
 				$group_title = sanitize_text_field( self::strip_quoted_name_parts( (string) ( $child['groupName'] ?? $child['text'] ?? '' ) ) );
 				$group_jumptype_group = sanitize_text_field( (string) ( $child['jumptypeGroup'] ?? $child['jumptype_group'] ?? '' ) );
+				$sky_text = sanitize_text_field( (string) ( $child['skyText'] ?? '' ) );
 
 				$members = $child['children'] ?? [];
 				if ( ! is_array( $members ) ) {
-					continue;
+					$members = [];
 				}
 
-				// Empty group with a name → show as a standalone placeholder row.
-				if ( empty( $members ) && '' !== $group_title ) {
+				// Empty group → show skyText or group title as a standalone placeholder row.
+				if ( empty( $members ) ) {
+					$placeholder_label = '' !== $sky_text ? $sky_text : $group_title;
+					if ( '' === $placeholder_label ) {
+						continue;
+					}
 					$jumpers[] = [
 						'id'                   => wp_generate_uuid4(),
 						'bookingId'            => sanitize_text_field( (string) ( $child['id'] ?? '' ) ),
-						'label'                => $group_title,
+						'label'                => $placeholder_label,
 						'internalNo'           => '',
 						'jump_type_name'       => '',
 						'jump_type'            => '',
@@ -1070,8 +1075,8 @@ class Skywin_Hub_Shortcode_Skyview {
 						'jumper_from_group_no' => null,
 						'captain'              => false,
 						'jumptype_group'       => $group_jumptype_group,
-						'group_id'             => null,
-						'group_title'          => null,
+						'group_id'             => '' !== $group_id ? $group_id : null,
+						'group_title'          => '' !== $group_title ? $group_title : $placeholder_label,
 					];
 					continue;
 				}

@@ -280,7 +280,7 @@ function renderJumperRow(jumper, groupColor, compact, showQuotedNameParts, isChi
   const studentJumpNo = jumper.student_jump_no != null ? String(jumper.student_jump_no) : '';
 
   // Queue items (showAltitudeInline) use skyText as label — show as-is
-  const labelText = showAltitudeInline ? (jumper.label || '') : formatDisplayName(jumper.label || '', showQuotedNameParts);
+  const labelText = formatDisplayName(jumper.label || '', showQuotedNameParts);
   const label = createEl('span', 'skyview-jumper-label', labelText);
 
   if (!showAltitudeInline && !compact && (jumpTypeText || studentJumpNo)) {
@@ -479,7 +479,7 @@ let _swRegistration = null;
 
 function registerSkyviewSW(swUrl) {
   if (!('serviceWorker' in navigator) || !swUrl) return Promise.resolve(null);
-  return navigator.serviceWorker.register(swUrl)
+  return navigator.serviceWorker.register(swUrl, { scope: '/' })
     .then((reg) => {
       _swRegistration = reg;
       return reg;
@@ -603,6 +603,8 @@ function mountSkyview(root) {
         notifyNewMessage: state.notifyNewMessage,
         soundEnabled: state.soundEnabled,
         soundNewJumper: state.soundNewJumper,
+        notifyNewQueueJumper: state.notifyNewQueueJumper,
+        soundNewQueueJumper: state.soundNewQueueJumper,
         maxLoads: state.maxLoads,
       }));
     } catch (_) { /* ignore */ }
@@ -641,9 +643,13 @@ function mountSkyview(root) {
     notifyNewMessage: typeof saved.notifyNewMessage === 'boolean' ? saved.notifyNewMessage : false,
     soundEnabled: typeof saved.soundEnabled === 'boolean' ? saved.soundEnabled : false,
     soundNewJumper: typeof saved.soundNewJumper === 'boolean' ? saved.soundNewJumper : false,
+    notifyNewQueueJumper: typeof saved.notifyNewQueueJumper === 'boolean' ? saved.notifyNewQueueJumper : false,
+    soundNewQueueJumper: typeof saved.soundNewQueueJumper === 'boolean' ? saved.soundNewQueueJumper : false,
     maxLoads: Number.isFinite(saved.maxLoads) && saved.maxLoads >= 0 ? saved.maxLoads : 0,
     offlineMode: false,
     knownJumperCounts: {},
+    knownQueueBookingIds: new Set(),
+    prevJumpQueueCount: null,
     knownMessage: '',
     hasFetchedOnce: false,
     altitudeUnit: '',
@@ -878,6 +884,7 @@ function mountSkyview(root) {
         if (incomingMessage !== state.knownMessage) state.knownMessage = incomingMessage;
         state.message = incomingMessage;
         state.altitudeUnit = String(data?.altitudeUnit || '').trim();
+        const prevQueueCount = state.jumpQueueCount;
         state.jumpQueueCount =
           data?.jumpQueueCount !== null &&
           data?.jumpQueueCount !== undefined &&
@@ -885,6 +892,12 @@ function mountSkyview(root) {
           Number.isFinite(Number(data.jumpQueueCount))
             ? Number(data.jumpQueueCount)
             : null;
+        if (state.hasFetchedOnce && prevQueueCount !== null && state.jumpQueueCount !== null && state.jumpQueueCount > prevQueueCount) {
+          if (state.notifyNewQueueJumper) {
+            showPushNotification('Ny i önskelistan', { body: `${state.jumpQueueCount} i kön`, icon: '/favicon.ico' });
+          }
+          if (state.soundNewQueueJumper) playPingSound();
+        }
         const previousLoads = state.loads;
         const previousIds = new Set(previousLoads.map((load) => load.id));
         const merged = mergeLoads(previousLoads, data.loads || []);
@@ -920,25 +933,44 @@ function mountSkyview(root) {
         });
         let soundPlayed = false;
         if (state.hasFetchedOnce && addedLoadIds.length > 0) {
+          if (state.notifyNewLoad) {
+            const total = merged.length;
+            const msg = addedLoadIds.length === 1
+              ? 'Lift nummer ' + total + ' tillagd!'
+              : addedLoadIds.length + ' nya liftar tillagda!';
+            showPushNotification('SkyView', { body: msg, tag: 'skyview-newLoad', icon: '/favicon.ico' });
+          }
           if (state.soundEnabled) { playPingSound(); soundPlayed = true; }
         }
 
         {
           const currentCounts = {};
+          const keyToLabel = {};
           merged.forEach((load) => {
             (load.jumpers || []).forEach((j) => {
-              const key = (j.internalNo || '').trim() || (j.label || '').trim().toLowerCase();
+              const label = (j.label || '').trim();
+              const key = (j.internalNo || '').trim() || label.toLowerCase();
               if (key) {
                 currentCounts[key] = (currentCounts[key] || 0) + 1;
+                if (label && !keyToLabel[key]) keyToLabel[key] = label;
               }
             });
           });
-          if (state.soundNewJumper && !soundPlayed) {
+          if (state.hasFetchedOnce) {
+            let newJumperCount = 0;
             for (const key in currentCounts) {
               if (currentCounts[key] > (state.knownJumperCounts[key] || 0)) {
-                playPingSound();
-                break;
+                newJumperCount++;
               }
+            }
+            if (newJumperCount > 0) {
+              if (state.notifyNewJumper) {
+                const msg = newJumperCount === 1
+                  ? 'Ny hoppare tillagd!'
+                  : newJumperCount + ' nya hoppare tillagda!';
+                showPushNotification('SkyView', { body: msg, tag: 'skyview-newJumper', icon: '/favicon.ico' });
+              }
+              if (state.soundNewJumper && !soundPlayed) playPingSound();
             }
           }
           state.knownJumperCounts = currentCounts;
@@ -991,7 +1023,9 @@ function mountSkyview(root) {
         headers: { Accept: 'application/json' },
       });
       const data = await res.json();
-      state.queueList = Array.isArray(data?.items) ? data.items : [];
+      const incoming = Array.isArray(data?.items) ? data.items : [];
+      state.knownQueueBookingIds = new Set(incoming.map((item) => item.bookingId).filter(Boolean));
+      state.queueList = incoming;
     } catch (_) {
       state.queueList = [];
     }
@@ -1275,7 +1309,6 @@ function mountSkyview(root) {
       if (state.notifyNewLoad) ensureNotificationPermission();
       saveSettings();
       syncPushSubscription(vapidPublicKey, pushEndpoint, state);
-      render();
     });
     notifyLoadItem.appendChild(notifyLoadLabel);
     notifyLoadItem.appendChild(notifyLoadToggle);
@@ -1291,7 +1324,6 @@ function mountSkyview(root) {
       if (state.notifyNewJumper) ensureNotificationPermission();
       saveSettings();
       syncPushSubscription(vapidPublicKey, pushEndpoint, state);
-      render();
     });
     notifyJumperItem.appendChild(notifyJumperLabel);
     notifyJumperItem.appendChild(notifyJumperToggle);
@@ -1306,7 +1338,6 @@ function mountSkyview(root) {
       state.notifyNewMessage = notifyMessageToggle.checked;
       if (state.notifyNewMessage) ensureNotificationPermission();
       saveSettings();
-      render();
     });
     notifyMessageItem.appendChild(notifyMessageLabel);
     notifyMessageItem.appendChild(notifyMessageToggle);
@@ -1321,7 +1352,6 @@ function mountSkyview(root) {
       state.soundEnabled = soundToggle.checked;
       saveSettings();
       if (soundToggle.checked) playPingSound();
-      render();
     });
     soundItem.appendChild(soundLabel);
     soundItem.appendChild(soundToggle);
@@ -1336,11 +1366,38 @@ function mountSkyview(root) {
       state.soundNewJumper = soundJumperToggle.checked;
       saveSettings();
       if (soundJumperToggle.checked) playPingSound();
-      render();
     });
     soundJumperItem.appendChild(soundJumperLabel);
     soundJumperItem.appendChild(soundJumperToggle);
     list.appendChild(soundJumperItem);
+
+    const notifyQueueItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+    const notifyQueueLabel = createEl('span', 'skyview-settings-label', 'Notis ny i önskelistan');
+    const notifyQueueToggle = createEl('input', 'skyview-settings-toggle');
+    notifyQueueToggle.type = 'checkbox';
+    notifyQueueToggle.checked = Boolean(state.notifyNewQueueJumper);
+    notifyQueueToggle.addEventListener('change', () => {
+      state.notifyNewQueueJumper = notifyQueueToggle.checked;
+      if (state.notifyNewQueueJumper) ensureNotificationPermission();
+      saveSettings();
+    });
+    notifyQueueItem.appendChild(notifyQueueLabel);
+    notifyQueueItem.appendChild(notifyQueueToggle);
+    list.appendChild(notifyQueueItem);
+
+    const soundQueueItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+    const soundQueueLabel = createEl('span', 'skyview-settings-label', 'Ljud ny i önskelistan');
+    const soundQueueToggle = createEl('input', 'skyview-settings-toggle');
+    soundQueueToggle.type = 'checkbox';
+    soundQueueToggle.checked = Boolean(state.soundNewQueueJumper);
+    soundQueueToggle.addEventListener('change', () => {
+      state.soundNewQueueJumper = soundQueueToggle.checked;
+      saveSettings();
+      if (soundQueueToggle.checked) playPingSound();
+    });
+    soundQueueItem.appendChild(soundQueueLabel);
+    soundQueueItem.appendChild(soundQueueToggle);
+    list.appendChild(soundQueueItem);
     } // end isLoggedIn
 
     if (!state.isLoggedIn && loginUrl) {
@@ -1385,12 +1442,6 @@ function mountSkyview(root) {
 
         const color = groupColorMap[segment.groupId] || 0;
         const groupContainer = createEl('div', `skyview-group-container skyview-group-container--color-${color}`);
-
-        if (segment.groupTitle) {
-          const title = createEl('div', `skyview-group-title skyview-group-title--color-${color}`);
-          title.appendChild(createEl('span', 'skyview-group-title-text', segment.groupTitle));
-          groupContainer.appendChild(title);
-        }
 
         segment.members.forEach((jumper) => {
           groupContainer.appendChild(renderJumperRow(jumper, color, false, state.showQuotedNameParts, false, true));
