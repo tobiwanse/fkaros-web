@@ -1342,6 +1342,7 @@ function mountSkyview(root) {
       state.notifyNewMessage = notifyMessageToggle.checked;
       if (state.notifyNewMessage) ensureNotificationPermission();
       saveSettings();
+      syncPushSubscription(vapidPublicKey, pushEndpoint, state);
     });
     notifyMessageItem.appendChild(notifyMessageLabel);
     notifyMessageItem.appendChild(notifyMessageToggle);
@@ -1384,6 +1385,7 @@ function mountSkyview(root) {
       state.notifyNewQueueJumper = notifyQueueToggle.checked;
       if (state.notifyNewQueueJumper) ensureNotificationPermission();
       saveSettings();
+      syncPushSubscription(vapidPublicKey, pushEndpoint, state);
     });
     notifyQueueItem.appendChild(notifyQueueLabel);
     notifyQueueItem.appendChild(notifyQueueToggle);
