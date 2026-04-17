@@ -333,7 +333,7 @@
 }
 
 .skyview-next-crew-item {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .skyview-queue-badge {
@@ -695,7 +695,7 @@
   gap: 0.4rem;
   padding: 0.25rem 0.8rem;
   font-size: 1.14rem;  cursor: grab;
-  font-weight: 500;
+  font-weight: 400;
   border-left: 3px solid transparent;
   transition: background 0.12s;
   will-change: transform;
@@ -828,14 +828,14 @@
 }
 
 .skyview-jumper-altitude {
-  font-size: 1.03rem;  font-weight: 500;
+  font-size: 1.03rem;  font-weight: 400;
   color: var(--sv-text-muted);
   opacity: 0.7;
 }
 
 .skyview-jumper-altitude-inline {
   font-size: 0.99rem;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--sv-accent);
   opacity: 0.85;
 }
@@ -1122,7 +1122,7 @@
   color: var(--sv-text);
   border-radius: 10px;
   padding: 0.28rem 1.8rem 0.28rem 0.5rem;
-  font-size: 1.06rem;  font-weight: 500;
+  font-size: 1.06rem;  font-weight: 400;
   min-height: 1.9rem;
   min-width: 10rem;
   box-shadow: var(--sv-shadow);
