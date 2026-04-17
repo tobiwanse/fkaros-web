@@ -28,16 +28,20 @@ class Skywin_Hub_Push {
 		add_action( 'rest_api_init', [ __CLASS__, 'register_rest_routes' ] );
 		add_action( 'init', [ __CLASS__, 'register_sw_rewrite' ] );
 		add_action( 'parse_request', [ __CLASS__, 'serve_sw_file' ] );
+		add_action( 'parse_request', [ __CLASS__, 'serve_manifest' ] );
+		add_action( 'wp_head', [ __CLASS__, 'pwa_meta_tags' ] );
 	}
 
 	public static function register_sw_rewrite(): void {
 		add_rewrite_rule( '^skyview-sw\.js$', 'index.php?skyview_sw=1', 'top' );
+		add_rewrite_rule( '^skyview-manifest\.json$', 'index.php?skyview_manifest=1', 'top' );
 		add_rewrite_tag( '%skyview_sw%', '1' );
+		add_rewrite_tag( '%skyview_manifest%', '1' );
 
-		// Flush once so the rewrite rule takes effect.
-		if ( get_option( 'skyview_sw_rewrite_version' ) !== '1' ) {
+		// Flush once so the rewrite rules take effect.
+		if ( get_option( 'skyview_sw_rewrite_version' ) !== '2' ) {
 			flush_rewrite_rules( false );
-			update_option( 'skyview_sw_rewrite_version', '1', true );
+			update_option( 'skyview_sw_rewrite_version', '2', true );
 		}
 	}
 
@@ -59,6 +63,48 @@ class Skywin_Hub_Push {
 
 	public static function get_sw_url(): string {
 		return home_url( '/skyview-sw.js' );
+	}
+
+	public static function serve_manifest( WP $wp ): void {
+		if ( empty( $wp->query_vars['skyview_manifest'] ) ) {
+			return;
+		}
+		$manifest = [
+			'name'             => 'SkyView',
+			'short_name'       => 'SkyView',
+			'start_url'        => '/',
+			'display'          => 'standalone',
+			'background_color' => '#1a1a2e',
+			'theme_color'      => '#1a1a2e',
+			'icons'            => [
+				[
+					'src'     => plugins_url( 'assets/img/icon-192.png', SW_PLUGIN_FILE ),
+					'sizes'   => '192x192',
+					'type'    => 'image/png',
+					'purpose' => 'any maskable',
+				],
+				[
+					'src'     => plugins_url( 'assets/img/icon-512.png', SW_PLUGIN_FILE ),
+					'sizes'   => '512x512',
+					'type'    => 'image/png',
+					'purpose' => 'any maskable',
+				],
+			],
+		];
+		header( 'Content-Type: application/manifest+json' );
+		header( 'Cache-Control: public, max-age=86400' );
+		echo wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+		exit;
+	}
+
+	public static function pwa_meta_tags(): void {
+		if ( ! is_page( 'skyview-full' ) ) {
+			return;
+		}
+		echo '<link rel="manifest" href="' . esc_url( home_url( '/skyview-manifest.json' ) ) . '">' . "\n";
+		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
+		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
+		echo '<meta name="theme-color" content="#1a1a2e">' . "\n";
 	}
 
 	/* ── VAPID keys ────────────────────────────────────────────────── */
