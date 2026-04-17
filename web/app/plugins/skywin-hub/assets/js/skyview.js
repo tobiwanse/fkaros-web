@@ -517,7 +517,7 @@ function urlBase64ToUint8Array(base64String) {
 
 function syncPushSubscription(vapidKey, pushApiBase, state) {
   if (!vapidKey || !pushApiBase) return Promise.resolve();
-  var wantsAny = state.notifyNewLoad || state.notifyNewJumper;
+  var wantsAny = state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper;
 
   return getSWRegistration().then(function (reg) {
     if (!reg || !reg.pushManager) return;
@@ -557,6 +557,8 @@ function syncPushSubscription(vapidKey, pushApiBase, state) {
             types: {
               newLoad: state.notifyNewLoad,
               newJumper: state.notifyNewJumper,
+              newMessage: state.notifyNewMessage,
+              newQueueJumper: state.notifyNewQueueJumper,
             },
           }),
         }).catch(function () {});
@@ -946,28 +948,30 @@ function mountSkyview(root) {
         {
           const currentCounts = {};
           const keyToLabel = {};
-          merged.forEach((load) => {
+          const keyToLoadNum = {};
+          merged.forEach((load, loadIdx) => {
             (load.jumpers || []).forEach((j) => {
               const label = (j.label || '').trim();
               const key = (j.internalNo || '').trim() || label.toLowerCase();
               if (key) {
                 currentCounts[key] = (currentCounts[key] || 0) + 1;
                 if (label && !keyToLabel[key]) keyToLabel[key] = label;
+                keyToLoadNum[key] = loadIdx + 1;
               }
             });
           });
           if (state.hasFetchedOnce) {
-            let newJumperCount = 0;
+            let newJumperLoadNums = [];
             for (const key in currentCounts) {
               if (currentCounts[key] > (state.knownJumperCounts[key] || 0)) {
-                newJumperCount++;
+                newJumperLoadNums.push(keyToLoadNum[key]);
               }
             }
-            if (newJumperCount > 0) {
+            if (newJumperLoadNums.length > 0) {
               if (state.notifyNewJumper) {
-                const msg = newJumperCount === 1
-                  ? 'Ny hoppare tillagd!'
-                  : newJumperCount + ' nya hoppare tillagda!';
+                const msg = newJumperLoadNums.length === 1
+                  ? 'Ny hoppare lades till i lift nr ' + newJumperLoadNums[0]
+                  : newJumperLoadNums.length + ' nya hoppare lades till i lift nr ' + [...new Set(newJumperLoadNums)].join(', ');
                 showPushNotification('SkyView', { body: msg, tag: 'skyview-newJumper', icon: '/favicon.ico' });
               }
               if (state.soundNewJumper && !soundPlayed) playPingSound();

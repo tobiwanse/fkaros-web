@@ -314,6 +314,12 @@ class Skywin_Hub_Push {
 		}
 
 		$loads  = $result['loads'] ?? [];
+		$current_message     = trim( $result['message'] ?? '' );
+		$current_queue_count = $result['jumpQueueCount'] ?? null;
+		if ( $current_queue_count !== null ) {
+			$current_queue_count = (int) $current_queue_count;
+		}
+
 		$prev   = get_option( self::OPTION_LAST_STATE, false );
 		$is_first_run = false === $prev;
 		if ( ! is_array( $prev ) ) {
@@ -322,14 +328,19 @@ class Skywin_Hub_Push {
 
 		$prev_load_ids    = $prev['loadIds']    ?? [];
 		$prev_jumper_keys = $prev['jumperKeys'] ?? [];
+		$prev_message     = $prev['message']    ?? '';
+		$prev_queue_count = $prev['queueCount'] ?? null;
 
 		// Current state.
 		$current_load_ids    = [];
 		$current_jumper_counts = [];
+		$jumper_load_map = []; // key => load position (1-based)
 
+		$load_position = 0;
 		foreach ( $loads as $load ) {
 			$load_id = $load['id'];
 			$current_load_ids[] = $load_id;
+			$load_position++;
 			foreach ( $load['jumpers'] ?? [] as $j ) {
 				$label      = trim( $j['label'] ?? '' );
 				$internalNo = trim( $j['internalNo'] ?? '' );
@@ -343,6 +354,7 @@ class Skywin_Hub_Push {
 					$current_jumper_counts[ $key ] = [ 'count' => 0, 'label' => $label ];
 				}
 				$current_jumper_counts[ $key ]['count']++;
+				$jumper_load_map[ $key ] = $load_position;
 			}
 		}
 
@@ -350,21 +362,22 @@ class Skywin_Hub_Push {
 		$new_loads = array_diff( $current_load_ids, $prev_load_ids );
 
 		// Detect jumpers whose count increased.
-		$new_jumper_labels = [];
+		$new_jumper_loads = [];
 		if ( ! $is_first_run ) {
 			foreach ( $current_jumper_counts as $key => $data ) {
 				$prev_count = $prev_jumper_keys[ $key ]['count'] ?? 0;
 				if ( $data['count'] > $prev_count ) {
-					$new_jumper_labels[] = $data['label'];
+					$new_jumper_loads[] = $jumper_load_map[ $key ] ?? 0;
 				}
 			}
-			$new_jumper_labels = array_unique( $new_jumper_labels );
 		}
 
 		// Save current state.
 		update_option( self::OPTION_LAST_STATE, [
 			'loadIds'    => $current_load_ids,
 			'jumperKeys' => $current_jumper_counts,
+			'message'    => $current_message,
+			'queueCount' => $current_queue_count,
 			'date'       => $date,
 		], false );
 
@@ -379,7 +392,10 @@ class Skywin_Hub_Push {
 		}
 
 		// Nothing new? Bail.
-		if ( empty( $new_loads ) && empty( $new_jumper_labels ) ) {
+		$message_changed = $current_message !== '' && $current_message !== $prev_message;
+		$queue_increased = $current_queue_count !== null && $prev_queue_count !== null && $current_queue_count > $prev_queue_count;
+
+		if ( empty( $new_loads ) && empty( $new_jumper_loads ) && ! $message_changed && ! $queue_increased ) {
 			return [ 'skipped' => 'no_changes', 'loads' => count( $current_load_ids ), 'prev_loads' => count( $prev_load_ids ) ];
 		}
 
@@ -395,11 +411,22 @@ class Skywin_Hub_Push {
 			}
 		}
 
-		if ( ! empty( $new_jumper_labels ) ) {
-			$c = count( $new_jumper_labels );
-			$messages['newJumper'] = $c === 1
-				? 'Ny hoppare tillagd!'
-				: $c . ' nya hoppare tillagda!';
+		if ( ! empty( $new_jumper_loads ) ) {
+			$c = count( $new_jumper_loads );
+			if ( $c === 1 ) {
+				$messages['newJumper'] = 'Ny hoppare lades till i lift nr ' . $new_jumper_loads[0];
+			} else {
+				$load_nums = array_unique( $new_jumper_loads );
+				$messages['newJumper'] = $c . ' nya hoppare lades till i lift nr ' . implode( ', ', $load_nums );
+			}
+		}
+
+		if ( $message_changed ) {
+			$messages['newMessage'] = $current_message;
+		}
+
+		if ( $queue_increased ) {
+			$messages['newQueueJumper'] = $current_queue_count . ' i kön';
 		}
 
 		self::send_push( $subs, $messages );
@@ -427,8 +454,13 @@ class Skywin_Hub_Push {
 		$stale_endpoints = [];
 
 		foreach ( $messages as $type => $body ) {
+			$title = match ( $type ) {
+				'newMessage'      => 'Nytt meddelande',
+				'newQueueJumper'  => 'Ny i önskelistan',
+				default           => 'SkyView',
+			};
 			$payload = wp_json_encode( [
-				'title' => 'SkyView',
+				'title' => $title,
 				'body'  => $body,
 				'tag'   => 'skyview-' . $type,
 				'data'  => [ 'type' => $type ],
