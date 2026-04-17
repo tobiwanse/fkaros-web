@@ -1278,6 +1278,16 @@
   padding: 0.65rem;
 }
 
+.skyview-settings-category {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sv-text-muted);
+  padding: 0.5rem 0.4rem 0.1rem;
+  margin-top: 0.3rem;
+}
+
 .skyview-settings-item {
   color: var(--sv-text);
   font-size: 1.01rem;

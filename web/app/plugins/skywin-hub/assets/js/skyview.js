@@ -611,6 +611,7 @@ function mountSkyview(root) {
         notifyNewMessage: state.notifyNewMessage,
         soundEnabled: state.soundEnabled,
         soundNewJumper: state.soundNewJumper,
+        soundNewMessage: state.soundNewMessage,
         notifyNewQueueJumper: state.notifyNewQueueJumper,
         soundNewQueueJumper: state.soundNewQueueJumper,
         maxLoads: state.maxLoads,
@@ -651,6 +652,7 @@ function mountSkyview(root) {
     notifyNewMessage: typeof saved.notifyNewMessage === 'boolean' ? saved.notifyNewMessage : false,
     soundEnabled: typeof saved.soundEnabled === 'boolean' ? saved.soundEnabled : false,
     soundNewJumper: typeof saved.soundNewJumper === 'boolean' ? saved.soundNewJumper : false,
+    soundNewMessage: typeof saved.soundNewMessage === 'boolean' ? saved.soundNewMessage : false,
     notifyNewQueueJumper: typeof saved.notifyNewQueueJumper === 'boolean' ? saved.notifyNewQueueJumper : false,
     soundNewQueueJumper: typeof saved.soundNewQueueJumper === 'boolean' ? saved.soundNewQueueJumper : false,
     maxLoads: Number.isFinite(saved.maxLoads) && saved.maxLoads >= 0 ? saved.maxLoads : 0,
@@ -886,8 +888,9 @@ function mountSkyview(root) {
       } else {
         state.error = '';
         const incomingMessage = String(data?.message || '').trim();
-        if (state.notifyNewMessage && state.hasFetchedOnce && incomingMessage && incomingMessage !== state.knownMessage) {
-          showPushNotification('Nytt meddelande', { body: incomingMessage, icon: '/favicon.ico' });
+        if (state.hasFetchedOnce && incomingMessage && incomingMessage !== state.knownMessage) {
+          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: incomingMessage, icon: '/favicon.ico' });
+          if (state.soundNewMessage) playPingSound();
         }
         if (incomingMessage !== state.knownMessage) state.knownMessage = incomingMessage;
         state.message = incomingMessage;
@@ -1174,6 +1177,9 @@ function mountSkyview(root) {
 
     const list = createEl('div', 'skyview-settings-list');
 
+    // --- Allmänt ---
+    list.appendChild(createEl('div', 'skyview-settings-category', 'Allmänt'));
+
     const toggleItem = createEl('label', 'skyview-settings-item skyview-settings-control');
     const toggleText = createEl('span', 'skyview-settings-label', 'Auto-uppdatering');
     const toggle = createEl('input', 'skyview-settings-toggle');
@@ -1310,8 +1316,11 @@ function mountSkyview(root) {
       }
     }
 
+    // --- Notiser ---
+    list.appendChild(createEl('div', 'skyview-settings-category', 'Notiser'));
+
     const notifyLoadItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const notifyLoadLabel = createEl('span', 'skyview-settings-label', 'Notis vid ny lift');
+    const notifyLoadLabel = createEl('span', 'skyview-settings-label', 'Ny lift');
     const notifyLoadToggle = createEl('input', 'skyview-settings-toggle');
     notifyLoadToggle.type = 'checkbox';
     notifyLoadToggle.checked = Boolean(state.notifyNewLoad);
@@ -1326,7 +1335,7 @@ function mountSkyview(root) {
     list.appendChild(notifyLoadItem);
 
     const notifyJumperItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const notifyJumperLabel = createEl('span', 'skyview-settings-label', 'Notis för hoppare');
+    const notifyJumperLabel = createEl('span', 'skyview-settings-label', 'Ny hoppare');
     const notifyJumperToggle = createEl('input', 'skyview-settings-toggle');
     notifyJumperToggle.type = 'checkbox';
     notifyJumperToggle.checked = Boolean(state.notifyNewJumper);
@@ -1341,7 +1350,7 @@ function mountSkyview(root) {
     list.appendChild(notifyJumperItem);
 
     const notifyMessageItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const notifyMessageLabel = createEl('span', 'skyview-settings-label', 'Notis vid nytt meddelande');
+    const notifyMessageLabel = createEl('span', 'skyview-settings-label', 'Nytt meddelande');
     const notifyMessageToggle = createEl('input', 'skyview-settings-toggle');
     notifyMessageToggle.type = 'checkbox';
     notifyMessageToggle.checked = Boolean(state.notifyNewMessage);
@@ -1355,36 +1364,8 @@ function mountSkyview(root) {
     notifyMessageItem.appendChild(notifyMessageToggle);
     list.appendChild(notifyMessageItem);
 
-    const soundItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const soundLabel = createEl('span', 'skyview-settings-label', 'Ljud vid ny lift');
-    const soundToggle = createEl('input', 'skyview-settings-toggle');
-    soundToggle.type = 'checkbox';
-    soundToggle.checked = Boolean(state.soundEnabled);
-    soundToggle.addEventListener('change', () => {
-      state.soundEnabled = soundToggle.checked;
-      saveSettings();
-      if (soundToggle.checked) playPingSound();
-    });
-    soundItem.appendChild(soundLabel);
-    soundItem.appendChild(soundToggle);
-    list.appendChild(soundItem);
-
-    const soundJumperItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const soundJumperLabel = createEl('span', 'skyview-settings-label', 'Ljud för ny hoppare');
-    const soundJumperToggle = createEl('input', 'skyview-settings-toggle');
-    soundJumperToggle.type = 'checkbox';
-    soundJumperToggle.checked = Boolean(state.soundNewJumper);
-    soundJumperToggle.addEventListener('change', () => {
-      state.soundNewJumper = soundJumperToggle.checked;
-      saveSettings();
-      if (soundJumperToggle.checked) playPingSound();
-    });
-    soundJumperItem.appendChild(soundJumperLabel);
-    soundJumperItem.appendChild(soundJumperToggle);
-    list.appendChild(soundJumperItem);
-
     const notifyQueueItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const notifyQueueLabel = createEl('span', 'skyview-settings-label', 'Notis ny i önskelistan');
+    const notifyQueueLabel = createEl('span', 'skyview-settings-label', 'Ny i önskelistan');
     const notifyQueueToggle = createEl('input', 'skyview-settings-toggle');
     notifyQueueToggle.type = 'checkbox';
     notifyQueueToggle.checked = Boolean(state.notifyNewQueueJumper);
@@ -1398,8 +1379,53 @@ function mountSkyview(root) {
     notifyQueueItem.appendChild(notifyQueueToggle);
     list.appendChild(notifyQueueItem);
 
+    // --- Ljud ---
+    list.appendChild(createEl('div', 'skyview-settings-category', 'Ljud'));
+
+    const soundItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+    const soundLabel = createEl('span', 'skyview-settings-label', 'Ny lift');
+    const soundToggle = createEl('input', 'skyview-settings-toggle');
+    soundToggle.type = 'checkbox';
+    soundToggle.checked = Boolean(state.soundEnabled);
+    soundToggle.addEventListener('change', () => {
+      state.soundEnabled = soundToggle.checked;
+      saveSettings();
+      if (soundToggle.checked) playPingSound();
+    });
+    soundItem.appendChild(soundLabel);
+    soundItem.appendChild(soundToggle);
+    list.appendChild(soundItem);
+
+    const soundJumperItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+    const soundJumperLabel = createEl('span', 'skyview-settings-label', 'Ny hoppare');
+    const soundJumperToggle = createEl('input', 'skyview-settings-toggle');
+    soundJumperToggle.type = 'checkbox';
+    soundJumperToggle.checked = Boolean(state.soundNewJumper);
+    soundJumperToggle.addEventListener('change', () => {
+      state.soundNewJumper = soundJumperToggle.checked;
+      saveSettings();
+      if (soundJumperToggle.checked) playPingSound();
+    });
+    soundJumperItem.appendChild(soundJumperLabel);
+    soundJumperItem.appendChild(soundJumperToggle);
+    list.appendChild(soundJumperItem);
+
+    const soundMessageItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+    const soundMessageLabel = createEl('span', 'skyview-settings-label', 'Nytt meddelande');
+    const soundMessageToggle = createEl('input', 'skyview-settings-toggle');
+    soundMessageToggle.type = 'checkbox';
+    soundMessageToggle.checked = Boolean(state.soundNewMessage);
+    soundMessageToggle.addEventListener('change', () => {
+      state.soundNewMessage = soundMessageToggle.checked;
+      saveSettings();
+      if (soundMessageToggle.checked) playPingSound();
+    });
+    soundMessageItem.appendChild(soundMessageLabel);
+    soundMessageItem.appendChild(soundMessageToggle);
+    list.appendChild(soundMessageItem);
+
     const soundQueueItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const soundQueueLabel = createEl('span', 'skyview-settings-label', 'Ljud ny i önskelistan');
+    const soundQueueLabel = createEl('span', 'skyview-settings-label', 'Ny i önskelistan');
     const soundQueueToggle = createEl('input', 'skyview-settings-toggle');
     soundQueueToggle.type = 'checkbox';
     soundQueueToggle.checked = Boolean(state.soundNewQueueJumper);
