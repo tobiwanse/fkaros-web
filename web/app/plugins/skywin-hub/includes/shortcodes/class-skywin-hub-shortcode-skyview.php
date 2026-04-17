@@ -536,7 +536,7 @@ class Skywin_Hub_Shortcode_Skyview {
 				'loadStatusName' => sanitize_text_field( $raw['loadStatusName'] ?? $raw['statusName'] ?? $raw['loadstatus_name'] ?? '' ),
 				'lift'           => sanitize_text_field( $raw['lift'] ?? $raw['aircraft'] ?? $raw['skyText'] ?? $raw['planeReg'] ?? '' ),
 				'seats'          => $seats_text,
-				'chief'          => sanitize_text_field( $raw['chief'] ?? $raw['loadChief'] ?? self::extract_first_member_name( $raw['fallingLeaders'] ?? [] ) ),
+				'chief'          => sanitize_text_field( $raw['chief'] ?? $raw['loadChief'] ?? self::extract_first_member_name( $raw['fellingLeaders'] ?? [] ) ),
 				'pilot'          => sanitize_text_field( self::extract_first_member_name( $raw['pilots'] ?? [] ) ?: self::extract_crew_name_by_childtype( $raw, 'PILOT' ) ),
 				'jumpLeader'     => sanitize_text_field( self::extract_first_member_name( $raw['jumpLeaders'] ?? [] ) ?: self::extract_crew_name_by_childtype( $raw, 'JUMP_LEADER' ) ),
 				'time'           => $time,

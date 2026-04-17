@@ -315,7 +315,7 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
   const fields = [
     ['Lift', load.lift || ''],
     ['Platser', seatsDisplay],
-    ['Liftchef', load.jumpLeader || load.chief || ''],
+    ['Liftchef', load.chief || ''],
     ['Avgang', load.time || ''],
   ];
 
