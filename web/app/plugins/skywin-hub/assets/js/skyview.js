@@ -1826,7 +1826,7 @@ function mountSkyview(root) {
   }
 
   // Sync push subscription on load if notifications are enabled.
-  if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage) {
+  if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper) {
     syncPushSubscription(vapidPublicKey, pushEndpoint, state);
   }
 }
