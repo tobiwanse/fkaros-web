@@ -238,8 +238,10 @@ class Skywin_Hub_Push {
 				'auth'   => sanitize_text_field( $keys['auth'] ),
 			],
 			'types'    => [
-				'newLoad'   => ! empty( $types['newLoad'] ),
-				'newJumper' => ! empty( $types['newJumper'] ),
+				'newLoad'        => ! empty( $types['newLoad'] ),
+				'newJumper'      => ! empty( $types['newJumper'] ),
+				'newMessage'     => ! empty( $types['newMessage'] ),
+				'newQueueJumper' => ! empty( $types['newQueueJumper'] ),
 			],
 			'created'  => time(),
 		];
