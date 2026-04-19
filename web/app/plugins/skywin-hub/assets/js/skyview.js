@@ -236,6 +236,13 @@ function segmentAltitudeText(seg) {
     : String((seg.members[0] || {}).altitude || '').trim();
 }
 
+function isTandemSegment(seg) {
+  const jumpType = seg.type === 'single'
+    ? String(seg.jumper.jump_type_name || seg.jumper.jump_type || '').trim().toLowerCase()
+    : String((seg.members[0] || {}).jump_type_name || (seg.members[0] || {}).jump_type || '').trim().toLowerCase();
+  return jumpType.startsWith('tandem');
+}
+
 function buildGroupColorMap(jumpers) {
   const map = {};
   let colorIndex = 1;
@@ -350,6 +357,9 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
   const jumpersWrap = createEl('div', 'skyview-jumpers');
   const segments = buildRenderSegments(jumpers);
   segments.sort((a, b) => {
+    const aTandem = isTandemSegment(a) ? 1 : 0;
+    const bTandem = isTandemSegment(b) ? 1 : 0;
+    if (aTandem !== bTandem) return aTandem - bTandem;
     const altDiff = segmentAltitude(a) - segmentAltitude(b);
     if (altDiff !== 0) return altDiff;
     if (a.type === 'single' && b.type !== 'single') return -1;
@@ -670,6 +680,16 @@ function mountSkyview(root) {
     fadingOutMessage: '',
   };
 
+  const els = {
+    header: root.querySelector('.skyview-header'),
+    clock: root.querySelector('.skyview-clock'),
+    crewPilot: root.querySelector('.skyview-crew-pilot'),
+    crewJumpLeader: root.querySelector('.skyview-crew-jumpleader'),
+    tools: root.querySelector('.skyview-tools'),
+    messages: root.querySelector('.skyview-messages'),
+    loads: root.querySelector('.skyview-loads'),
+  };
+
   function buildUrl() {
     if (!state.endpoint) return '';
 
@@ -710,7 +730,7 @@ function mountSkyview(root) {
 
   function animateLoadRemovalTransition(removedLoadIds, nextOrderIds) {
     return new Promise((resolve) => {
-      const board = root.querySelector('.skyview-board');
+      const board = els.loads;
       if (!board) {
         resolve();
         return;
@@ -925,7 +945,7 @@ function mountSkyview(root) {
         }
 
         if (removedLoadIds.length === 0 && addedLoadIds.length > 0 && !state.firstRender) {
-          const board = root.querySelector('.skyview-board');
+          const board = els.loads;
           if (board) {
             const firstRects = new Map();
             Array.from(board.querySelectorAll('.skyview-load-sortable')).forEach((wrap) => {
@@ -1498,8 +1518,6 @@ function mountSkyview(root) {
   }
 
   function render() {
-    root.innerHTML = '';
-
     function renderOverlays() {
       const existingQueueModal = root.querySelector('.skyview-queue-modal-overlay');
       if (existingQueueModal) existingQueueModal.remove();
@@ -1551,6 +1569,7 @@ function mountSkyview(root) {
       }
     }
 
+    // --- Theme ---
     const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'];
     allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
     if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
@@ -1559,9 +1578,46 @@ function mountSkyview(root) {
     document.body.style.backgroundColor = themeBg[state.theme] || '';
     document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
 
-    const toolbar = createEl('div', 'skyview-toolbar');
+    // --- Clock ---
+    const dateText = state.clock.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const clockText = `${String(state.clock.getHours()).padStart(2, '0')}:${String(state.clock.getMinutes()).padStart(2, '0')}`;
+    els.clock.textContent = `${dateText} ${clockText}`;
+
+    // --- Crew ---
+    const isSelectedDateToday = state.selectedDate === '' || state.selectedDate === todayDate();
+    const hasDateSelected = state.selectedDate !== '';
+    let nextLoadId = null;
+    let nextPilot = '';
+    let nextJumpLeader = '';
+    if (state.loads.length > 0) {
+      const nextLoad = getNextUpcomingLoad(state.loads);
+      nextLoadId = nextLoad?.id || null;
+      const crewSource = nextLoad || state.loads[state.loads.length - 1];
+      nextPilot = formatDisplayName(String(crewSource?.pilot || '').trim(), state.showQuotedNameParts);
+      nextJumpLeader = formatDisplayName(String(crewSource?.jumpLeader || '').trim(), state.showQuotedNameParts);
+    }
+    els.crewPilot.textContent = nextPilot ? `Pilot: ${nextPilot}` : '';
+    els.crewJumpLeader.textContent = nextJumpLeader ? `Hoppledare: ${nextJumpLeader}` : '';
+
+    // --- Tools (toolbar) ---
+    els.tools.innerHTML = '';
     const toolbarLeft = createEl('div', 'skyview-toolbar-left');
-    const toolbarRight = createEl('div', 'skyview-toolbar-right');
+
+    if (state.jumpQueueCount !== null) {
+      const queueBtn = createEl('button', 'skyview-queue-badge');
+      queueBtn.type = 'button';
+      queueBtn.textContent = `${state.jumpQueueCount} i kön`;
+      queueBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.queueModalOpen = true;
+        fetchJumpQueue();
+      });
+      toolbarLeft.appendChild(queueBtn);
+    }
 
     if (state.title.trim() !== '') {
       toolbarLeft.appendChild(createEl('h2', 'skyview-title', state.title));
@@ -1583,8 +1639,6 @@ function mountSkyview(root) {
       render();
     });
     settingsWrap.appendChild(settingsButton);
-
-    toolbarLeft.appendChild(settingsWrap);
 
     if (state.isLoggedIn) {
       const dateControl = createEl('label', 'skyview-date-control');
@@ -1635,87 +1689,14 @@ function mountSkyview(root) {
       toolbarLeft.appendChild(dateControl);
     }
 
-    const tvLink = createEl('a', 'skyview-tv-link');
-    tvLink.href = '/skyview-full';
-    tvLink.title = 'Fullskärm';
-    tvLink.setAttribute('aria-label', 'Visa i fullskärm');
-    tvLink.appendChild(createTvIcon());
-    toolbarLeft.appendChild(tvLink);
+    toolbarLeft.appendChild(settingsWrap);
+    els.tools.appendChild(toolbarLeft);
 
-    const dateText = state.clock.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    const clockText = `${String(state.clock.getHours()).padStart(2, '0')}:${String(state.clock.getMinutes()).padStart(2, '0')}`;
-
-    toolbar.appendChild(toolbarLeft);
-    toolbar.appendChild(toolbarRight);
-    root.appendChild(toolbar);
+    // --- Messages ---
+    els.messages.innerHTML = '';
 
     if (state.offlineMode) {
-      root.appendChild(createEl('div', 'skyview-offline-bar', 'Offline \u2014 visar cachad data'));
-    }
-
-    if (state.error) {
-      root.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
-      renderOverlays();
-      return;
-    }
-
-    if (state.loading) {
-      root.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
-      renderOverlays();
-      return;
-    }
-
-    if (!state.loads.length) {
-      if (state.jumpQueueCount !== null) {
-        const row = createEl('div', 'skyview-next-crew-row');
-        row.appendChild(createEl('span', 'skyview-next-crew-item skyview-clock', `${dateText} ${clockText}`));
-        const queueBtn = createEl('button', 'skyview-next-crew-item skyview-next-crew-item--right skyview-queue-badge');
-        queueBtn.type = 'button';
-        queueBtn.textContent = `${state.jumpQueueCount} i kön`;
-        queueBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          state.queueModalOpen = true;
-          fetchJumpQueue();
-        });
-        row.appendChild(queueBtn);
-        root.appendChild(row);
-      }
-      root.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
-      renderOverlays();
-      return;
-    }
-
-    const isSelectedDateToday = state.selectedDate === '' || state.selectedDate === todayDate();
-    const hasDateSelected = state.selectedDate !== '';
-    const nextLoad = getNextUpcomingLoad(state.loads);
-    const nextLoadId = nextLoad?.id || null;
-    const crewSource = nextLoad || state.loads[state.loads.length - 1];
-    const nextPilot = formatDisplayName(String(crewSource?.pilot || '').trim(), state.showQuotedNameParts);
-    const nextJumpLeader = formatDisplayName(String(crewSource?.jumpLeader || '').trim(), state.showQuotedNameParts);
-    const hasNextCrew = nextPilot !== '' || nextJumpLeader !== '' || state.jumpQueueCount !== null;
-
-    const alwaysShowCrew = true;
-    if (hasNextCrew || alwaysShowCrew) {
-      const row = createEl('div', 'skyview-next-crew-row');
-      row.appendChild(createEl('span', 'skyview-next-crew-item skyview-clock', `${dateText} ${clockText}`));
-      if (nextPilot) row.appendChild(createEl('span', 'skyview-next-crew-item', `Pilot: ${nextPilot}`));
-      if (nextJumpLeader) row.appendChild(createEl('span', 'skyview-next-crew-item', `Hoppledare: ${nextJumpLeader}`));
-      if (state.jumpQueueCount !== null) {
-        const queueBtn = createEl('button', 'skyview-next-crew-item skyview-next-crew-item--right skyview-queue-badge');
-        queueBtn.type = 'button';
-        queueBtn.textContent = `${state.jumpQueueCount} i kön`;
-        queueBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          state.queueModalOpen = true;
-          fetchJumpQueue();
-        });
-        row.appendChild(queueBtn);
-      }
-      root.appendChild(row);
+      els.messages.appendChild(createEl('div', 'skyview-offline-bar', 'Offline \u2014 visar cachad data'));
     }
 
     // Detect when message disappears → fade it out.
@@ -1743,54 +1724,65 @@ function mountSkyview(root) {
         if (i > 0) msgRow.appendChild(document.createElement('br'));
         msgRow.appendChild(document.createTextNode(part.trim()));
       });
-      root.appendChild(msgRow);
+      els.messages.appendChild(msgRow);
     }
 
-    const board = createEl('div', 'skyview-board');
-    let newIndex = 0;
-    const visibleLoads = state.maxLoads > 0 ? state.loads.slice(0, state.maxLoads) : state.loads;
+    // --- Loads ---
+    if (state.error) {
+      els.loads.innerHTML = '';
+      els.loads.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
+    } else if (state.loading) {
+      els.loads.innerHTML = '';
+      els.loads.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
+    } else if (!state.loads.length) {
+      els.loads.innerHTML = '';
+      els.loads.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
+    } else {
+      els.loads.innerHTML = '';
+      let newIndex = 0;
+      const visibleLoads = state.maxLoads > 0 ? state.loads.slice(0, state.maxLoads) : state.loads;
 
-    // Detect comments that just disappeared and animate them out.
-    // Also detect comments that just appeared or changed (for fade-in).
-    const justFaded = new Map();
-    const newCommentIds = new Set();
-    visibleLoads.forEach((load) => {
-      const prev = state.prevComments[load.id] || '';
-      if (prev && !load.comment) justFaded.set(load.id, prev);
-      if (load.comment && load.comment !== prev) newCommentIds.add(load.id);
-      state.prevComments[load.id] = load.comment || '';
-    });
-    if (justFaded.size > 0) {
-      justFaded.forEach((v, k) => state.fadingOutComments.set(k, v));
-      setTimeout(() => {
-        justFaded.forEach((_, k) => state.fadingOutComments.delete(k));
-        render();
-      }, 700);
-    }
-
-    visibleLoads.forEach((load) => {
-      const wrap = createEl('div', 'skyview-load-sortable');
-      wrap.dataset.loadId = String(load.id || '');
-      const isNew = state.newLoadIds.has(load.id);
-      if (state.firstRender || isNew) {
-        wrap.classList.add('skyview-load-sortable--animate');
-        wrap.style.setProperty('--card-index', newIndex++);
+      // Detect comments that just disappeared and animate them out.
+      // Also detect comments that just appeared or changed (for fade-in).
+      const justFaded = new Map();
+      const newCommentIds = new Set();
+      visibleLoads.forEach((load) => {
+        const prev = state.prevComments[load.id] || '';
+        if (prev && !load.comment) justFaded.set(load.id, prev);
+        if (load.comment && load.comment !== prev) newCommentIds.add(load.id);
+        state.prevComments[load.id] = load.comment || '';
+      });
+      if (justFaded.size > 0) {
+        justFaded.forEach((v, k) => state.fadingOutComments.set(k, v));
+        setTimeout(() => {
+          justFaded.forEach((_, k) => state.fadingOutComments.delete(k));
+          render();
+        }, 700);
       }
-      if (isNew) {
-        wrap.classList.add('skyview-load-sortable--new');
+
+      visibleLoads.forEach((load) => {
+        const wrap = createEl('div', 'skyview-load-sortable');
+        wrap.dataset.loadId = String(load.id || '');
+        const isNew = state.newLoadIds.has(load.id);
+        if (state.firstRender || isNew) {
+          wrap.classList.add('skyview-load-sortable--animate');
+          wrap.style.setProperty('--card-index', newIndex++);
+        }
+        if (isNew) {
+          wrap.classList.add('skyview-load-sortable--new');
+        }
+        const fadingComment = state.fadingOutComments.get(load.id) || '';
+        const commentIsNew = newCommentIds.has(load.id);
+        wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew, hasDateSelected));
+        els.loads.appendChild(wrap);
+      });
+
+      applyPendingInsertTransition(els.loads);
+
+      state.firstRender = false;
+      if (state.newLoadIds.size > 0) {
+        state.newLoadIds = new Set();
       }
-      const fadingComment = state.fadingOutComments.get(load.id) || '';
-      const commentIsNew = newCommentIds.has(load.id);
-      wrap.appendChild(renderLoadCard(load, isSelectedDateToday, load.id === nextLoadId, state, fadingComment, commentIsNew, hasDateSelected));
-      board.appendChild(wrap);
-    });
-    root.appendChild(board);
-
-    applyPendingInsertTransition(board);
-
-    state.firstRender = false;
-    if (state.newLoadIds.size > 0) {
-      state.newLoadIds = new Set();
     }
 
     renderOverlays();
@@ -1804,6 +1796,21 @@ function mountSkyview(root) {
       render();
     }
   }, 30000);
+
+  // Header show/hide on scroll
+  let lastScrollY = window.scrollY;
+  let headerHidden = false;
+  window.addEventListener('scroll', () => {
+    const sy = window.scrollY;
+    if (sy > lastScrollY && sy > 60 && !headerHidden) {
+      els.header.classList.add('skyview-header--hidden');
+      headerHidden = true;
+    } else if (sy < lastScrollY && headerHidden) {
+      els.header.classList.remove('skyview-header--hidden');
+      headerHidden = false;
+    }
+    lastScrollY = sy;
+  }, { passive: true });
 
   document.addEventListener('click', (event) => {
     const target = event.target;

@@ -39,20 +39,27 @@ class Skywin_Hub_Shortcode_Skyview {
 			$endpoint = add_query_arg( 'aircraft', $aircraft, $endpoint );
 		}
 
-		return sprintf(
-			'<div class="skyview-page" data-skyview-endpoint="%s" data-skyview-title="%s" data-skyview-date="%s" data-skyview-refresh="%d" data-skyview-logged-in="%s" data-skyview-sw="%s" data-skyview-vapid="%s" data-skyview-push-endpoint="%s" data-skyview-login-url="%s" data-skyview-logout-url="%s" data-skyview-queue-endpoint="%s"></div>',
-			esc_attr( $endpoint ),
-			esc_attr( $title ),
-			esc_attr( $date ),
-			$refresh,
-			esc_attr( $logged_in ),
-			esc_attr( class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_sw_url() : '' ),
-			esc_attr( class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_vapid_public_key() : '' ),
-			esc_attr( rest_url( 'skywin-hub/v1/push' ) ),
-			esc_attr( wp_login_url( get_permalink() ) ),
-			esc_attr( wp_logout_url( get_permalink() ) ),
-			esc_attr( rest_url( 'skywin-hub/v1/jump-queue' ) )
+		$template_args = [
+			'endpoint'       => $endpoint,
+			'title'          => $title,
+			'date'           => $date,
+			'refresh'        => $refresh,
+			'logged_in'      => $logged_in,
+			'sw'             => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_sw_url() : '',
+			'vapid'          => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_vapid_public_key() : '',
+			'push_endpoint'  => rest_url( 'skywin-hub/v1/push' ),
+			'login_url'      => wp_login_url( get_permalink() ),
+			'logout_url'     => wp_logout_url( get_permalink() ),
+			'queue_endpoint' => rest_url( 'skywin-hub/v1/jump-queue' ),
+		];
+
+		ob_start();
+		load_template(
+			plugin_dir_path( SW_PLUGIN_FILE ) . 'templates/template-skywin-skyview.php',
+			false,
+			$template_args
 		);
+		return ob_get_clean();
 	}
 
 	// ── REST route ───────────────────────────────────────────────────────────

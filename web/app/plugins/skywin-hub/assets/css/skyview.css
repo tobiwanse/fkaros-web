@@ -5,9 +5,10 @@
   --sv-card-bg: #1a2d42;
   --sv-card-header-bg: #1e3a5f;
   --sv-card-border: #2a4d70;
-  --sv-text: #c9d6e3;
+  --sv-text: #ffffff;
   --sv-text-muted: #7a9bbf;
   --sv-accent: #2ec4f0;
+  --sv-header-text: #ffffff;
   --sv-radius: 12px;
   --sv-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   --sv-g1: #e05c5c;
@@ -25,7 +26,7 @@
   background: transparent;
   color: var(--sv-text);
   min-height: 100vh;
-  padding: 1rem 0.75rem 3rem;
+  padding:0;;
 }
 
 .skyview-title {
@@ -38,10 +39,10 @@
 .skyview-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: end;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-left: auto;
 }
 
 .skyview-date-control {
@@ -83,7 +84,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: var(--sv-text);
+  color: inherit;
   cursor: pointer;
   transition: color 0.15s, opacity 0.15s;
   opacity: 0.75;
@@ -124,9 +125,10 @@
 .skyview-datepicker-popup {
   position: absolute;
   top: calc(100% + 0.45rem);
-  left: 0;
+  right: 0;
   z-index: 40;
   width: 19.5rem;
+  max-width: calc(100vw - 1rem);
   background: var(--sv-card-bg);
   border: 1px solid var(--sv-card-border);
   border-radius: 12px;
@@ -299,9 +301,87 @@
   margin-bottom: 0.75rem;
   font-size: 1.23rem;}
 .skyview-next-crew-row {
-  background: rgba(240, 162, 46, 0.14);
-  border: 1px solid rgba(240, 162, 46, 0.38);
-  color: #ffd79a;
+  background: var(--sv-card-header-bg);
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0.5rem 0;
+  color: inherit;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* ── Template-based header ────────────────────────────────────────────── */
+
+.skyview-header {
+  background: var(--sv-card-header-bg);
+  color: var(--sv-header-text, var(--sv-text));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 0.8rem 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.admin-bar .skyview-header {
+  top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+  .admin-bar .skyview-header {
+    top: 46px;
+  }
+}
+
+.skyview-header--hidden {
+  transform: translateY(-100%);
+}
+
+.skyview-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+  font-size: 1.23rem;
+}
+
+.skyview-crew {
+  display: contents;
+}
+
+.skyview-crew-pilot,
+.skyview-crew-jumpleader {
+  font-weight: 400;
+}
+
+.skyview-crew-pilot:empty,
+.skyview-crew-jumpleader:empty {
+  display: none;
+}
+
+.skyview-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.skyview-messages:empty {
+  display: none;
+}
+
+.skyview-loads {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.skyview-loads:has(.skyview-notice) {
+  display: block;
 }
 
 .skyview-message-row {
@@ -466,19 +546,22 @@
 }
 
 @media (max-width: 1800px) {
-  .skyview-board {
+  .skyview-board,
+  .skyview-loads {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1440px) {
-  .skyview-board {
+  .skyview-board,
+  .skyview-loads {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1120px) {
-  .skyview-board {
+  .skyview-board,
+  .skyview-loads {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -489,7 +572,8 @@
     padding-right: 0;
   }
 
-  .skyview-board {
+  .skyview-board,
+  .skyview-loads {
     grid-template-columns: 1fr;
   }
 }
@@ -1178,7 +1262,7 @@
 
 .skyview-clock {
   font-size: 1.46rem;  font-weight: 600;
-  color: var(--sv-text-muted);
+  color: inherit;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1191,7 +1275,7 @@
 .skyview-settings-button {
   border: none;
   background: none;
-  color: var(--sv-text);
+  color: inherit;
   padding: 0.2rem;
   display: inline-flex;
   align-items: center;
@@ -1292,9 +1376,6 @@
   color: var(--sv-text);
   font-size: 1.01rem;
   padding: 0.3rem 0.4rem;
-  border-radius: 8px;
-  background: var(--sv-card-header-bg);
-  border: 1px solid var(--sv-card-border);
 }
 
 .skyview-settings-control {
@@ -1306,7 +1387,7 @@
 
 .skyview-settings-label {
   font-size: 0.99rem;
-  color: var(--sv-text-muted);
+  color: var(--sv-text);
 }
 
 .skyview-settings-toggle {
@@ -1324,7 +1405,7 @@
   display: inline-block;
   padding: 0.4rem 1.2rem;
   background: var(--sv-accent);
-  color: #fff;
+  color: var(--sv-accent-text, #fff);
   border-radius: 8px;
   font-size: 1.01rem;
   font-weight: 600;
@@ -1338,7 +1419,7 @@
 
 .skyview-logout-button {
   background: var(--sv-card-header-bg);
-  color: var(--sv-text-muted);
+  color: var(--sv-header-text, #fff);
 }
 
 .skyview-settings-select {
@@ -1395,9 +1476,10 @@
   --sv-card-bg: #ffffff;
   --sv-card-header-bg: #e8eef5;
   --sv-card-border: #c5d3e0;
-  --sv-text: #1a2d42;
+  --sv-text: #000000;
   --sv-text-muted: #5a7a96;
   --sv-accent: #0e8abf;
+  --sv-header-text: #111111;
   --sv-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -1407,7 +1489,7 @@
   --sv-card-bg: #0a0a0a;
   --sv-card-header-bg: #111111;
   --sv-card-border: #1e1e1e;
-  --sv-text: #d4d4d4;
+  --sv-text: #ffffff;
   --sv-text-muted: #666666;
   --sv-accent: #00d4ff;
   --sv-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
@@ -1425,7 +1507,7 @@
   --sv-card-bg: #2a1810;
   --sv-card-header-bg: #3a2218;
   --sv-card-border: #4a3020;
-  --sv-text: #e8d5c4;
+  --sv-text: #ffffff;
   --sv-text-muted: #a08068;
   --sv-accent: #e8943a;
   --sv-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
@@ -1443,7 +1525,7 @@
   --sv-card-bg: #122418;
   --sv-card-header-bg: #1a3020;
   --sv-card-border: #2a4a30;
-  --sv-text: #c4dcc8;
+  --sv-text: #ffffff;
   --sv-text-muted: #6a9a70;
   --sv-accent: #4ac078;
   --sv-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -1461,9 +1543,10 @@
   --sv-card-bg: #f6fafd;
   --sv-card-header-bg: #dce8f2;
   --sv-card-border: #b8cfe0;
-  --sv-text: #1c2e3e;
+  --sv-text: #000000;
   --sv-text-muted: #5080a0;
   --sv-accent: #2888c0;
+  --sv-header-text: #111111;
   --sv-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   --sv-g1: #c84040;
   --sv-g2: #c88820;
@@ -1482,6 +1565,7 @@
   --sv-text: #ffffff;
   --sv-text-muted: #cccccc;
   --sv-accent: #ffff00;
+  --sv-accent-text: #000000;
   --sv-shadow: 0 0 0 1px #ffffff;
   --sv-g1: #ff4444;
   --sv-g2: #ffcc00;
@@ -1497,7 +1581,7 @@
   --sv-card-bg: #082040;
   --sv-card-header-bg: #0c2d55;
   --sv-card-border: #144a80;
-  --sv-text: #b8d8f0;
+  --sv-text: #ffffff;
   --sv-text-muted: #5a90b8;
   --sv-accent: #00b8d4;
   --sv-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
@@ -1515,9 +1599,10 @@
   --sv-card-bg: #faf8fd;
   --sv-card-header-bg: #e8e0f0;
   --sv-card-border: #c8b8d8;
-  --sv-text: #2e2040;
+  --sv-text: #000000;
   --sv-text-muted: #7860a0;
   --sv-accent: #7c4dbd;
+  --sv-header-text: #111111;
   --sv-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
   --sv-g1: #c04848;
   --sv-g2: #c89020;
@@ -1533,7 +1618,7 @@
   --sv-card-bg: #2a1018;
   --sv-card-header-bg: #3a1820;
   --sv-card-border: #502030;
-  --sv-text: #e8c8d0;
+  --sv-text: #ffffff;
   --sv-text-muted: #a06878;
   --sv-accent: #e04060;
   --sv-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
@@ -1670,13 +1755,6 @@
     0 0 28px color-mix(in srgb, var(--sv-accent) 38%, transparent),
     0 0 42px rgba(0, 0, 0, 0.95);
 }
-}
-
-:is(.skyview-page--neon-pink, .skyview-page--neon-green, .skyview-page--neon-blue) .skyview-next-crew-row {
-  background: color-mix(in srgb, var(--sv-accent) 8%, #000 92%);
-  border-color: color-mix(in srgb, var(--sv-accent) 28%, transparent);
-  color: color-mix(in srgb, var(--sv-accent) 75%, #fff 25%);
-}
 
 :is(.skyview-page--neon-pink, .skyview-page--neon-green, .skyview-page--neon-blue) .skyview-message-row {
   background: color-mix(in srgb, var(--sv-accent) 8%, #000 92%);
@@ -1690,7 +1768,7 @@
   --sv-card-bg: #0d2440;
   --sv-card-header-bg: #133560;
   --sv-card-border: #1e508a;
-  --sv-text: #c8e4f8;
+  --sv-text: #ffffff;
   --sv-text-muted: #6090b8;
   --sv-accent: #f07820;
   --sv-shadow: 0 4px 22px rgba(0, 0, 0, 0.58);
@@ -1750,12 +1828,6 @@
   border: 1px dashed rgba(74, 176, 232, 0.35);
 }
 
-.skyview-page--aros .skyview-next-crew-row {
-  background: rgba(240, 120, 32, 0.1);
-  border-color: rgba(240, 120, 32, 0.32);
-  color: #ffb86c;
-}
-
 .skyview-page--aros .skyview-message-row {
   background: rgba(74, 176, 232, 0.1);
   border-color: rgba(74, 176, 232, 0.32);
@@ -1768,7 +1840,7 @@
   --sv-card-bg: rgba(4, 18, 52, 0.76);
   --sv-card-header-bg: rgba(8, 28, 80, 0.88);
   --sv-card-border: rgba(90, 176, 240, 0.28);
-  --sv-text: #d8eeff;
+  --sv-text: #ffffff;
   --sv-text-muted: #70b2e8;
   --sv-accent: #00d4ff;
   --sv-shadow: 0 6px 32px rgba(0, 0, 0, 0.6);
@@ -1893,14 +1965,6 @@
   border-radius: 6px;
 }
 
-.skyview-page--skydiver .skyview-next-crew-row {
-  background: rgba(255, 204, 68, 0.1);
-  border-color: rgba(255, 204, 68, 0.32);
-  color: #ffe8a0;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
 .skyview-page--skydiver .skyview-message-row {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.32);
@@ -1916,12 +1980,6 @@
 
 :is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-datepicker-weekday--sunday {
   color: #c0392b;
-}
-
-:is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-next-crew-row {
-  background: rgba(180, 100, 0, 0.1);
-  border-color: rgba(180, 100, 0, 0.45);
-  color: #5a3200;
 }
 
 :is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-queue-badge {
@@ -1992,7 +2050,9 @@
   border-color: #c03030;
   color: #a02020;
 }
-
+.skyview-main{
+  margin:0.8rem;
+}
 /* ── Compact view ────────────────────────────────────────── */
 .skyview-page--compact .skyview-jumper-row {
   padding: 0.1rem 0.6rem;
@@ -2253,9 +2313,11 @@
   --sv-card-bg: #ffffff;
   --sv-card-header-bg: #111111;
   --sv-card-border: #cccccc;
-  --sv-text: #111111;
+  --sv-text: #000000;
   --sv-text-muted: #555555;
   --sv-accent: #1a6fc4;
+  --sv-accent-text: #ffffff;
+  --sv-header-text: #f0f0f0;
   --sv-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   --sv-g1: #c0392b;
   --sv-g2: #d68910;
@@ -2382,11 +2444,7 @@
 .skyview-page--classic .skyview-group-container--color-10 { background: rgba(52,  100, 220, 0.10); }
 
 /* Crew- och meddelanderad */
-.skyview-page--classic .skyview-next-crew-row {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.3);
-  color: #111111;
-}
+.skyview-page--classic .skyview-message-row {
 
 .skyview-page--classic .skyview-message-row {
   background: rgba(26, 111, 196, 0.06);
@@ -2428,7 +2486,7 @@
 }
 
 .skyview-page--classic .skyview-settings-label {
-  color: #444444;
+  color: #000000;
 }
 
 .skyview-page--classic .skyview-date-input:focus,
@@ -2461,8 +2519,8 @@
 
 /* Knappar — synlig text på ljus bakgrund */
 .skyview-page--classic .skyview-logout-button {
-  background: #e8ecf1;
-  color: #444444;
+  background: #111111;
+  color: #ffffff;
   border: 1px solid #cccccc;
 }
 
