@@ -3,7 +3,7 @@
 .skyview-page {
   --sv-bg: #0d1b2a;
   --sv-card-bg: #1a2d42;
-  --sv-card-header-bg: #1e3a5f;
+  --sv-card-header-bg: #1a4a78;
   --sv-card-border: #2a4d70;
   --sv-text: #ffffff;
   --sv-text-muted: #7a9bbf;
@@ -1474,7 +1474,7 @@
 .skyview-page--light {
   --sv-bg: #f0f4f8;
   --sv-card-bg: #ffffff;
-  --sv-card-header-bg: #e8eef5;
+  --sv-card-header-bg: #d8e4f0;
   --sv-card-border: #c5d3e0;
   --sv-text: #000000;
   --sv-text-muted: #5a7a96;
@@ -1487,7 +1487,7 @@
 .skyview-page--midnight {
   --sv-bg: #000000;
   --sv-card-bg: #0a0a0a;
-  --sv-card-header-bg: #111111;
+  --sv-card-header-bg: #181818;
   --sv-card-border: #1e1e1e;
   --sv-text: #ffffff;
   --sv-text-muted: #666666;
@@ -1505,7 +1505,7 @@
 .skyview-page--sunset {
   --sv-bg: #1a0f0a;
   --sv-card-bg: #2a1810;
-  --sv-card-header-bg: #3a2218;
+  --sv-card-header-bg: #4a2a18;
   --sv-card-border: #4a3020;
   --sv-text: #ffffff;
   --sv-text-muted: #a08068;
@@ -1523,7 +1523,7 @@
 .skyview-page--forest {
   --sv-bg: #0a1a10;
   --sv-card-bg: #122418;
-  --sv-card-header-bg: #1a3020;
+  --sv-card-header-bg: #1a3a22;
   --sv-card-border: #2a4a30;
   --sv-text: #ffffff;
   --sv-text-muted: #6a9a70;
@@ -1541,7 +1541,7 @@
 .skyview-page--arctic {
   --sv-bg: #eaf2f8;
   --sv-card-bg: #f6fafd;
-  --sv-card-header-bg: #dce8f2;
+  --sv-card-header-bg: #ccdff0;
   --sv-card-border: #b8cfe0;
   --sv-text: #000000;
   --sv-text-muted: #5080a0;
@@ -1560,7 +1560,7 @@
 .skyview-page--contrast {
   --sv-bg: #000000;
   --sv-card-bg: #0a0a0a;
-  --sv-card-header-bg: #1a1a1a;
+  --sv-card-header-bg: #222222;
   --sv-card-border: #ffffff;
   --sv-text: #ffffff;
   --sv-text-muted: #cccccc;
@@ -1579,7 +1579,7 @@
 .skyview-page--ocean {
   --sv-bg: #031525;
   --sv-card-bg: #082040;
-  --sv-card-header-bg: #0c2d55;
+  --sv-card-header-bg: #0e3868;
   --sv-card-border: #144a80;
   --sv-text: #ffffff;
   --sv-text-muted: #5a90b8;
@@ -1597,7 +1597,7 @@
 .skyview-page--lavender {
   --sv-bg: #f0edf6;
   --sv-card-bg: #faf8fd;
-  --sv-card-header-bg: #e8e0f0;
+  --sv-card-header-bg: #ddd0ea;
   --sv-card-border: #c8b8d8;
   --sv-text: #000000;
   --sv-text-muted: #7860a0;
@@ -1616,7 +1616,7 @@
 .skyview-page--cherry {
   --sv-bg: #1a0a0e;
   --sv-card-bg: #2a1018;
-  --sv-card-header-bg: #3a1820;
+  --sv-card-header-bg: #4a1c28;
   --sv-card-border: #502030;
   --sv-text: #ffffff;
   --sv-text-muted: #a06878;
@@ -1634,7 +1634,7 @@
 .skyview-page--neon-pink {
   --sv-bg: #000000;
   --sv-card-bg: #080108;
-  --sv-card-header-bg: #140214;
+  --sv-card-header-bg: #1e041e;
   --sv-card-border: #ff4dce;
   --sv-text: #ffffff;
   --sv-text-muted: rgba(255, 255, 255, 0.55);
@@ -1652,7 +1652,7 @@
 .skyview-page--neon-green {
   --sv-bg: #000000;
   --sv-card-bg: #010805;
-  --sv-card-header-bg: #02140c;
+  --sv-card-header-bg: #041e10;
   --sv-card-border: #39ff88;
   --sv-text: #ffffff;
   --sv-text-muted: rgba(255, 255, 255, 0.55);
@@ -1670,7 +1670,7 @@
 .skyview-page--neon-blue {
   --sv-bg: #000000;
   --sv-card-bg: #01060b;
-  --sv-card-header-bg: #02111c;
+  --sv-card-header-bg: #041a28;
   --sv-card-border: #3cbcff;
   --sv-text: #ffffff;
   --sv-text-muted: rgba(255, 255, 255, 0.55);
@@ -1766,7 +1766,7 @@
 .skyview-page--aros {
   --sv-bg: #07162a;
   --sv-card-bg: #0d2440;
-  --sv-card-header-bg: #133560;
+  --sv-card-header-bg: #164278;
   --sv-card-border: #1e508a;
   --sv-text: #ffffff;
   --sv-text-muted: #6090b8;
@@ -1838,7 +1838,7 @@
 .skyview-page--skydiver {
   --sv-bg: #04183a;
   --sv-card-bg: rgba(4, 18, 52, 0.76);
-  --sv-card-header-bg: rgba(8, 28, 80, 0.88);
+  --sv-card-header-bg: rgba(10, 35, 100, 0.90);
   --sv-card-border: rgba(90, 176, 240, 0.28);
   --sv-text: #ffffff;
   --sv-text-muted: #70b2e8;
@@ -2117,7 +2117,7 @@
 .skyview-page--airport {
   --sv-bg: #050505;
   --sv-card-bg: #0c0c0a;
-  --sv-card-header-bg: #141410;
+  --sv-card-header-bg: #1c1c14;
   --sv-card-border: rgba(200, 155, 30, 0.3);
   --sv-text: #ffffff;
   --sv-text-muted: rgba(255, 255, 255, 0.55);
@@ -2311,7 +2311,7 @@
 .skyview-page--classic {
   --sv-bg: #ffffff;
   --sv-card-bg: #ffffff;
-  --sv-card-header-bg: #111111;
+  --sv-card-header-bg: #1a1a1a;
   --sv-card-border: #cccccc;
   --sv-text: #000000;
   --sv-text-muted: #555555;
