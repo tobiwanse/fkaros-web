@@ -704,7 +704,7 @@ function mountSkyview(root) {
     queueList: [],
     queueLoading: false,
     showQuotedNameParts: typeof saved.showQuotedNameParts === 'boolean' ? saved.showQuotedNameParts : false,
-    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
+    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'wizard-cup', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
     compactView: typeof saved.compactView === 'boolean' ? saved.compactView : false,
     notifyNewLoad: typeof saved.notifyNewLoad === 'boolean' ? saved.notifyNewLoad : (typeof saved.notificationsEnabled === 'boolean' ? saved.notificationsEnabled : false),
     notifyNewJumper: typeof saved.notifyNewJumper === 'boolean' ? saved.notifyNewJumper : (typeof saved.notifyWatchedJumper === 'boolean' ? saved.notifyWatchedJumper : false),
@@ -1393,6 +1393,7 @@ function mountSkyview(root) {
       { value: 'skydiver', label: 'Skydiver' },
       { value: 'airport', label: 'Flygplats' },
       { value: 'flower-power', label: 'Flower Power' },
+      { value: 'wizard-cup', label: 'Wizard Cup' },
     ];
     themes.forEach((t) => {
       const option = createEl('option', '', t.label);
@@ -1595,11 +1596,11 @@ function mountSkyview(root) {
   }
 
   function applyThemeStyles() {
-    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'];
+    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'wizard-cup', 'classic'];
     allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
     if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
     root.classList.toggle('skyview-page--compact', state.compactView);
-    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', classic: '#ffffff' };
+    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', 'wizard-cup': '#120f22', classic: '#ffffff' };
     document.body.style.backgroundColor = themeBg[state.theme] || '';
     document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
   }

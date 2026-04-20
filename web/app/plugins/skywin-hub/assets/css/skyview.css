@@ -2458,6 +2458,103 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   Theme: Wizard Cup (fantasy broom-sport inspired)
+   Uses optional custom images through CSS variables.
+   ══════════════════════════════════════════════════════════ */
+.skyview-page--wizard-cup {
+  --sv-bg: #120f22;
+  --sv-card-bg: rgba(24, 21, 44, 0.92);
+  --sv-card-header-bg: linear-gradient(135deg, #3a2a6c, #6c2f70);
+  --sv-card-border: rgba(201, 166, 91, 0.45);
+  --sv-text: #f5efdd;
+  --sv-text-muted: #c7b98d;
+  --sv-accent: #f0c66a;
+  --sv-accent-text: #241b09;
+  --sv-header-text: #fff7df;
+  --sv-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --sv-g1: #f0c66a;
+  --sv-g2: #df7f52;
+  --sv-g3: #4db07d;
+  --sv-g4: #4e8fe8;
+  --sv-g5: #aa6de8;
+  --sv-g6: #d65f92;
+  --sv-queue-bg: rgba(240, 198, 106, 0.18);
+  --sv-queue-border: rgba(240, 198, 106, 0.5);
+  --sv-queue-text: #ffe8b5;
+  --sv-queue-bg-hover: rgba(240, 198, 106, 0.28);
+  --sv-queue-border-hover: rgba(240, 198, 106, 0.7);
+
+  /* Set these to your own licensed image files if desired. */
+  --sv-wizard-pitch-image: none;
+  --sv-wizard-crowd-image: none;
+}
+
+.skyview-page--wizard-cup::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    var(--sv-wizard-crowd-image),
+    var(--sv-wizard-pitch-image),
+    radial-gradient(circle at 15% 20%, rgba(240, 198, 106, 0.13), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(110, 70, 190, 0.15), transparent 48%),
+    linear-gradient(180deg, #191332 0%, #120f22 45%, #0d0b18 100%);
+  background-size: cover, cover, auto, auto, auto;
+  background-position: center, center, center, center, center;
+  background-repeat: no-repeat;
+}
+
+.skyview-page--wizard-cup .skyview-header {
+  background: linear-gradient(90deg, #2f245a, #4f2f77, #7a315f);
+  color: #fff7df;
+  border-bottom: 1px solid rgba(240, 198, 106, 0.35);
+}
+
+.skyview-page--wizard-cup .skyview-title {
+  color: #f0c66a;
+  text-shadow: 0 0 16px rgba(240, 198, 106, 0.35);
+}
+
+.skyview-page--wizard-cup .skyview-card {
+  border-color: rgba(201, 166, 91, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(201, 166, 91, 0.22),
+    0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.skyview-page--wizard-cup .skyview-card:hover {
+  border-color: rgba(240, 198, 106, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(240, 198, 106, 0.4),
+    0 0 18px rgba(240, 198, 106, 0.18),
+    0 10px 30px rgba(0, 0, 0, 0.62);
+}
+
+.skyview-page--wizard-cup .skyview-card-header {
+  background: linear-gradient(135deg, rgba(80, 45, 130, 0.95), rgba(120, 45, 95, 0.95));
+  border-bottom-color: rgba(201, 166, 91, 0.3);
+}
+
+.skyview-page--wizard-cup .skyview-message-row {
+  background: rgba(240, 198, 106, 0.1);
+  border-color: rgba(240, 198, 106, 0.32);
+  color: #ffe8b5;
+}
+
+.skyview-page--wizard-cup .skyview-jumper-row--highlighted {
+  background: rgba(240, 198, 106, 0.12);
+  box-shadow: inset 2px 0 0 #f0c66a;
+}
+
+.skyview-page--wizard-cup .skyview-settings-panel,
+.skyview-page--wizard-cup .skyview-datepicker-popup {
+  background: rgba(20, 17, 36, 0.96);
+  border-color: rgba(201, 166, 91, 0.45);
+}
+
+/* ══════════════════════════════════════════════════════════
    Theme: Classic (white bg, black header, white footer)
    ══════════════════════════════════════════════════════════ */
 .skyview-page--classic {
