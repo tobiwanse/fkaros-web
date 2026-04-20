@@ -1,4 +1,6 @@
 
+// Toolbar event listeners and dynamic updates are now handled inside mountSkyview/render where 'els' is defined.
+
 function todayDate() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -488,6 +490,17 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
     card.appendChild(crewRow);
   }
 
+  // Weight summary: only show if a date is selected
+  if (state.selectedDate && state.selectedDate !== '') {
+    const totalWeight = jumpers.reduce((sum, j) => sum + (Number(j.memberWeight) || 0), 0);
+    if (totalWeight > 0) {
+      const maxW = load.maxWeight ? Number(load.maxWeight) : 0;
+      const weightText = maxW > 0 ? `${Math.round(totalWeight)}/${Math.round(maxW)} kg` : `${Math.round(totalWeight)} kg`;
+      const weightRow = createEl('div', 'skyview-card-weight', `Vikt: ${weightText}`);
+      card.appendChild(weightRow);
+    }
+  }
+
   return card;
 }
 
@@ -655,7 +668,7 @@ function mountSkyview(root) {
     queueList: [],
     queueLoading: false,
     showQuotedNameParts: typeof saved.showQuotedNameParts === 'boolean' ? saved.showQuotedNameParts : false,
-    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
+    theme: ['dark', 'light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'].includes(saved.theme) ? saved.theme : 'classic',
     compactView: typeof saved.compactView === 'boolean' ? saved.compactView : false,
     notifyNewLoad: typeof saved.notifyNewLoad === 'boolean' ? saved.notifyNewLoad : (typeof saved.notificationsEnabled === 'boolean' ? saved.notificationsEnabled : false),
     notifyNewJumper: typeof saved.notifyNewJumper === 'boolean' ? saved.notifyNewJumper : (typeof saved.notifyWatchedJumper === 'boolean' ? saved.notifyWatchedJumper : false),
@@ -1037,7 +1050,61 @@ function mountSkyview(root) {
       // Skip re-render while settings panel or queue modal is open so focused
       // inputs/dropdowns don't lose focus and modals don't flash.
       if (!state.settingsOpen && !state.queueModalOpen) {
-        render();
+        if (state.calendarOpen) {
+          // Only update the loads section, not the whole page
+          if (els.loads) {
+            // ...existing code to update just the loads...
+            els.loads.innerHTML = '';
+            if (state.error) {
+              els.loads.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
+            } else if (state.loading) {
+              els.loads.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
+            } else if (!state.loads.length) {
+              els.loads.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
+            } else {
+              let newIndex = 0;
+              const visibleLoads = state.maxLoads > 0 ? state.loads.slice(0, state.maxLoads) : state.loads;
+              const justFaded = new Map();
+              const newCommentIds = new Set();
+              visibleLoads.forEach((load) => {
+                const prev = state.prevComments[load.id] || '';
+                if (prev && !load.comment) justFaded.set(load.id, prev);
+                if (load.comment && load.comment !== prev) newCommentIds.add(load.id);
+                state.prevComments[load.id] = load.comment || '';
+              });
+              if (justFaded.size > 0) {
+                justFaded.forEach((v, k) => state.fadingOutComments.set(k, v));
+                setTimeout(() => {
+                  justFaded.forEach((_, k) => state.fadingOutComments.delete(k));
+                  render();
+                }, 700);
+              }
+              visibleLoads.forEach((load) => {
+                const wrap = createEl('div', 'skyview-load-sortable');
+                wrap.dataset.loadId = String(load.id || '');
+                const isNew = state.newLoadIds.has(load.id);
+                if (state.firstRender || isNew) {
+                  wrap.classList.add('skyview-load-sortable--animate');
+                  wrap.style.setProperty('--card-index', newIndex++);
+                }
+                if (isNew) {
+                  wrap.classList.add('skyview-load-sortable--new');
+                }
+                const fadingComment = state.fadingOutComments.get(load.id) || '';
+                const commentIsNew = newCommentIds.has(load.id);
+                wrap.appendChild(renderLoadCard(load, state.selectedDate === '' || state.selectedDate === todayDate(), load.id === (getNextUpcomingLoad(state.loads)?.id || null), state, fadingComment, commentIsNew, state.selectedDate !== ''));
+                els.loads.appendChild(wrap);
+              });
+              applyPendingInsertTransition(els.loads);
+              state.firstRender = false;
+              if (state.newLoadIds.size > 0) {
+                state.newLoadIds = new Set();
+              }
+            }
+          }
+        } else {
+          render();
+        }
       }
     }
   }
@@ -1099,7 +1166,7 @@ function mountSkyview(root) {
     prevBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       state.calendarMonth = addMonths(state.calendarMonth, -1);
-      render();
+      rerenderCalendarOnly();
     });
 
     const nextBtn = createEl('button', 'skyview-datepicker-nav skyview-datepicker-nav--next', '›');
@@ -1108,8 +1175,23 @@ function mountSkyview(root) {
     nextBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       state.calendarMonth = addMonths(state.calendarMonth, 1);
-      render();
+      rerenderCalendarOnly();
     });
+  // Helper to only re-render the calendar popup, not the whole page
+  function rerenderCalendarOnly() {
+    const root = document.querySelector('.skyview-page');
+    const existingPopup = root && root.querySelector('.skyview-datepicker-popup');
+    if (existingPopup) existingPopup.remove();
+    if (state.calendarOpen) {
+      const popup = renderCalendarPopup();
+      const tools = root && root.querySelector('.skyview-tools');
+      if (tools && tools.parentNode) {
+        tools.parentNode.insertBefore(popup, tools.nextSibling);
+      } else if (root) {
+        root.appendChild(popup);
+      }
+    }
+  }
 
     const monthLabel = createEl(
       'div',
@@ -1280,6 +1362,7 @@ function mountSkyview(root) {
       { value: 'aros', label: 'Aros' },
       { value: 'skydiver', label: 'Skydiver' },
       { value: 'airport', label: 'Flygplats' },
+      { value: 'flower-power', label: 'Flower Power ✿' },
     ];
     themes.forEach((t) => {
       const option = createEl('option', '', t.label);
@@ -1518,6 +1601,92 @@ function mountSkyview(root) {
   }
 
   function render() {
+        // Find the root element for querySelector (the .skyview-root container)
+        const rootEl = els.header ? els.header.closest('.skyview-root') || document : document;
+
+        // Show selected date in .skyview-date-selected
+        const dateSelectedEl = rootEl.querySelector('.skyview-date-selected');
+        if (dateSelectedEl) {
+          if (state.selectedDate) {
+            const d = parseDateString(state.selectedDate);
+            dateSelectedEl.textContent = d ? d.toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' }) : state.selectedDate;
+          } else {
+            dateSelectedEl.textContent = '';
+          }
+        }
+
+        // Render datepicker popup if open, always re-render to update listeners
+        const existingPopup = root.querySelector('.skyview-datepicker-popup');
+        if (existingPopup) existingPopup.remove();
+        if (state.calendarOpen) {
+          const popup = renderCalendarPopup();
+          if (els.tools && els.tools.parentNode) {
+            els.tools.parentNode.insertBefore(popup, els.tools.nextSibling);
+          } else {
+            root.appendChild(popup);
+          }
+        }
+
+        // Queue badge: update text and click handler
+        const queueBtn = rootEl.querySelector('.skyview-queue-badge');
+        if (queueBtn) {
+          if (state.jumpQueueCount !== null) {
+            queueBtn.textContent = `${state.jumpQueueCount} i kön`;
+          }
+          if (!queueBtn._skyviewBound) {
+            queueBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              state.queueModalOpen = true;
+              fetchJumpQueue();
+            });
+            queueBtn._skyviewBound = true;
+          }
+        }
+
+        // Datepicker button: open/close calendar
+        const dateBtn = rootEl.querySelector('.skyview-date-button');
+        if (dateBtn && !dateBtn._skyviewBound) {
+          dateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.calendarOpen = !state.calendarOpen;
+            if (state.calendarOpen) state.settingsOpen = false;
+            const baseDate = parseDateString(state.selectedDate) || new Date();
+            state.calendarMonth = startOfMonth(baseDate);
+            render();
+          });
+          dateBtn._skyviewBound = true;
+        }
+
+        // Date clear button: only show if a date is selected
+        const clearBtn = rootEl.querySelector('.skyview-date-clear');
+        if (clearBtn) {
+          clearBtn.style.display = state.selectedDate ? '' : 'none';
+          if (!clearBtn._skyviewBound) {
+            clearBtn.addEventListener('click', () => {
+              state.selectedDate = '';
+              state.calendarOpen = false;
+              state.calendarMonth = startOfMonth(new Date());
+              state.hasFetchedOnce = false;
+              state.loading = true;
+              scheduleRefresh();
+              render();
+              fetchLoads();
+            });
+            clearBtn._skyviewBound = true;
+          }
+        }
+
+        // Settings button: open/close settings modal
+        const settingsBtn = rootEl.querySelector('.skyview-settings-button');
+        if (settingsBtn && !settingsBtn._skyviewBound) {
+          settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.settingsOpen = !state.settingsOpen;
+            if (state.settingsOpen) state.calendarOpen = false;
+            render();
+          });
+          settingsBtn._skyviewBound = true;
+        }
     function renderOverlays() {
       const existingQueueModal = root.querySelector('.skyview-queue-modal-overlay');
       if (existingQueueModal) existingQueueModal.remove();
@@ -1570,11 +1739,11 @@ function mountSkyview(root) {
     }
 
     // --- Theme ---
-    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'classic'];
+    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'];
     allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
     if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
     root.classList.toggle('skyview-page--compact', state.compactView);
-    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', classic: '#ffffff' };
+    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', classic: '#ffffff' };
     document.body.style.backgroundColor = themeBg[state.theme] || '';
     document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
 
@@ -1604,93 +1773,8 @@ function mountSkyview(root) {
     els.crewJumpLeader.textContent = nextJumpLeader ? `Hoppledare: ${nextJumpLeader}` : '';
 
     // --- Tools (toolbar) ---
-    els.tools.innerHTML = '';
-    const toolbarLeft = createEl('div', 'skyview-toolbar-left');
-
-    if (state.jumpQueueCount !== null) {
-      const queueBtn = createEl('button', 'skyview-queue-badge');
-      queueBtn.type = 'button';
-      queueBtn.textContent = `${state.jumpQueueCount} i kön`;
-      queueBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        state.queueModalOpen = true;
-        fetchJumpQueue();
-      });
-      toolbarLeft.appendChild(queueBtn);
-    }
-
-    if (state.title.trim() !== '') {
-      toolbarLeft.appendChild(createEl('h2', 'skyview-title', state.title));
-    }
-
-    const settingsWrap = createEl('div', 'skyview-settings-wrapper');
-    const settingsButton = createEl(
-      'button',
-      `skyview-settings-button${state.settingsOpen ? ' skyview-settings-button--active' : ''}`
-    );
-    settingsButton.type = 'button';
-    settingsButton.title = 'Inställningar';
-    settingsButton.setAttribute('aria-label', 'Visa inställningar');
-    settingsButton.appendChild(createSettingsIcon());
-    settingsButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      state.settingsOpen = !state.settingsOpen;
-      if (state.settingsOpen) state.calendarOpen = false;
-      render();
-    });
-    settingsWrap.appendChild(settingsButton);
-
-    if (state.isLoggedIn) {
-      const dateControl = createEl('label', 'skyview-date-control');
-      const dateActions = createEl('div', 'skyview-date-actions');
-      const dateButton = createEl(
-        'button',
-        'skyview-date-button'
-      );
-      dateButton.appendChild(createCalendarIcon());
-      if (state.selectedDate) {
-        dateButton.appendChild(document.createTextNode(' ' + state.selectedDate));
-      }
-      dateButton.type = 'button';
-      dateButton.setAttribute('aria-label', 'Välj datum');
-      dateButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        state.calendarOpen = !state.calendarOpen;
-        if (state.calendarOpen) state.settingsOpen = false;
-        const baseDate = parseDateString(state.selectedDate) || new Date();
-        state.calendarMonth = startOfMonth(baseDate);
-        render();
-      });
-      dateActions.appendChild(dateButton);
-
-      if (state.selectedDate) {
-        const clearBtn = createEl('button', 'skyview-date-clear', '✕');
-        clearBtn.type = 'button';
-        clearBtn.title = 'Rensa datum';
-        clearBtn.setAttribute('aria-label', 'Rensa datum');
-        clearBtn.addEventListener('click', () => {
-          state.selectedDate = '';
-          state.calendarOpen = false;
-          state.calendarMonth = startOfMonth(new Date());
-          state.hasFetchedOnce = false;
-          state.loading = true;
-          scheduleRefresh();
-          render();
-          fetchLoads();
-        });
-        dateActions.appendChild(clearBtn);
-      }
-
-      if (state.calendarOpen) {
-        dateActions.appendChild(renderCalendarPopup());
-      }
-
-      dateControl.appendChild(dateActions);
-      toolbarLeft.appendChild(dateControl);
-    }
-
-    toolbarLeft.appendChild(settingsWrap);
-    els.tools.appendChild(toolbarLeft);
+    // Toolbar is now static in HTML/PHP. Only update dynamic content if needed.
+    // Example: update queue count, add event listeners, etc. if required.
 
     // --- Messages ---
     els.messages.innerHTML = '';
@@ -1728,6 +1812,7 @@ function mountSkyview(root) {
     }
 
     // --- Loads ---
+    // Always re-render lift cards when loads change
     if (state.error) {
       els.loads.innerHTML = '';
       els.loads.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
@@ -1783,6 +1868,21 @@ function mountSkyview(root) {
       if (state.newLoadIds.size > 0) {
         state.newLoadIds = new Set();
       }
+    }
+    // Close datepicker popup on outside click (only one listener at a time)
+    if (!window._skyviewDatepickerOutsideHandler) {
+      window._skyviewDatepickerOutsideHandler = function handleOutsideClick(e) {
+        const popup = document.querySelector('.skyview-datepicker-popup');
+        if (state.calendarOpen && popup && !popup.contains(e.target)) {
+          state.calendarOpen = false;
+          render();
+        }
+      };
+    }
+    if (state.calendarOpen) {
+      document.addEventListener('mousedown', window._skyviewDatepickerOutsideHandler, true);
+    } else {
+      document.removeEventListener('mousedown', window._skyviewDatepickerOutsideHandler, true);
     }
 
     renderOverlays();

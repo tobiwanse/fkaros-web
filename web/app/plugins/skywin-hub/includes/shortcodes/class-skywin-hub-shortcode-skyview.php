@@ -555,6 +555,7 @@ class Skywin_Hub_Shortcode_Skyview {
 				'onlyFlying'     => ! empty( $raw['onlyFlying'] ?? $raw['only_flying'] ?? false ),
 				'comment'        => sanitize_text_field( $raw['comment'] ?? $raw['loadComment'] ?? $raw['remarks'] ?? $raw['note'] ?? '' ),
 				'jumpers'        => self::deduplicate_jumpers( self::extract_jumpers( $raw, $load_id ) ),
+				'maxWeight'      => isset( $raw['maxWeight'] ) ? floatval( $raw['maxWeight'] ) : null,
 			];
 		}
 
@@ -1034,6 +1035,7 @@ class Skywin_Hub_Shortcode_Skyview {
 					'jumptype_group' => sanitize_text_field( (string) ( $slot['jumptypeGroup'] ?? $slot['jumptype_group'] ?? '' ) ),
 					'group_id'    => $group_id,
 					'group_title' => $group_title,
+					'memberWeight' => isset( $slot['memberWeight'] ) ? floatval( $slot['memberWeight'] ) : null,
 				];
 			}
 		}
@@ -1084,6 +1086,7 @@ class Skywin_Hub_Shortcode_Skyview {
 						'jumptype_group'       => $group_jumptype_group,
 						'group_id'             => '' !== $group_id ? $group_id : null,
 						'group_title'          => '' !== $group_title ? $group_title : $placeholder_label,
+						'memberWeight'         => null,
 					];
 					continue;
 				}
@@ -1118,14 +1121,16 @@ class Skywin_Hub_Shortcode_Skyview {
 						'jumptype_group' => $group_jumptype_group,
 						'group_id'    => '' !== $group_id ? $group_id : null,
 						'group_title' => '' !== $group_title ? $group_title : null,
+						'memberWeight' => isset( $jump['weight'] ) ? floatval( $jump['weight'] ) : null,
 					];
 				}
-
+				
 				continue;
 			}
 
 			if ( 'JUMP' === $child_type ) {
 				$name = self::extract_jump_name( $child );
+				
 				if ( '' === $name ) {
 					continue;
 				}
@@ -1151,6 +1156,7 @@ class Skywin_Hub_Shortcode_Skyview {
 					'jumptype_group' => sanitize_text_field( (string) ( $child['jumptypeGroup'] ?? $child['jumptype_group'] ?? '' ) ),
 					'group_id'    => $jump_gid,
 					'group_title' => '' !== (string) $jump_gtit ? $jump_gtit : null,
+					'memberWeight' => isset( $child['weight'] ) ? floatval( $child['weight'] ) : null,
 				];
 			}
 		}

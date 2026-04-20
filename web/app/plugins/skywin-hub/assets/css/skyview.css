@@ -123,9 +123,10 @@
 }
 
 .skyview-datepicker-popup {
-  position: absolute;
-  top: calc(100% + 0.45rem);
-  right: 0;
+  position: fixed;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 40;
   width: 19.5rem;
   max-width: calc(100vw - 1rem);
@@ -134,6 +135,16 @@
   border-radius: 12px;
   box-shadow: var(--sv-shadow);
   overflow: hidden;
+}
+
+@media (max-width: 400px) {
+  .skyview-datepicker-popup {
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    width: auto;
+    max-width: none;
+  }
 }
 
 .skyview-datepicker-header {
@@ -1020,6 +1031,15 @@
   font-weight: 600;
   color: var(--sv-text-muted);
   white-space: nowrap;
+}
+
+.skyview-card-weight {
+  padding: 0.25rem 0.8rem;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--sv-text-muted);
+  border-top: 1px solid var(--sv-card-border);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .skyview-card-footer {
@@ -2051,7 +2071,7 @@
   color: #a02020;
 }
 .skyview-main{
-  margin:0.8rem;
+  margin:1rem;
 }
 /* ── Compact view ────────────────────────────────────────── */
 .skyview-page--compact .skyview-jumper-row {
@@ -2306,6 +2326,111 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   Theme: Flower Power (hippie / 60-tal)
+   ══════════════════════════════════════════════════════════ */
+.skyview-page--flower-power {
+  --sv-bg: #fff8e7;
+  --sv-card-bg: #fff3d6;
+  --sv-card-header-bg: #ffe0a0;
+  --sv-card-border: #e8c870;
+  --sv-text: #000000;
+  --sv-text-muted: #7a6530;
+  --sv-accent: #e8308a;
+  --sv-accent-text: #ffffff;
+  --sv-header-text: #3a1048;
+  --sv-shadow: 0 3px 16px rgba(180, 120, 40, 0.15);
+  --sv-g1: #e8308a;
+  --sv-g2: #f0a020;
+  --sv-g3: #40b868;
+  --sv-g4: #3890d8;
+  --sv-g5: #9850c8;
+  --sv-g6: #e85040;
+}
+
+/* Bakgrund med blommor och peace-tecken */
+.skyview-page--flower-power::before {
+  content: '✿ ☮ ❀ ✾ ☮ ✿ ❁ ☮ ❀ ✿ ☮ ❀ ✾ ☮ ✿ ❁ ☮ ❀ ✿ ☮ ❀ ✾ ☮ ✿ ❁';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-around;
+  justify-content: space-around;
+  font-size: 3rem;
+  line-height: 4rem;
+  letter-spacing: 1.5rem;
+  word-spacing: 1rem;
+  color: rgba(200, 100, 160, 0.10);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Header — gradient regnbåge */
+.skyview-page--flower-power .skyview-header {
+  background: linear-gradient(90deg, #e84080, #f0a020, #f0d040, #40b868, #3890d8, #9850c8);
+  color: #ffffff;
+}
+
+/* Kort — mjuk blomma-känsla */
+.skyview-page--flower-power .skyview-card {
+  border-radius: 16px;
+  border: 2px solid #e8c870;
+  position: relative;
+  z-index: 1;
+}
+
+.skyview-page--flower-power .skyview-card:hover {
+  border-color: #e8308a;
+  box-shadow: 0 0 20px rgba(232, 48, 138, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Kort-header — varm gradient */
+.skyview-page--flower-power .skyview-card-header {
+  background: linear-gradient(135deg, #ffe0a0, #ffd0c0);
+}
+
+/* Meddelande-rad */
+.skyview-page--flower-power .skyview-message-row {
+  background: rgba(232, 48, 138, 0.08);
+  border-color: rgba(232, 48, 138, 0.3);
+  color: #a02060;
+}
+
+/* Settings-panel */
+.skyview-page--flower-power .skyview-settings-panel,
+.skyview-page--flower-power .skyview-datepicker-popup {
+  background: #fff8e7;
+  border-color: #e8c870;
+}
+
+/* Queue badge */
+.skyview-page--flower-power .skyview-queue-badge {
+  background: #e8308a;
+  color: #ffffff;
+}
+
+/* Highlighted jumper */
+.skyview-page--flower-power .skyview-jumper-row--highlighted {
+  background: rgba(232, 48, 138, 0.12);
+  box-shadow: inset 2px 0 0 #e8308a;
+}
+
+/* Lift info — vit text på varm header */
+.skyview-page--flower-power .skyview-lift-info {
+  color: #ffffff;
+}
+
+.skyview-page--flower-power .skyview-lift-info-value {
+  color: #ffffff;
+}
+
+.skyview-page--flower-power .skyview-lift-info-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ══════════════════════════════════════════════════════════
    Theme: Classic (white bg, black header, white footer)
    ══════════════════════════════════════════════════════════ */
 .skyview-page--classic {
@@ -2444,7 +2569,6 @@
 .skyview-page--classic .skyview-group-container--color-10 { background: rgba(52,  100, 220, 0.10); }
 
 /* Crew- och meddelanderad */
-.skyview-page--classic .skyview-message-row {
 
 .skyview-page--classic .skyview-message-row {
   background: rgba(26, 111, 196, 0.06);

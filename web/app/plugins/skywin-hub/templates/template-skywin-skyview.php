@@ -37,7 +37,29 @@ defined( 'ABSPATH' ) || exit;
                 <span class="skyview-crew-pilot"></span>
                 <span class="skyview-crew-jumpleader"></span>
             </div>
-            <div class="skyview-tools"></div>
+            <div class="skyview-tools">
+                <div class="skyview-toolbar-left">
+                    <button class="skyview-queue-badge" type="button"></button>
+                    <div class="skyview-date-actions">
+                        <button class="skyview-date-button" type="button" aria-label="Välj datum">
+                            <svg class="skyview-calendar-icon" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zM7 1v4M13 1v4M3 8h14"></path>
+                            </svg>
+                            <span class="skyview-date-selected"></span>
+                        </button>
+                        <button class="skyview-date-clear" type="button" title="Rensa datum" aria-label="Rensa datum">✕</button>
+                    </div>
+                    <div class="skyview-settings-wrapper">
+                        <button class="skyview-settings-button" type="button" title="Inställningar" aria-label="Visa inställningar">
+                            <svg class="skyview-settings-icon" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8.5 2h3l.4 2.2a5.5 5.5 0 0 1 1.8 1l2.1-.7 1.5 2.6-1.7 1.5a5.6 5.6 0 0 1 0 2.1l1.7 1.5-1.5 2.6-2.1-.7a5.5 5.5 0 0 1-1.8 1L11.5 18h-3l-.4-2.2a5.5 5.5 0 0 1-1.8-1l-2.1.7-1.5-2.6 1.7-1.5a5.6 5.6 0 0 1 0-2.1L2.7 7.8l1.5-2.6 2.1.7a5.5 5.5 0 0 1 1.8-1z"></path>
+                                <circle cx="10" cy="10" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </header>
     <main class="skyview-main">
