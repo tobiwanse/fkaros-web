@@ -1,6 +1,3 @@
-
-// Toolbar event listeners and dynamic updates are now handled inside mountSkyview/render where 'els' is defined.
-
 function todayDate() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -658,7 +655,7 @@ function mountSkyview(root) {
   function saveSettings() {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-        autoRefreshEnabled: state.autoRefreshEnabled,
+        autoRefreshEnabled: state.refreshIntervalSeconds > 0,
         refreshIntervalSeconds: state.refreshIntervalSeconds,
         showQuotedNameParts: state.showQuotedNameParts,
         theme: state.theme,
@@ -677,13 +674,18 @@ function mountSkyview(root) {
   }
 
   const saved = loadSettings();
+  const savedRefreshInterval = Number(saved.refreshIntervalSeconds);
+  const defaultRefreshInterval = refreshSeconds > 0 ? refreshSeconds : 30;
+  const initialRefreshInterval = Number.isFinite(savedRefreshInterval) && savedRefreshInterval >= 0
+    ? savedRefreshInterval
+    : (saved.autoRefreshEnabled === false ? 0 : defaultRefreshInterval);
 
   const state = {
     endpoint,
     title,
     selectedDate: initialDate,
-    autoRefreshEnabled: typeof saved.autoRefreshEnabled === 'boolean' ? saved.autoRefreshEnabled : refreshSeconds > 0,
-    refreshIntervalSeconds: Number.isFinite(saved.refreshIntervalSeconds) && saved.refreshIntervalSeconds > 0 ? saved.refreshIntervalSeconds : (refreshSeconds > 0 ? refreshSeconds : 30),
+    autoRefreshEnabled: initialRefreshInterval > 0,
+    refreshIntervalSeconds: initialRefreshInterval,
     isLoggedIn,
     loads: [],
     jumpQueueCount: null,
@@ -940,7 +942,7 @@ function mountSkyview(root) {
 
   async function fetchLoads() {
     // Allow forced fetch even if auto update is off
-    if (arguments[0] !== true && state.autoRefreshEnabled === false && !state.firstRender) {
+    if (arguments[0] !== true && state.refreshIntervalSeconds <= 0 && !state.firstRender) {
       return;
     }
     try {
@@ -1085,9 +1087,8 @@ function mountSkyview(root) {
       }
     } finally {
       state.loading = false;
-      // Skip re-render while settings panel or queue modal is open so focused
-      // inputs/dropdowns don't lose focus and modals don't flash.
-      if (!state.settingsOpen && !state.queueModalOpen) {
+      // Skip re-render while queue modal is open to avoid visible modal flashing.
+      if (!state.queueModalOpen) {
         if (state.calendarOpen) {
           // Only update the loads section, not the whole page
           if (els.loads) {
@@ -1185,7 +1186,6 @@ function mountSkyview(root) {
     }
 
     const shouldAutoRefresh =
-      state.autoRefreshEnabled &&
       state.refreshIntervalSeconds > 0 &&
       (state.selectedDate === '' || state.selectedDate === todayDate());
 
@@ -1325,33 +1325,11 @@ function mountSkyview(root) {
     // --- Allmänt ---
     list.appendChild(createEl('div', 'skyview-settings-category', 'Allmänt'));
 
-    const toggleItem = createEl('label', 'skyview-settings-item skyview-settings-control');
-    const toggleText = createEl('span', 'skyview-settings-label', 'Auto-uppdatering');
-    const toggle = createEl('input', 'skyview-settings-toggle');
-    toggle.type = 'checkbox';
-    toggle.checked = Boolean(state.autoRefreshEnabled);
-    toggle.addEventListener('change', () => {
-      state.autoRefreshEnabled = toggle.checked;
-      saveSettings();
-      scheduleRefresh();
-      if (state.autoRefreshEnabled) {
-        state.firstRender = true;
-        state.loading = true;
-        render();
-        fetchLoads(true);
-        return;
-      }
-      render();
-    });
-    toggleItem.appendChild(toggleText);
-    toggleItem.appendChild(toggle);
-    list.appendChild(toggleItem);
-
     const intervalItem = createEl('label', 'skyview-settings-item skyview-settings-control');
     const intervalLabel = createEl('span', 'skyview-settings-label', 'Uppdateringsintervall');
     const intervalSelect = createEl('select', 'skyview-settings-select');
-    [10, 20, 30, 60, 120].forEach((seconds) => {
-      const option = createEl('option', '', `${seconds} sek`);
+    [0, 10, 20, 30, 60, 120].forEach((seconds) => {
+      const option = createEl('option', '', seconds === 0 ? 'Av' : `${seconds} sek`);
       option.value = String(seconds);
       if (seconds === Number(state.refreshIntervalSeconds)) {
         option.selected = true;
@@ -1360,10 +1338,18 @@ function mountSkyview(root) {
     });
     intervalSelect.addEventListener('change', () => {
       const next = Number(intervalSelect.value);
-      if (Number.isFinite(next) && next > 0) {
+      if (Number.isFinite(next) && next >= 0) {
         state.refreshIntervalSeconds = next;
+        state.autoRefreshEnabled = next > 0;
         saveSettings();
         scheduleRefresh();
+        if (next > 0) {
+          state.firstRender = true;
+          state.loading = true;
+          render();
+          fetchLoads(true);
+          return;
+        }
       }
       render();
     });
@@ -1406,7 +1392,7 @@ function mountSkyview(root) {
       { value: 'aros', label: 'Aros' },
       { value: 'skydiver', label: 'Skydiver' },
       { value: 'airport', label: 'Flygplats' },
-      { value: 'flower-power', label: 'Flower Power ✿' },
+      { value: 'flower-power', label: 'Flower Power' },
     ];
     themes.forEach((t) => {
       const option = createEl('option', '', t.label);
@@ -1417,9 +1403,8 @@ function mountSkyview(root) {
     themeSelect.addEventListener('change', () => {
       state.theme = themeSelect.value;
       saveSettings();
-      state.firstRender = true;
-      render();
-      state.firstRender = false;
+      applyThemeStyles();
+      rerenderSettingsOverlayOnly();
     });
     themeItem.appendChild(themeLabel);
     themeItem.appendChild(themeSelect);
@@ -1609,6 +1594,39 @@ function mountSkyview(root) {
     return panel;
   }
 
+  function applyThemeStyles() {
+    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'];
+    allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
+    if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
+    root.classList.toggle('skyview-page--compact', state.compactView);
+    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', classic: '#ffffff' };
+    document.body.style.backgroundColor = themeBg[state.theme] || '';
+    document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
+  }
+
+  function rerenderSettingsOverlayOnly() {
+    if (!state.settingsOpen) {
+      return;
+    }
+
+    const existingSettingsModal = root.querySelector('.skyview-settings-modal-overlay');
+    if (!existingSettingsModal) {
+      return;
+    }
+
+    const settingsOverlay = createEl('div', 'skyview-settings-modal-overlay');
+    const settingsPanel = renderSettingsPanel();
+    settingsOverlay.appendChild(settingsPanel);
+    settingsOverlay.addEventListener('click', (e) => {
+      if (e.target === settingsOverlay) {
+        state.settingsOpen = false;
+        render();
+      }
+    });
+
+    root.replaceChild(settingsOverlay, existingSettingsModal);
+  }
+
   function buildQueueModalBody(modal) {
     while (modal.children.length > 1) {
       modal.removeChild(modal.lastChild);
@@ -1648,7 +1666,7 @@ function mountSkyview(root) {
 
   function render() {
         // Always allow overlays (settings, datepicker, queue modal) to render
-        if (state.autoRefreshEnabled === false && !state.firstRender) {
+      if (state.refreshIntervalSeconds <= 0 && !state.firstRender) {
           // Only render overlays if open
           const rootEl = els.header ? els.header.closest('.skyview-root') || document : document;
           const root = rootEl.querySelector('.skyview-page') || document.body;
@@ -1789,9 +1807,7 @@ function mountSkyview(root) {
       if (existingQueueModal) existingQueueModal.remove();
 
       const existingSettingsModal = root.querySelector('.skyview-settings-modal-overlay');
-      if (existingSettingsModal) existingSettingsModal.remove();
-
-      if (state.settingsOpen) {
+      if (state.settingsOpen && !existingSettingsModal) {
         const settingsOverlay = createEl('div', 'skyview-settings-modal-overlay');
         const settingsPanel = renderSettingsPanel();
         settingsOverlay.appendChild(settingsPanel);
@@ -1802,6 +1818,8 @@ function mountSkyview(root) {
           }
         });
         root.appendChild(settingsOverlay);
+      } else if (!state.settingsOpen && existingSettingsModal) {
+        existingSettingsModal.remove();
       }
 
       if (state.queueModalOpen) {
@@ -1836,13 +1854,7 @@ function mountSkyview(root) {
     }
 
     // --- Theme ---
-    const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'classic'];
-    allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
-    if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
-    root.classList.toggle('skyview-page--compact', state.compactView);
-    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', classic: '#ffffff' };
-    document.body.style.backgroundColor = themeBg[state.theme] || '';
-    document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
+    applyThemeStyles();
 
     // --- Clock ---
     const dateText = state.clock.toLocaleDateString('en-US', {
@@ -2002,10 +2014,14 @@ function mountSkyview(root) {
   let headerHidden = false;
   window.addEventListener('scroll', () => {
     const sy = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const nearBottom = sy >= maxScroll - 30; // Within 30px of bottom
+    
     if (sy > lastScrollY && sy > 60 && !headerHidden) {
       els.header.classList.add('skyview-header--hidden');
       headerHidden = true;
-    } else if (sy < lastScrollY && headerHidden) {
+    } else if (sy < lastScrollY && headerHidden && !nearBottom) {
+      // Only show header if scrolling up AND not near bottom
       els.header.classList.remove('skyview-header--hidden');
       headerHidden = false;
     }
