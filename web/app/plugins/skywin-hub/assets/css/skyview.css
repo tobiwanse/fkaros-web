@@ -1,3 +1,12 @@
+/* Time left row above lift info */
+.skyview-lift-timeleft-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  margin-top:0.4rem;
+}
 /* SkyView source styles (compiled to assets/css/skyview.css) */
 
 .skyview-page {
@@ -255,7 +264,7 @@
 .skyview-date-clear {
   border: none;
   background: none;
-  color: var(--sv-text);
+  color: inherit;
   font-size: 1.23rem;
   font-weight: 700;
   line-height: 1;
@@ -433,9 +442,9 @@
   gap: 0.3rem;
   padding: 0.2rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(240, 162, 46, 0.45);
-  background: rgba(240, 162, 46, 0.14);
-  color: #ffd79a;
+  border: 1px solid var(--sv-queue-border, rgba(240, 162, 46, 0.45));
+  background: var(--sv-queue-bg, rgba(240, 162, 46, 0.14));
+  color: var(--sv-queue-text, #ffd79a);
   font-size: 1.06rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -446,8 +455,8 @@
 
 .skyview-queue-badge:hover,
 .skyview-queue-badge:focus-visible {
-  background: rgba(240, 162, 46, 0.28);
-  border-color: rgba(240, 162, 46, 0.7);
+  background: var(--sv-queue-bg-hover, rgba(240, 162, 46, 0.28));
+  border-color: var(--sv-queue-border-hover, rgba(240, 162, 46, 0.7));
   outline: none;
 }
 
@@ -676,6 +685,23 @@
 
 .skyview-card-header:active {
   cursor: grabbing;
+}
+
+.skyview-card-chief {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--sv-text-muted);
+  border-bottom: 1px solid var(--sv-card-border);
+}
+
+.skyview-card-chief-label {
+  opacity: 0.7;
+}
+
+.skyview-card-chief-value {
+  color: var(--sv-text);
 }
 
 .skyview-field {
@@ -1044,6 +1070,7 @@
 
 .skyview-card-footer {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 0.55rem 0.8rem;
@@ -2002,10 +2029,12 @@
   color: #c0392b;
 }
 
-:is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-queue-badge {
-  background: rgba(180, 100, 0, 0.15);
-  border-color: rgba(180, 100, 0, 0.5);
-  color: #4a2800;
+:is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) {
+  --sv-queue-bg: rgba(180, 100, 0, 0.15);
+  --sv-queue-border: rgba(180, 100, 0, 0.5);
+  --sv-queue-text: #4a2800;
+  --sv-queue-bg-hover: rgba(180, 100, 0, 0.28);
+  --sv-queue-border-hover: rgba(180, 100, 0, 0.7);
 }
 
 :is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-message-row {
@@ -2345,6 +2374,11 @@
   --sv-g4: #3890d8;
   --sv-g5: #9850c8;
   --sv-g6: #e85040;
+  --sv-queue-bg: #e8308a;
+  --sv-queue-text: #ffffff;
+  --sv-queue-border: #e8308a;
+  --sv-queue-bg-hover: #d02878;
+  --sv-queue-border-hover: #d02878;
 }
 
 /* Bakgrund med blommor och peace-tecken */
@@ -2405,12 +2439,6 @@
   border-color: #e8c870;
 }
 
-/* Queue badge */
-.skyview-page--flower-power .skyview-queue-badge {
-  background: #e8308a;
-  color: #ffffff;
-}
-
 /* Highlighted jumper */
 .skyview-page--flower-power .skyview-jumper-row--highlighted {
   background: rgba(232, 48, 138, 0.12);
@@ -2450,6 +2478,11 @@
   --sv-g4: #1a6fc4;
   --sv-g5: #7d3c98;
   --sv-g6: #c0392b;
+  --sv-queue-bg: rgba(255, 255, 255, 0.12);
+  --sv-queue-border: rgba(255, 255, 255, 0.35);
+  --sv-queue-text: #f0f0f0;
+  --sv-queue-bg-hover: rgba(255, 255, 255, 0.22);
+  --sv-queue-border-hover: rgba(255, 255, 255, 0.5);
 }
 
 /* Card */
@@ -2574,12 +2607,6 @@
   background: rgba(26, 111, 196, 0.06);
   border-color: rgba(26, 111, 196, 0.35);
   color: #0d3f7a;
-}
-
-.skyview-page--classic .skyview-queue-badge {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.35);
-  color: #111111;
 }
 
 /* Inmatningsfält */
