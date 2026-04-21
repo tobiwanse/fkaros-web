@@ -2457,6 +2457,47 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* Flower Power — time-left bricka */
+.skyview-page--flower-power .skyview-time-left {
+  background: linear-gradient(180deg, #fff0f6, #ffe8f0);
+  border-color: rgba(232, 48, 138, 0.35);
+  color: #c0185a;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.skyview-page--flower-power .skyview-time-left--ok {
+  background: linear-gradient(180deg, #f0fff4, #e0f8e8);
+  border-color: rgba(64, 184, 104, 0.4);
+  color: #1a7a3a;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.skyview-page--flower-power .skyview-time-left--soon {
+  background: linear-gradient(180deg, #fffbea, #fff3c0);
+  border-color: rgba(220, 160, 0, 0.4);
+  color: #7a5400;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.skyview-page--flower-power .skyview-time-left--warning {
+  background: linear-gradient(180deg, #fff4ee, #ffe4d0);
+  border-color: rgba(220, 100, 20, 0.4);
+  color: #8a3800;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.skyview-page--flower-power .skyview-time-left--urgent {
+  background: linear-gradient(180deg, #fff0f0, #ffd8d8);
+  border-color: rgba(220, 50, 50, 0.45);
+  color: #aa1818;
+  text-shadow: none;
+  box-shadow: none;
+}
+
 /* ══════════════════════════════════════════════════════════
    Theme: Wizard Cup (fantasy broom-sport inspired)
    Uses optional custom images through CSS variables.
