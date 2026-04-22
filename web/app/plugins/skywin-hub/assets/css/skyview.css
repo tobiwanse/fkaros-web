@@ -405,9 +405,49 @@
 }
 
 .skyview-message-row {
-  background: rgba(65, 199, 156, 0.14);
-  border: 1px solid rgba(65, 199, 156, 0.38);
-  color: #aef5dd;
+  background: rgba(15, 28, 40, 0.88);
+  border: 1px solid rgba(120, 180, 220, 0.55);
+  color: #eef8ff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-shadow: none;
+  animation: skyviewMessagePulse 3.2s ease-in-out infinite;
+}
+
+@keyframes skyviewMessagePulse {
+  0%, 100% {
+    filter: brightness(1);
+    box-shadow: 0 0 0 0 rgba(80, 140, 210, 0.0);
+  }
+  50% {
+    filter: brightness(1.06);
+    box-shadow: 0 0 0 2px rgba(80, 140, 210, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skyview-message-row {
+    animation: none;
+  }
+}
+
+.skyview-message-row--alert {
+  background: color-mix(in srgb, #e05c5c 24%, var(--sv-card-bg));
+  border-color: color-mix(in srgb, #e05c5c 68%, var(--sv-card-border));
+  color: var(--sv-text);
+}
+
+.skyview-message-row--warning {
+  background: color-mix(in srgb, #e0a020 24%, var(--sv-card-bg));
+  border-color: color-mix(in srgb, #e0a020 68%, var(--sv-card-border));
+  color: var(--sv-text);
+}
+
+.skyview-message-row--info {
+  background: color-mix(in srgb, #50c878 24%, var(--sv-card-bg));
+  border-color: color-mix(in srgb, #50c878 68%, var(--sv-card-border));
+  color: var(--sv-text);
 }
 
 .skyview-message-row--new {
@@ -666,6 +706,58 @@
   flex-direction: column;
   min-width: 0;
   transition: box-shadow 0.25s, transform 0.25s;
+}
+
+.skyview-load-sortable--skeleton {
+  pointer-events: none;
+}
+
+.skyview-card--skeleton {
+  overflow: hidden;
+}
+
+.skyview-card-header--skeleton,
+.skyview-skeleton-block {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.skyview-skeleton-block {
+  flex-direction: column;
+  border-bottom: 1px solid var(--sv-card-border);
+}
+
+.skyview-skeleton-block--footer {
+  border-bottom: 0;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.skyview-skeleton-line {
+  position: relative;
+  display: block;
+  height: 0.95rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sv-text-muted) 32%, transparent);
+  overflow: hidden;
+}
+
+.skyview-skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.28) 50%, transparent 100%);
+  animation: skyviewSkeletonShimmer 1.35s ease-in-out infinite;
+}
+
+.skyview-skeleton-line--short { width: 38%; }
+.skyview-skeleton-line--medium { width: 64%; }
+.skyview-skeleton-line--long { width: 92%; }
+
+@keyframes skyviewSkeletonShimmer {
+  100% { transform: translateX(100%); }
 }
 
 .skyview-card--drop-target {
@@ -1310,6 +1402,21 @@
 .skyview-clock {
   font-size: 1.46rem;  font-weight: 600;
   color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.skyview-last-updated {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--sv-text) 26%, transparent);
+  background: color-mix(in srgb, var(--sv-bg) 68%, transparent);
+  font-size: 1.23rem;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--sv-text) 86%, white);
+  text-shadow: none;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2143,21 +2250,14 @@
 
 /* ── Offline bar ─────────────────────────────────────────── */
 .skyview-offline-bar {
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  background: rgba(240, 162, 46, 0.18);
-  border: 1px solid rgba(240, 162, 46, 0.45);
-  color: #ffd79a;
-  font-size: 1.06rem;
-  font-weight: 600;
   text-align: center;
   margin-bottom: 0.75rem;
 }
 
 :is(.skyview-page--light, .skyview-page--arctic, .skyview-page--lavender) .skyview-offline-bar {
-  background: rgba(240, 162, 46, 0.1);
-  border-color: rgba(240, 162, 46, 0.35);
-  color: #8a5c00;
+  color: inherit;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -2549,6 +2649,11 @@
   border-bottom: 1px solid rgba(240, 198, 106, 0.35);
 }
 
+.skyview-page--wizard-cup .skyview-main {
+  position: relative;
+  z-index: 1;
+}
+
 .skyview-page--wizard-cup .skyview-title {
   color: #f0c66a;
   text-shadow: 0 0 16px rgba(240, 198, 106, 0.35);
@@ -2822,4 +2927,29 @@
 .skyview-page--classic .skyview-load-sortable--drop-target > .skyview-card,
 .skyview-page--classic .skyview-card--drop-target {
   box-shadow: inset 0 0 0 2px rgba(26, 111, 196, 0.6);
+}
+
+/* Severity colors must override theme-generic message-row colors. */
+.skyview-page .skyview-message-row.skyview-message-row--alert {
+  background: color-mix(in srgb, #e05c5c 24%, var(--sv-card-bg)) !important;
+  border-color: color-mix(in srgb, #e05c5c 68%, var(--sv-card-border)) !important;
+  color: var(--sv-text) !important;
+}
+
+.skyview-page .skyview-message-row.skyview-message-row--warning {
+  background: color-mix(in srgb, #e0a020 24%, var(--sv-card-bg)) !important;
+  border-color: color-mix(in srgb, #e0a020 68%, var(--sv-card-border)) !important;
+  color: var(--sv-text) !important;
+}
+
+.skyview-page .skyview-message-row.skyview-message-row--info {
+  background: color-mix(in srgb, #50c878 24%, var(--sv-card-bg)) !important;
+  border-color: color-mix(in srgb, #50c878 68%, var(--sv-card-border)) !important;
+  color: var(--sv-text) !important;
+}
+
+.skyview-page .skyview-message-row:not(.skyview-message-row--alert):not(.skyview-message-row--warning):not(.skyview-message-row--info) {
+  background: color-mix(in srgb, #3f7fd6 24%, var(--sv-card-bg)) !important;
+  border-color: color-mix(in srgb, #3f7fd6 68%, var(--sv-card-border)) !important;
+  color: var(--sv-text) !important;
 }

@@ -131,6 +131,20 @@ class Skywin_Hub_Push {
 		return $vapid['publicKey'] ?? '';
 	}
 
+	private static function get_vapid_subject(): string {
+		$home_url = home_url();
+		if ( is_string( $home_url ) && str_starts_with( $home_url, 'https://' ) ) {
+			return $home_url;
+		}
+
+		$admin_email = get_option( 'admin_email' );
+		if ( is_string( $admin_email ) && is_email( $admin_email ) ) {
+			return 'mailto:' . $admin_email;
+		}
+
+		return 'mailto:no-reply@skyview.invalid';
+	}
+
 	/* ── REST routes ───────────────────────────────────────────────── */
 
 	public static function register_rest_routes(): void {
@@ -226,6 +240,7 @@ class Skywin_Hub_Push {
 
 		$endpoint = esc_url_raw( $sub['endpoint'] );
 		$keys     = $sub['keys'] ?? [];
+		$content_encoding = sanitize_text_field( $sub['contentEncoding'] ?? 'aes128gcm' );
 
 		if ( empty( $keys['p256dh'] ) || empty( $keys['auth'] ) ) {
 			return new WP_REST_Response( [ 'error' => 'Missing keys' ], 400 );
@@ -237,6 +252,7 @@ class Skywin_Hub_Push {
 				'p256dh' => sanitize_text_field( $keys['p256dh'] ),
 				'auth'   => sanitize_text_field( $keys['auth'] ),
 			],
+			'contentEncoding' => in_array( $content_encoding, [ 'aes128gcm', 'aesgcm' ], true ) ? $content_encoding : 'aes128gcm',
 			'types'    => [
 				'newLoad'        => ! empty( $types['newLoad'] ),
 				'newJumper'      => ! empty( $types['newJumper'] ),
@@ -443,7 +459,7 @@ class Skywin_Hub_Push {
 
 		$auth = [
 			'VAPID' => [
-				'subject'    => home_url(),
+				'subject'    => self::get_vapid_subject(),
 				'publicKey'  => $vapid['publicKey'],
 				'privateKey' => $vapid['privateKey'],
 			],
@@ -474,6 +490,7 @@ class Skywin_Hub_Push {
 				$subscription = Subscription::create( [
 					'endpoint' => $sub['endpoint'],
 					'keys'     => $sub['keys'],
+					'contentEncoding' => $sub['contentEncoding'] ?? 'aes128gcm',
 				] );
 
 				$webPush->queueNotification( $subscription, $payload );

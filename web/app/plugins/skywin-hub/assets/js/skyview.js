@@ -535,7 +535,63 @@ function renderLoadCard(load, showFooterForDate, isNext, state, fadingComment = 
   return card;
 }
 
+function createLoadSkeletonCard() {
+  const wrap = createEl('div', 'skyview-load-sortable skyview-load-sortable--skeleton');
+  const card = createEl('div', 'skyview-card skyview-card--skeleton');
+
+  const header = createEl('div', 'skyview-card-header skyview-card-header--skeleton');
+  header.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--short'));
+  header.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--short'));
+  card.appendChild(header);
+
+  const chief = createEl('div', 'skyview-skeleton-block');
+  chief.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--medium'));
+  card.appendChild(chief);
+
+  const jumpers = createEl('div', 'skyview-skeleton-block');
+  jumpers.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--long'));
+  jumpers.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--long'));
+  jumpers.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--medium'));
+  card.appendChild(jumpers);
+
+  const footer = createEl('div', 'skyview-skeleton-block skyview-skeleton-block--footer');
+  footer.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--short'));
+  footer.appendChild(createEl('span', 'skyview-skeleton-line skyview-skeleton-line--short'));
+  card.appendChild(footer);
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function parseMessageEntry(rawMessage) {
+  const text = String(rawMessage || '').trim();
+  if (!text) {
+    return null;
+  }
+
+  const match = text.match(/^\[(alert|warning|info)\]\s*[,:\-]?\s*/i);
+  if (!match) {
+    return { type: 'default', text };
+  }
+
+  const type = String(match[1] || '').toLowerCase();
+  const cleaned = text.slice(match[0].length).trim();
+  return {
+    type,
+    text: cleaned || text,
+  };
+}
+
+function parseMessageEntries(rawMessage) {
+  return String(rawMessage || '')
+    .split(/\n|;/)
+    .map(parseMessageEntry)
+    .filter(Boolean);
+}
+
 let _swRegistration = null;
+const SKYVIEW_NOTIFICATION_ICON = '/app/plugins/skywin-hub/assets/img/icon-192.png';
+const SKYVIEW_NOTIFICATION_BADGE = '/app/plugins/skywin-hub/assets/img/icon-192.png';
 
 function registerSkyviewSW(swUrl) {
   if (!('serviceWorker' in navigator) || !swUrl) return Promise.resolve(null);
@@ -555,14 +611,48 @@ function getSWRegistration() {
     .catch(() => null);
 }
 
+function stripPushMessagePrefix(text) {
+  return String(text || '').replace(/^\[(alert|warning|info)\]\s*[,:\-]?\s*/i, '').trim();
+}
+
+function splitPushNotificationBodies(text) {
+  const parts = String(text || '')
+    .split(';')
+    .map((part) => stripPushMessagePrefix(part))
+    .filter(Boolean);
+
+  return parts.length > 0 ? parts : [stripPushMessagePrefix(text) || String(text || '').trim()].filter(Boolean);
+}
+
 function showPushNotification(title, opts) {
   if (Notification.permission !== 'granted') return;
+  const baseOpts = opts && typeof opts === 'object'
+    ? { icon: SKYVIEW_NOTIFICATION_ICON, badge: SKYVIEW_NOTIFICATION_BADGE, ...opts }
+    : { icon: SKYVIEW_NOTIFICATION_ICON, badge: SKYVIEW_NOTIFICATION_BADGE };
+  const bodies = splitPushNotificationBodies(baseOpts.body || '');
   getSWRegistration().then((reg) => {
-    if (reg && reg.active) {
-      reg.showNotification(title, opts);
-    } else {
-      try { new Notification(title, opts); } catch (_) { /* ignore */ }
-    }
+    bodies.forEach((bodyPart, index) => {
+      const notificationOpts = {
+        ...baseOpts,
+        body: bodyPart,
+        tag: baseOpts.tag && bodies.length > 1 ? `${baseOpts.tag}-${index}` : baseOpts.tag,
+      };
+      const fallbackOpts = {
+        ...notificationOpts,
+        icon: undefined,
+        badge: undefined,
+      };
+
+      if (reg && reg.active) {
+        reg.showNotification(title, notificationOpts).catch(() => reg.showNotification(title, fallbackOpts).catch(() => null));
+      } else {
+        try {
+          new Notification(title, notificationOpts);
+        } catch (_) {
+          try { new Notification(title, fallbackOpts); } catch (_) { /* ignore */ }
+        }
+      }
+    });
   });
 }
 
@@ -578,6 +668,10 @@ function urlBase64ToUint8Array(base64String) {
 function syncPushSubscription(vapidKey, pushApiBase, state) {
   if (!vapidKey || !pushApiBase) return Promise.resolve();
   var wantsAny = state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper;
+  var supportedContentEncodings = Array.isArray(window.PushManager && PushManager.supportedContentEncodings)
+    ? PushManager.supportedContentEncodings
+    : [];
+  var contentEncoding = supportedContentEncodings.includes('aes128gcm') ? 'aes128gcm' : 'aesgcm';
 
   return getSWRegistration().then(function (reg) {
     if (!reg || !reg.pushManager) return;
@@ -613,6 +707,7 @@ function syncPushSubscription(vapidKey, pushApiBase, state) {
             subscription: {
               endpoint: subJSON.endpoint,
               keys: subJSON.keys,
+              contentEncoding: contentEncoding,
             },
             types: {
               newLoad: state.notifyNewLoad,
@@ -692,12 +787,11 @@ function mountSkyview(root) {
     loading: true,
     error: '',
     message: '',
-    clock: new Date(),
     knownLoadIds: new Set(),
     newLoadIds: new Set(),
     firstRender: true,
     refreshTimer: null,
-    clockTimer: null,
+    offlineTicker: null,
     calendarOpen: false,
     settingsOpen: false,
     queueModalOpen: false,
@@ -727,17 +821,69 @@ function mountSkyview(root) {
     fadingOutComments: new Map(),
     prevMessage: '',
     fadingOutMessage: '',
+    lastUpdatedAt: null,
+    lastUpdateSource: '',
+    offlineReason: '',
+    offlineSince: null,
   };
 
   const els = {
     header: root.querySelector('.skyview-header'),
-    clock: root.querySelector('.skyview-clock'),
+    lastUpdated: root.querySelector('.skyview-last-updated'),
     crewPilot: root.querySelector('.skyview-crew-pilot'),
     crewJumpLeader: root.querySelector('.skyview-crew-jumpleader'),
     tools: root.querySelector('.skyview-tools'),
     messages: root.querySelector('.skyview-messages'),
     loads: root.querySelector('.skyview-loads'),
   };
+
+  function formatLastUpdatedText() {
+    if (!(state.lastUpdatedAt instanceof Date) || Number.isNaN(state.lastUpdatedAt.getTime())) {
+      return 'Senast uppdaterad: -';
+    }
+
+    const timestamp = state.lastUpdatedAt.toLocaleTimeString('sv-SE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    if (state.lastUpdateSource === 'cache') {
+      return `Senast uppdaterad: ${timestamp} (cache)`;
+    }
+
+    return `Senast uppdaterad: ${timestamp}`;
+  }
+
+  function formatOfflineDuration() {
+    if (!(state.offlineSince instanceof Date) || Number.isNaN(state.offlineSince.getTime())) {
+      return '';
+    }
+
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - state.offlineSince.getTime()) / 1000));
+    const hours = Math.floor(elapsedSeconds / 3600);
+    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+    const seconds = elapsedSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+    }
+    return `${seconds}s`;
+  }
+
+  function renderLoadSkeletons() {
+    if (!els.loads) return;
+    els.loads.innerHTML = '';
+
+    const defaultCount = 4;
+    const skeletonCount = state.maxLoads > 0 ? Math.max(1, Math.min(state.maxLoads, 6)) : defaultCount;
+    for (let i = 0; i < skeletonCount; i += 1) {
+      els.loads.appendChild(createLoadSkeletonCard());
+    }
+  }
 
   function buildUrl() {
     if (!state.endpoint) return '';
@@ -953,16 +1099,19 @@ function mountSkyview(root) {
       const data = await res.json();
 
       if (!res.ok) {
-        state.message = '';
-        state.error = `HTTP ${res.status}: ${data?.message || data?.error || res.statusText}`;
+        // Server error — try to fall back to cache, just like a network failure.
+        throw new Error(`HTTP ${res.status}: ${data?.message || data?.error || res.statusText}`);
       } else if (data.error) {
         state.message = '';
         state.error = data.error;
       } else {
         state.error = '';
+        const fetchedAtIso = new Date().toISOString();
+        state.lastUpdatedAt = new Date(fetchedAtIso);
+        state.lastUpdateSource = 'network';
         const incomingMessage = String(data?.message || '').trim();
         if (state.hasFetchedOnce && incomingMessage && incomingMessage !== state.knownMessage) {
-          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: incomingMessage, icon: '/favicon.ico' });
+          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: incomingMessage });
           if (state.soundNewMessage) playPingSound();
         }
         if (incomingMessage !== state.knownMessage) state.knownMessage = incomingMessage;
@@ -978,7 +1127,7 @@ function mountSkyview(root) {
             : null;
         if (state.hasFetchedOnce && prevQueueCount !== null && state.jumpQueueCount !== null && state.jumpQueueCount > prevQueueCount) {
           if (state.notifyNewQueueJumper) {
-            showPushNotification('Ny i önskelistan', { body: `${state.jumpQueueCount} i kön`, icon: '/favicon.ico' });
+            showPushNotification('Ny i önskelistan', { body: `${state.jumpQueueCount} i kön` });
           }
           if (state.soundNewQueueJumper) playPingSound();
         }
@@ -1022,7 +1171,7 @@ function mountSkyview(root) {
             const msg = addedLoadIds.length === 1
               ? 'Lift nummer ' + total + ' tillagd!'
               : addedLoadIds.length + ' nya liftar tillagda!';
-            showPushNotification('SkyView', { body: msg, tag: 'skyview-newLoad', icon: '/favicon.ico' });
+            showPushNotification('SkyView', { body: msg, tag: 'skyview-newLoad' });
           }
           if (state.soundEnabled) { playPingSound(); soundPlayed = true; }
         }
@@ -1054,7 +1203,7 @@ function mountSkyview(root) {
                 const msg = newJumperLoadNums.length === 1
                   ? 'Ny hoppare lades till i lift nr ' + newJumperLoadNums[0]
                   : newJumperLoadNums.length + ' nya hoppare lades till i lift nr ' + [...new Set(newJumperLoadNums)].join(', ');
-                showPushNotification('SkyView', { body: msg, tag: 'skyview-newJumper', icon: '/favicon.ico' });
+                showPushNotification('SkyView', { body: msg, tag: 'skyview-newJumper' });
               }
               if (state.soundNewJumper && !soundPlayed) playPingSound();
             }
@@ -1066,7 +1215,14 @@ function mountSkyview(root) {
         state.hasFetchedOnce = true;
         state.loads = merged;
         state.offlineMode = false;
-        try { localStorage.setItem(SETTINGS_KEY + '_cache', JSON.stringify(data)); } catch (_) { /* ignore */ }
+        state.offlineReason = '';
+        state.offlineSince = null;
+        try {
+          localStorage.setItem(SETTINGS_KEY + '_cache', JSON.stringify({
+            ...data,
+            _fetchedAt: fetchedAtIso,
+          }));
+        } catch (_) { /* ignore */ }
       }
     } catch (err) {
       try {
@@ -1076,14 +1232,24 @@ function mountSkyview(root) {
           state.error = '';
           state.message = String(cacheData?.message || '').trim();
           state.loads = cacheData.loads || [];
+          if (!state.offlineMode) {
+            state.offlineSince = new Date();
+          }
           state.offlineMode = true;
+          state.offlineReason = err.message || 'Anslutningsfel';
+          state.lastUpdateSource = 'cache';
+          const cacheFetchedAt = cacheData?._fetchedAt;
+          if (cacheFetchedAt) {
+            const parsed = new Date(cacheFetchedAt);
+            state.lastUpdatedAt = Number.isNaN(parsed.getTime()) ? null : parsed;
+          }
         } else {
           state.message = '';
-          state.error = 'N\u00e4tverksfel: ' + err.message;
+          state.error = err.message || 'N\u00e4tverksfel';
         }
       } catch (_) {
         state.message = '';
-        state.error = 'N\u00e4tverksfel: ' + err.message;
+        state.error = err.message || 'N\u00e4tverksfel';
       }
     } finally {
       state.loading = false;
@@ -1097,7 +1263,7 @@ function mountSkyview(root) {
             if (state.error) {
               els.loads.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
             } else if (state.loading) {
-              els.loads.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
+              renderLoadSkeletons();
             } else if (!state.loads.length) {
               els.loads.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
             } else {
@@ -1365,7 +1531,7 @@ function mountSkyview(root) {
     quotedNameToggle.addEventListener('change', () => {
       state.showQuotedNameParts = quotedNameToggle.checked;
       saveSettings();
-      render();
+      render(true);
     });
     quotedNameItem.appendChild(quotedNameLabel);
     quotedNameItem.appendChild(quotedNameToggle);
@@ -1598,11 +1764,12 @@ function mountSkyview(root) {
   function applyThemeStyles() {
     const allThemes = ['light', 'midnight', 'sunset', 'forest', 'arctic', 'contrast', 'ocean', 'lavender', 'cherry', 'neon-pink', 'neon-green', 'neon-blue', 'aros', 'skydiver', 'airport', 'flower-power', 'wizard-cup', 'classic'];
     allThemes.forEach((t) => root.classList.remove('skyview-page--' + t));
-    if (state.theme !== 'dark') root.classList.add('skyview-page--' + state.theme);
+    if (state.theme !== 'dark')
+      root.classList.add('skyview-page--' + state.theme);
     root.classList.toggle('skyview-page--compact', state.compactView);
-    const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', 'wizard-cup': '#120f22', classic: '#ffffff' };
-    document.body.style.backgroundColor = themeBg[state.theme] || '';
-    document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
+    //const themeBg = { dark: '#0d1b2a', light: '#f0f4f8', midnight: '#000000', sunset: '#1a0f0a', forest: '#0a1a10', arctic: '#eaf2f8', contrast: '#000000', ocean: '#031525', lavender: '#f0edf6', cherry: '#1a0a0e', 'neon-pink': '#000000', 'neon-green': '#000000', 'neon-blue': '#000000', aros: '#07162a', skydiver: '#010810', airport: '#050505', 'flower-power': '#fff8e7', 'wizard-cup': '#120f22', classic: '#ffffff' };
+    //document.body.style.backgroundColor = themeBg[state.theme] || '';
+    //document.body.style.overflow = (state.settingsOpen || state.queueModalOpen) ? 'hidden' : '';
   }
 
   function rerenderSettingsOverlayOnly() {
@@ -1665,9 +1832,9 @@ function mountSkyview(root) {
     }
   }
 
-  function render() {
+  function render(forceFullRender = false) {
         // Always allow overlays (settings, datepicker, queue modal) to render
-      if (state.refreshIntervalSeconds <= 0 && !state.firstRender) {
+      if (!forceFullRender && state.refreshIntervalSeconds <= 0 && !state.firstRender) {
           // Only render overlays if open
           const rootEl = els.header ? els.header.closest('.skyview-root') || document : document;
           const root = rootEl.querySelector('.skyview-page') || document.body;
@@ -1857,14 +2024,10 @@ function mountSkyview(root) {
     // --- Theme ---
     applyThemeStyles();
 
-    // --- Clock ---
-    const dateText = state.clock.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    const clockText = `${String(state.clock.getHours()).padStart(2, '0')}:${String(state.clock.getMinutes()).padStart(2, '0')}`;
-    els.clock.textContent = `${dateText} ${clockText}`;
+    // --- Last updated ---
+    if (els.lastUpdated) {
+      els.lastUpdated.textContent = formatLastUpdatedText();
+    }
 
     // --- Crew ---
     const isSelectedDateToday = state.selectedDate === '' || state.selectedDate === todayDate();
@@ -1890,7 +2053,11 @@ function mountSkyview(root) {
     els.messages.innerHTML = '';
 
     if (state.offlineMode) {
-      els.messages.appendChild(createEl('div', 'skyview-offline-bar', 'Offline \u2014 visar cachad data'));
+      const duration = formatOfflineDuration();
+      const offlineText = duration
+        ? `Offline \u2014 visar cachad data (offline i ${duration})`
+        : 'Offline \u2014 visar cachad data';
+      els.messages.appendChild(createEl('div', 'skyview-offline-bar skyview-message-row skyview-message-row--warning', offlineText));
     }
 
     // Detect when message disappears → fade it out.
@@ -1913,12 +2080,17 @@ function mountSkyview(root) {
           ? 'skyview-message-row skyview-message-row--new'
           : 'skyview-message-row';
       if (!isMsgFadingOut) state.prevMessage = effectiveMessage;
-      const msgRow = createEl('div', msgCls);
-      effectiveMessage.split(';').forEach((part, i) => {
-        if (i > 0) msgRow.appendChild(document.createElement('br'));
-        msgRow.appendChild(document.createTextNode(part.trim()));
-      });
-      els.messages.appendChild(msgRow);
+      const entries = parseMessageEntries(effectiveMessage);
+      if (entries.length === 0) {
+        const msgRow = createEl('div', msgCls, String(effectiveMessage).trim());
+        els.messages.appendChild(msgRow);
+      } else {
+        entries.forEach((entry) => {
+          const severityClass = entry.type !== 'default' ? ` skyview-message-row--${entry.type}` : '';
+          const msgRow = createEl('div', `${msgCls}${severityClass}`, entry.text);
+          els.messages.appendChild(msgRow);
+        });
+      }
     }
 
     // --- Loads ---
@@ -1927,8 +2099,7 @@ function mountSkyview(root) {
       els.loads.innerHTML = '';
       els.loads.appendChild(createEl('div', 'skyview-notice skyview-notice-error', state.error));
     } else if (state.loading) {
-      els.loads.innerHTML = '';
-      els.loads.appendChild(createEl('div', 'skyview-notice', 'Laddar...'));
+      renderLoadSkeletons();
     } else if (!state.loads.length) {
       els.loads.innerHTML = '';
       els.loads.appendChild(createEl('div', 'skyview-notice', 'Inga lyft hittades just nu.'));
@@ -2003,13 +2174,6 @@ function mountSkyview(root) {
 
   state.render = render;
 
-  state.clockTimer = setInterval(() => {
-    state.clock = new Date();
-    if (!state.queueModalOpen && !state.settingsOpen) {
-      render();
-    }
-  }, 30000);
-
   // Header show/hide on scroll
   let lastScrollY = window.scrollY;
   let headerHidden = false;
@@ -2056,6 +2220,12 @@ function mountSkyview(root) {
       render();
     }
   });
+
+  state.offlineTicker = setInterval(() => {
+    if (state.offlineMode && !state.queueModalOpen && !state.settingsOpen) {
+      render();
+    }
+  }, 1000);
 
   scheduleRefresh();
   render();
