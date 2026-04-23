@@ -1405,21 +1405,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.skyview-last-updated {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0.15rem 0.55rem;
-  border-radius: 0.55rem;
-  border: 1px solid color-mix(in srgb, var(--sv-text) 26%, transparent);
-  background: color-mix(in srgb, var(--sv-bg) 68%, transparent);
-  font-size: 1.23rem;
-  font-weight: 400;
-  color: color-mix(in srgb, var(--sv-text) 86%, white);
-  text-shadow: none;
-  font-variant-numeric: tabular-nums;
-}
-
 .skyview-settings-wrapper {
   position: relative;
   display: flex;

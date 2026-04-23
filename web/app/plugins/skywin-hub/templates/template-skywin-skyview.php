@@ -32,7 +32,6 @@ defined( 'ABSPATH' ) || exit;
      data-skyview-queue-endpoint="<?php echo esc_attr( $args['queue_endpoint'] ); ?>">
     <header class="skyview-header">
         <div class="skyview-header-row">
-            <div class="skyview-last-updated" aria-live="polite">Senast uppdaterad: -</div>
             <div class="skyview-crew">
                 <span class="skyview-crew-pilot"></span>
                 <span class="skyview-crew-jumpleader"></span>

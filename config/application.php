@@ -86,9 +86,12 @@ Config::define('WP_HOME', env('WP_HOME'));
 Config::define('WP_SITEURL', env('WP_SITEURL'));
 
 $home = Config::get('WP_HOME');
-$isLocalIp = !empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], env('LOCAL_DEV_IP')) !== false;
-if ($isLocalIp) {
-    $home = 'http://' . $_SERVER['HTTP_HOST'];
+
+if( WP_ENV === 'development' ) {
+    $isLocalIp = !empty($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], env('LOCAL_DEV_IP')) !== false;
+    if ($isLocalIp) {
+        $home = 'http://' . $_SERVER['HTTP_HOST'];
+    }
 }
 
 Config::define('WP_HOME', $home);

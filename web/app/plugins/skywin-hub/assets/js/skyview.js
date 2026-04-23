@@ -821,39 +821,18 @@ function mountSkyview(root) {
     fadingOutComments: new Map(),
     prevMessage: '',
     fadingOutMessage: '',
-    lastUpdatedAt: null,
-    lastUpdateSource: '',
     offlineReason: '',
     offlineSince: null,
   };
 
   const els = {
     header: root.querySelector('.skyview-header'),
-    lastUpdated: root.querySelector('.skyview-last-updated'),
     crewPilot: root.querySelector('.skyview-crew-pilot'),
     crewJumpLeader: root.querySelector('.skyview-crew-jumpleader'),
     tools: root.querySelector('.skyview-tools'),
     messages: root.querySelector('.skyview-messages'),
     loads: root.querySelector('.skyview-loads'),
   };
-
-  function formatLastUpdatedText() {
-    if (!(state.lastUpdatedAt instanceof Date) || Number.isNaN(state.lastUpdatedAt.getTime())) {
-      return 'Senast uppdaterad: -';
-    }
-
-    const timestamp = state.lastUpdatedAt.toLocaleTimeString('sv-SE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-
-    if (state.lastUpdateSource === 'cache') {
-      return `Senast uppdaterad: ${timestamp} (cache)`;
-    }
-
-    return `Senast uppdaterad: ${timestamp}`;
-  }
 
   function formatOfflineDuration() {
     if (!(state.offlineSince instanceof Date) || Number.isNaN(state.offlineSince.getTime())) {
@@ -872,6 +851,40 @@ function mountSkyview(root) {
       return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
     }
     return `${seconds}s`;
+  }
+
+  function formatOfflineBarText() {
+    const duration = formatOfflineDuration();
+    return duration
+      ? `Offline — visar cachad data (offline i ${duration})`
+      : 'Offline — visar cachad data';
+  }
+
+  function getMessageEntryKey(entry) {
+    const type = String(entry?.type || 'default').toLowerCase();
+    const text = String(entry?.text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    return `${type}:${text}`;
+  }
+
+  function getAddedMessageEntries(nextRawMessage, prevRawMessage) {
+    const prevCounts = new Map();
+    parseMessageEntries(prevRawMessage).forEach((entry) => {
+      const key = getMessageEntryKey(entry);
+      prevCounts.set(key, (prevCounts.get(key) || 0) + 1);
+    });
+
+    const added = [];
+    parseMessageEntries(nextRawMessage).forEach((entry) => {
+      const key = getMessageEntryKey(entry);
+      const remaining = prevCounts.get(key) || 0;
+      if (remaining > 0) {
+        prevCounts.set(key, remaining - 1);
+        return;
+      }
+      added.push(entry);
+    });
+
+    return added;
   }
 
   function renderLoadSkeletons() {
@@ -1107,11 +1120,11 @@ function mountSkyview(root) {
       } else {
         state.error = '';
         const fetchedAtIso = new Date().toISOString();
-        state.lastUpdatedAt = new Date(fetchedAtIso);
-        state.lastUpdateSource = 'network';
         const incomingMessage = String(data?.message || '').trim();
-        if (state.hasFetchedOnce && incomingMessage && incomingMessage !== state.knownMessage) {
-          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: incomingMessage });
+        const addedMessageEntries = getAddedMessageEntries(incomingMessage, state.knownMessage);
+        if (state.hasFetchedOnce && addedMessageEntries.length > 0) {
+          const notifyBody = addedMessageEntries.map((entry) => entry.text).join('; ');
+          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: notifyBody, tag: 'skyview-newMessage' });
           if (state.soundNewMessage) playPingSound();
         }
         if (incomingMessage !== state.knownMessage) state.knownMessage = incomingMessage;
@@ -1237,12 +1250,6 @@ function mountSkyview(root) {
           }
           state.offlineMode = true;
           state.offlineReason = err.message || 'Anslutningsfel';
-          state.lastUpdateSource = 'cache';
-          const cacheFetchedAt = cacheData?._fetchedAt;
-          if (cacheFetchedAt) {
-            const parsed = new Date(cacheFetchedAt);
-            state.lastUpdatedAt = Number.isNaN(parsed.getTime()) ? null : parsed;
-          }
         } else {
           state.message = '';
           state.error = err.message || 'N\u00e4tverksfel';
@@ -2024,11 +2031,6 @@ function mountSkyview(root) {
     // --- Theme ---
     applyThemeStyles();
 
-    // --- Last updated ---
-    if (els.lastUpdated) {
-      els.lastUpdated.textContent = formatLastUpdatedText();
-    }
-
     // --- Crew ---
     const isSelectedDateToday = state.selectedDate === '' || state.selectedDate === todayDate();
     const hasDateSelected = state.selectedDate !== '';
@@ -2053,11 +2055,7 @@ function mountSkyview(root) {
     els.messages.innerHTML = '';
 
     if (state.offlineMode) {
-      const duration = formatOfflineDuration();
-      const offlineText = duration
-        ? `Offline \u2014 visar cachad data (offline i ${duration})`
-        : 'Offline \u2014 visar cachad data';
-      els.messages.appendChild(createEl('div', 'skyview-offline-bar skyview-message-row skyview-message-row--warning', offlineText));
+      els.messages.appendChild(createEl('div', 'skyview-offline-bar skyview-message-row skyview-message-row--warning', formatOfflineBarText()));
     }
 
     // Detect when message disappears → fade it out.
@@ -2223,7 +2221,10 @@ function mountSkyview(root) {
 
   state.offlineTicker = setInterval(() => {
     if (state.offlineMode && !state.queueModalOpen && !state.settingsOpen) {
-      render();
+      const offlineBar = root.querySelector('.skyview-offline-bar');
+      if (offlineBar) {
+        offlineBar.textContent = formatOfflineBarText();
+      }
     }
   }, 1000);
 
