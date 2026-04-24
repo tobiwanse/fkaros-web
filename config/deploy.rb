@@ -16,8 +16,6 @@ set :linked_files, %w[.env]
 # Delade mappar – bevaras mellan deploys
 set :linked_dirs, %w[web/app/uploads]
 
-
-
 # SSH agent forwarding – använder din lokala SSH-nyckel för GitHub-åtkomst på servern
 set :ssh_options, { forward_agent: true }
 

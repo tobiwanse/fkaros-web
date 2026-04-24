@@ -66,9 +66,11 @@ Projektet använder [Capistrano](https://capistranorb.com/) för deployment.
 
 ### Förutsättningar
 
+- bundle init
 - Ruby (hanteras via rbenv)
 - Bundler: `gem install bundler`
 - Installera gems: `bundle install`
+- bundle exec cap install
 
 ### Första gången
 
