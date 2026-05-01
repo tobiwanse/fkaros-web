@@ -337,7 +337,11 @@ class Skywin_Hub_Push {
 	}
 
 	private static function parse_message_entries( string $raw_message ): array {
-		$parts = preg_split( '/\n|;/u', $raw_message ) ?: [];
+		// Split on:
+		//   - newlines
+		//   - semicolons
+		//   - boundary before a [alert|warning|info] tag (so "Msg1[warning]Msg2" → two entries)
+		$parts = preg_split( '/\n|;|(?=\[(alert|warning|info)\])/iu', $raw_message ) ?: [];
 		$entries = [];
 
 		foreach ( $parts as $part ) {
@@ -394,7 +398,6 @@ class Skywin_Hub_Push {
 
 			$added[] = (string) ( $entry['text'] ?? '' );
 		}
-		error_log( print_r( $added, true ) );
 		return array_values( array_filter( $added, static fn( $text ) => '' !== trim( (string) $text ) ) );
 	}
 

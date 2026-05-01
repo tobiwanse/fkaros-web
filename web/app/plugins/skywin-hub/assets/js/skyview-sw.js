@@ -8,8 +8,9 @@ function stripPushMessagePrefix(text) {
 }
 
 function normalizePushNotificationBody(text) {
+  // Split on newlines, semicolons, and before [alert|warning|info] tags.
   return String(text || '')
-    .split(';')
+    .split(/\n|;|(?=\[(alert|warning|info)\])/i)
     .map((part) => stripPushMessagePrefix(part))
     .filter(Boolean)
     .join('\n');
