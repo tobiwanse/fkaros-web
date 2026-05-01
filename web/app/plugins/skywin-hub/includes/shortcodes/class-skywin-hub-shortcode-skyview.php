@@ -1426,7 +1426,10 @@ class Skywin_Hub_Shortcode_Skyview {
 		foreach ( $candidates as $key ) {
 			$value = $data[ $key ] ?? null;
 			if ( is_string( $value ) && '' !== trim( $value ) ) {
-				return sanitize_text_field( $value );
+				// Use sanitize_textarea_field to preserve newline/semicolon separators
+				// that delimit individual message entries. sanitize_text_field would
+				// replace \n with spaces, breaking both the diff logic and notification body.
+				return sanitize_textarea_field( $value );
 			}
 		}
 
