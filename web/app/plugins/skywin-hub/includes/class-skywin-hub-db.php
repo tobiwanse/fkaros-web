@@ -336,6 +336,20 @@ if (!class_exists('Skywin_Hub_DB')) :
 			}
 			return $results;
 		}
+		public function get_intmessages()
+		{
+			if( is_wp_error($this->db) ) return [];
+			$sql = "SELECT MessageNo, Removed, MessageText, LastUpd FROM intmessage ORDER BY LastUpd DESC";
+			try {
+				$stmt = $this->db->prepare($sql);
+				$stmt->execute();
+				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			} catch (PDOException $exception) {
+				error_log('skywin_sql_error: ' . json_encode($exception->getMessage()));
+				$results = [];
+			}
+			return $results;
+		}		
 		public function get_typecountries()
 		{
 			if( is_wp_error($this->db) ) return [];
