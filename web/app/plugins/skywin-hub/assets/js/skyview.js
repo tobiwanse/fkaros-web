@@ -571,20 +571,20 @@ function parseMessageEntry(rawMessage) {
 
   const match = text.match(/^\[(alert|warning|info)\]\s*[,:\-]?\s*/i);
   if (!match) {
-    return { type: 'default', text };
+    return { type: 'default', text: text.replace(/\s*;\s*/g, '\n') };
   }
 
   const type = String(match[1] || '').toLowerCase();
   const cleaned = text.slice(match[0].length).trim();
   return {
     type,
-    text: cleaned || text,
+    text: (cleaned || text).replace(/\s*;\s*/g, '\n'),
   };
 }
 
 function parseMessageEntries(rawMessage) {
   return String(rawMessage || '')
-    .split(/\n|;/)
+    .split(/\n/)
     .map(parseMessageEntry)
     .filter(Boolean);
 }
