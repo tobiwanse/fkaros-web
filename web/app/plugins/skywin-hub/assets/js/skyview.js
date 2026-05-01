@@ -691,6 +691,10 @@ function syncPushSubscription(vapidKey, pushApiBase, state) {
       }
 
       // Subscribe or update.
+      // Don't attempt a new subscription without an explicit user gesture —
+      // calling pushManager.subscribe() when permission is 'default' would
+      // trigger the browser's permission prompt unexpectedly on page load.
+      if (!existing && Notification.permission !== 'granted') return;
       var subPromise = existing
         ? Promise.resolve(existing)
         : reg.pushManager.subscribe({
@@ -1124,7 +1128,6 @@ function mountSkyview(root) {
         const addedMessageEntries = getAddedMessageEntries(incomingMessage, state.knownMessage);
         if (state.hasFetchedOnce && addedMessageEntries.length > 0) {
           const notifyBody = addedMessageEntries.map((entry) => entry.text).join('; ');
-          if (state.notifyNewMessage) showPushNotification('Nytt meddelande', { body: notifyBody, tag: 'skyview-newMessage' });
           if (state.soundNewMessage) playPingSound();
         }
         if (incomingMessage !== state.knownMessage) state.knownMessage = incomingMessage;
@@ -1139,9 +1142,6 @@ function mountSkyview(root) {
             ? Number(data.jumpQueueCount)
             : null;
         if (state.hasFetchedOnce && prevQueueCount !== null && state.jumpQueueCount !== null && state.jumpQueueCount > prevQueueCount) {
-          if (state.notifyNewQueueJumper) {
-            showPushNotification('Ny i önskelistan', { body: `${state.jumpQueueCount} i kön` });
-          }
           if (state.soundNewQueueJumper) playPingSound();
         }
         const previousLoads = state.loads;
@@ -1179,13 +1179,6 @@ function mountSkyview(root) {
         });
         let soundPlayed = false;
         if (state.hasFetchedOnce && addedLoadIds.length > 0) {
-          if (state.notifyNewLoad) {
-            const total = merged.length;
-            const msg = addedLoadIds.length === 1
-              ? 'Lift nummer ' + total + ' tillagd!'
-              : addedLoadIds.length + ' nya liftar tillagda!';
-            showPushNotification('SkyView', { body: msg, tag: 'skyview-newLoad' });
-          }
           if (state.soundEnabled) { playPingSound(); soundPlayed = true; }
         }
 
@@ -1212,12 +1205,6 @@ function mountSkyview(root) {
               }
             }
             if (newJumperLoadNums.length > 0) {
-              if (state.notifyNewJumper) {
-                const msg = newJumperLoadNums.length === 1
-                  ? 'Ny hoppare lades till i lift nr ' + newJumperLoadNums[0]
-                  : newJumperLoadNums.length + ' nya hoppare lades till i lift nr ' + [...new Set(newJumperLoadNums)].join(', ');
-                showPushNotification('SkyView', { body: msg, tag: 'skyview-newJumper' });
-              }
               if (state.soundNewJumper && !soundPlayed) playPingSound();
             }
           }

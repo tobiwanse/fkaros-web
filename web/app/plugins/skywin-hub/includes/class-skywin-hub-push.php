@@ -100,6 +100,7 @@ class Skywin_Hub_Push {
 
 	public static function pwa_meta_tags(): void {
 		echo '<link rel="manifest" href="' . esc_url( home_url( '/skyview-manifest.json?start=' . rawurlencode( $_SERVER['REQUEST_URI'] ) ) ) . '">' . "\n";
+		echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";
 		echo '<meta name="theme-color" content="#1a1a2e">' . "\n";
@@ -313,6 +314,90 @@ class Skywin_Hub_Push {
 		return new WP_REST_Response( [ 'ok' => true, 'count' => count( $subs ) ] );
 	}
 
+	private static function parse_message_entry( string $raw_message ): ?array {
+		$text = trim( $raw_message );
+		if ( '' === $text ) {
+			return null;
+		}
+
+		if ( preg_match( '/^\[(alert|warning|info)\]\s*[,:\-]?\s*/iu', $text, $matches ) ) {
+			$type    = mb_strtolower( (string) ( $matches[1] ?? '' ) );
+			$cleaned = trim( preg_replace( '/^\[(alert|warning|info)\]\s*[,:\-]?\s*/iu', '', $text ) ?? '' );
+
+			return [
+				'type' => $type,
+				'text' => '' !== $cleaned ? $cleaned : $text,
+			];
+		}
+
+		return [
+			'type' => 'default',
+			'text' => $text,
+		];
+	}
+
+	private static function parse_message_entries( string $raw_message ): array {
+		$parts = preg_split( '/\n|;/u', $raw_message ) ?: [];
+		$entries = [];
+
+		foreach ( $parts as $part ) {
+			$entry = self::parse_message_entry( (string) $part );
+			if ( null !== $entry ) {
+				$entries[] = $entry;
+			}
+		}
+
+		return $entries;
+	}
+
+	private static function get_message_entry_key( array $entry ): string {
+		$type = mb_strtolower( (string) ( $entry['type'] ?? 'default' ) );
+		$text = mb_strtolower( preg_replace( '/\s+/u', ' ', trim( (string) ( $entry['text'] ?? '' ) ) ) ?? '' );
+
+		return $type . ':' . $text;
+	}
+
+	private static function get_added_message_entries( string $next_raw_message, string $prev_raw_message ): array {
+		$next_raw_message = trim( $next_raw_message );
+		$prev_raw_message = trim( $prev_raw_message );
+
+		if ( '' === $next_raw_message || $next_raw_message === $prev_raw_message ) {
+			return [];
+		}
+
+		// Fast path for append-only updates when upstream message formatting has
+		// weak/no delimiters (for example sanitized HTML lists that become one string).
+		if ( '' !== $prev_raw_message && str_starts_with( $next_raw_message, $prev_raw_message ) ) {
+			$suffix = trim( mb_substr( $next_raw_message, mb_strlen( $prev_raw_message ) ) );
+			$suffix = preg_replace( '/^[\s,;|:\-]+/u', '', $suffix ) ?? $suffix;
+
+			if ( '' !== trim( $suffix ) ) {
+				return [ $suffix ];
+			}
+		}
+
+		$prev_counts = [];
+		foreach ( self::parse_message_entries( $prev_raw_message ) as $entry ) {
+			$key = self::get_message_entry_key( $entry );
+			$prev_counts[ $key ] = ( $prev_counts[ $key ] ?? 0 ) + 1;
+		}
+
+		$added = [];
+		foreach ( self::parse_message_entries( $next_raw_message ) as $entry ) {
+			$key = self::get_message_entry_key( $entry );
+			$remaining = $prev_counts[ $key ] ?? 0;
+
+			if ( $remaining > 0 ) {
+				$prev_counts[ $key ] = $remaining - 1;
+				continue;
+			}
+
+			$added[] = (string) ( $entry['text'] ?? '' );
+		}
+		error_log( print_r( $added, true ) );
+		return array_values( array_filter( $added, static fn( $text ) => '' !== trim( (string) $text ) ) );
+	}
+
 	/* ── Cron: detect changes & push ───────────────────────────────── */
 
 	public static function cron_check(): array {
@@ -331,6 +416,8 @@ class Skywin_Hub_Push {
 
 		$loads  = $result['loads'] ?? [];
 		$current_message     = trim( $result['message'] ?? '' );
+		
+
 		$current_queue_count = $result['jumpQueueCount'] ?? null;
 		if ( $current_queue_count !== null ) {
 			$current_queue_count = (int) $current_queue_count;
@@ -408,7 +495,8 @@ class Skywin_Hub_Push {
 		}
 
 		// Nothing new? Bail.
-		$message_changed = $current_message !== '' && $current_message !== $prev_message;
+		$added_message_entries = self::get_added_message_entries( $current_message, $prev_message );
+		$message_changed = ! empty( $added_message_entries );
 		$queue_increased = $current_queue_count !== null && $prev_queue_count !== null && $current_queue_count > $prev_queue_count;
 
 		if ( empty( $new_loads ) && empty( $new_jumper_loads ) && ! $message_changed && ! $queue_increased ) {
@@ -438,7 +526,7 @@ class Skywin_Hub_Push {
 		}
 
 		if ( $message_changed ) {
-			$messages['newMessage'] = $current_message;
+			$messages['newMessage'] = implode( "\n", $added_message_entries );
 		}
 
 		if ( $queue_increased ) {

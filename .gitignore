@@ -2,6 +2,8 @@
 web/app/plugins/*
 !web/app/plugins/skywin-hub
 web/app/plugins/skywin-hub/node_modules
+!web/app/plugins/jumprunner
+!web/app/plugins/jumprunner/node_modules
 !web/app/plugins/.gitkeep
 web/app/mu-plugins/*/
 web/app/themes/twentytwentyfive/
