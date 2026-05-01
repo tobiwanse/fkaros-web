@@ -421,13 +421,19 @@ class Skywin_Hub_Push {
 
 		// Fetch messages directly from the Skywin DB instead of the API field.
 		$db_messages         = function_exists( 'skywin_hub_db' ) ? skywin_hub_db()->get_intmessages() : [];
-		$current_msg_map     = []; // MessageNo => MessageText for active (non-removed) messages
+		$latest_message_text = '';
+		$latest_message_key  = '';
 		if ( is_array( $db_messages ) ) {
 			foreach ( $db_messages as $row ) {
 				$no      = (string) ( $row['MessageNo'] ?? '' );
 				$removed = (string) ( $row['Removed']   ?? 'N' );
 				if ( '' !== $no && 'Y' !== strtoupper( $removed ) ) {
-					$current_msg_map[ $no ] = sanitize_textarea_field( (string) ( $row['MessageText'] ?? '' ) );
+					$text = sanitize_textarea_field( (string) ( $row['MessageText'] ?? '' ) );
+					if ( '' === $latest_message_key ) {
+						$last_upd           = (string) ( $row['LastUpd'] ?? '' );
+						$latest_message_key = $no . '|' . $last_upd . '|' . md5( $text );
+						$latest_message_text = trim( $text );
+					}
 				}
 			}
 		}
@@ -445,7 +451,7 @@ class Skywin_Hub_Push {
 
 		$prev_load_ids    = $prev['loadIds']    ?? [];
 		$prev_jumper_keys = $prev['jumperKeys'] ?? [];
-		$prev_msg_ids     = $prev['messageIds'] ?? [];
+		$prev_latest_message_key = (string) ( $prev['latestMessageKey'] ?? '' );
 		$prev_queue_count = $prev['queueCount'] ?? null;
 
 		// Current state.
@@ -493,7 +499,7 @@ class Skywin_Hub_Push {
 		update_option( self::OPTION_LAST_STATE, [
 			'loadIds'    => $current_load_ids,
 			'jumperKeys' => $current_jumper_counts,
-			'messageIds' => array_keys( $current_msg_map ),
+			'latestMessageKey' => $latest_message_key,
 			'queueCount' => $current_queue_count,
 			'date'       => $date,
 		], false );
@@ -509,8 +515,7 @@ class Skywin_Hub_Push {
 		}
 
 		// Nothing new? Bail.
-		$new_msg_ids     = array_diff( array_keys( $current_msg_map ), $prev_msg_ids );
-		$message_changed = ! empty( $new_msg_ids );
+		$message_changed = '' !== $latest_message_key && $latest_message_key !== $prev_latest_message_key;
 		$queue_increased = $current_queue_count !== null && $prev_queue_count !== null && $current_queue_count > $prev_queue_count;
 
 		if ( empty( $new_loads ) && empty( $new_jumper_loads ) && ! $message_changed && ! $queue_increased ) {
@@ -540,11 +545,7 @@ class Skywin_Hub_Push {
 		}
 
 		if ( $message_changed ) {
-			$new_texts = array_values( array_filter(
-				array_map( static fn( $id ) => trim( $current_msg_map[ $id ] ?? '' ), $new_msg_ids ),
-				static fn( $t ) => '' !== $t
-			) );
-			$messages['newMessage'] = implode( "\n", $new_texts );
+			$messages['newMessage'] = $latest_message_text;
 		}
 
 		if ( $queue_increased ) {
