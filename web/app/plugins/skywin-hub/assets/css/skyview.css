@@ -35,7 +35,7 @@
   /* background: transparent; */
   color: var(--sv-text);
   min-height: 100vh;
-  padding:0;;
+  padding: 0;
 }
 
 .skyview-title {
@@ -2192,7 +2192,7 @@
   color: #a02020;
 }
 .skyview-main{
-  margin:1rem;
+  padding: 1.5rem;
 }
 /* ── Compact view ────────────────────────────────────────── */
 .skyview-page--compact .skyview-jumper-row {
