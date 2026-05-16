@@ -133,15 +133,6 @@ class Skywin_Hub_FC_Tandem_View {
 		ob_start();
 		?>
 		<div class="tandem-view<?php echo $stale ? ' tandem-view--stale' : ''; ?>">
-			<?php if ( $generated !== '' ) : ?>
-				<div class="tandem-view__meta">
-					<?php if ( $stale ) : ?>
-						<span class="tandem-view__stale" title="<?php esc_attr_e( 'Visar senast lyckade svar', 'skywin-hub' ); ?>"><?php esc_html_e( 'Offline-läge', 'skywin-hub' ); ?></span>
-					<?php endif; ?>
-					<span class="tandem-view__updated"><?php echo esc_html( sprintf( __( 'Uppdaterad %s', 'skywin-hub' ), $generated ) ); ?></span>
-				</div>
-			<?php endif; ?>
-
 			<?php
 			// Only show loads with status === 'planned'. Drop the rest before rendering.
 			$sections = array_values( array_filter(
@@ -171,6 +162,15 @@ class Skywin_Hub_FC_Tandem_View {
 					<?php foreach ( $sections as $section ) : ?>
 						<?php echo self::render_load( is_array( $section ) ? $section : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php endforeach; ?>
+				</div>
+			<?php endif; ?>
+
+			<?php if ( $generated !== '' ) : ?>
+				<div class="tandem-view__meta">
+					<?php if ( $stale ) : ?>
+						<span class="tandem-view__stale" title="<?php esc_attr_e( 'Visar senast lyckade svar', 'skywin-hub' ); ?>"><?php esc_html_e( 'Offline-läge', 'skywin-hub' ); ?></span>
+					<?php endif; ?>
+					<span class="tandem-view__updated"><?php echo esc_html( sprintf( __( 'Uppdaterad %s', 'skywin-hub' ), $generated ) ); ?></span>
 				</div>
 			<?php endif; ?>
 		</div>

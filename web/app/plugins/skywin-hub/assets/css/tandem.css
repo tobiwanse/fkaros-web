@@ -10,6 +10,11 @@
 .skyview-main-grid > .skyview-loads {
   min-width: 0;
 }
+/* Override viewport-based column counts: size to actual container width instead. */
+.skyview-main-grid > .skyview-loads,
+.skyview-main-grid > .skyview-board {
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+}
 .skyview-main-grid > .tandem-section {
   min-width: 0;
   margin-top: 0;
@@ -50,13 +55,13 @@
   opacity: 0.95;
 }
 
-/* Header meta (Uppdaterad HH:MM) */
+/* Footer meta (Uppdaterad HH:MM) */
 .tandem-view__meta {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
   font-size: 0.85rem;
   color: var(--sv-text-muted, #7a9bbf);
 }
