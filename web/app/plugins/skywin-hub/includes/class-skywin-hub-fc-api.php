@@ -83,28 +83,19 @@ class Skywin_Hub_FC_API {
 
 		$url      = $base . $this->get_endpoint();
 		$attempts = 0;
-		$max      = 3;
 		$response = null;
-		while ( $attempts < $max ) {
+		// Never give up — keep retrying with a short pause between attempts.
+		// PHP's max_execution_time will still eventually abort runaway loops.
+		$pause_seconds = 3;
+		while ( true ) {
 			$attempts++;
 			$response = wp_remote_request( $url, $args );
 			if ( ! is_wp_error( $response ) ) {
 				break;
 			}
-			// Retry only on transient connectivity errors.
-			$code = $response->get_error_code();
-			$msg  = $response->get_error_message();
-			$transient_error = $code === 'http_request_failed'
-				&& ( stripos( $msg, 'cURL error 7' ) !== false
-					|| stripos( $msg, 'cURL error 28' ) !== false
-					|| stripos( $msg, 'cURL error 6' ) !== false
-					|| stripos( $msg, 'cURL error 52' ) !== false
-					|| stripos( $msg, 'cURL error 56' ) !== false );
-			if ( ! $transient_error || $attempts >= $max ) {
-				break;
-			}
-			error_log( sprintf( 'Skywin FC API retry %d/%d after error: %s', $attempts, $max - 1, $msg ) );
-			usleep( 300000 * $attempts ); // 300ms, 600ms backoff
+			$msg = $response->get_error_message();
+			error_log( sprintf( 'Skywin FC API retry %d after error: %s (paus %ds)', $attempts, $msg, $pause_seconds ) );
+			sleep( $pause_seconds );
 		}
 
 		if ( is_wp_error( $response ) ) {
