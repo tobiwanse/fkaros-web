@@ -94,6 +94,11 @@ if (!class_exists('Skywin_Hub')):
 
 			include_once SW_ABSPATH . 'includes/class-skywin-hub-push.php';
 			Skywin_Hub_Push::init();
+
+			include_once SW_ABSPATH . 'includes/class-skywin-hub-fc-api.php';
+
+			include_once SW_ABSPATH . 'includes/class-skywin-hub-fc-tandem-view.php';
+			Skywin_Hub_FC_Tandem_View::init();
 		}
 	}
 endif;

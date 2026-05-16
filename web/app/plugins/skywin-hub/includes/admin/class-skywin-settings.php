@@ -54,6 +54,7 @@ if (!class_exists('Skywin_Admin_Settings')):
 			$tabs["deposit"] = esc_html__('Deposit');
 			$tabs["api"] = esc_html__('SkywinOne');
 			$tabs["db"] = esc_html__('Skywin Database');
+			$tabs["fc"] = esc_html__('FC-Settings');
 			return $tabs;
 		}
 		private function current_tab()
@@ -540,6 +541,44 @@ if (!class_exists('Skywin_Admin_Settings')):
 					'desc' => __('View product button text'),
 					'desc_tip' => __('View product button text'),
 					'custom_attributes' => array('autocomplete' => 'off'),
+				];
+				$settings[] = [
+					'type' => 'sectionend',
+				];
+			elseif ("skywin_hub_fc" === $this->option_page):
+				$settings[] = [
+					'name' => __('FC (Loadplanner) Settings'),
+					'type' => 'title',
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_url",
+					'name' => __('URL'),
+					'type' => 'text',
+					'desc' => __('FC base URL, e.g. https://localhost'),
+					'desc_tip' => __('FC base URL without trailing slash'),
+					'default' => 'https://localhost',
+					'sanitize_callback' => [$this, 'sanitize_text_field'],
+					'custom_attributes' => array('autocomplete' => 'off', 'class' => 'regular-text'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_endpoint",
+					'name' => __('Endpoint'),
+					'type' => 'text',
+					'desc' => __('API endpoint path, e.g. /api/endpoint'),
+					'desc_tip' => __('API endpoint path appended to the URL above'),
+					'default' => '/api/endpoint',
+					'sanitize_callback' => [$this, 'sanitize_text_field'],
+					'custom_attributes' => array('autocomplete' => 'off', 'class' => 'regular-text'),
+				];
+				$settings[] = [
+					'id' => "{$this->option_page}_authorization",
+					'name' => __('Authorization'),
+					'type' => 'text',
+					'desc' => __('Authorization header value sent with the API request'),
+					'desc_tip' => __('Authorization header value sent with the API request'),
+					'default' => '',
+					'sanitize_callback' => [$this, 'sanitize_text_field'],
+					'custom_attributes' => array('autocomplete' => 'off', 'class' => 'regular-text'),
 				];
 				$settings[] = [
 					'type' => 'sectionend',

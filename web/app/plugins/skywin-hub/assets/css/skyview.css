@@ -1734,10 +1734,10 @@
 
 /* ── Theme: Lavender (soft purple light) ──────────────── */
 .skyview-page--lavender {
-  /* --sv-bg: #f0edf6; */
-  /* --sv-card-bg: #faf8fd; */
-  /* --sv-card-header-bg: #ddd0ea; */
-  /* --sv-card-border: #c8b8d8; */
+  --sv-bg: #f0edf6;
+  --sv-card-bg: #faf8fd;
+  --sv-card-header-bg: #ddd0ea;
+  --sv-card-border: #c8b8d8;
   --sv-text: #000000;
   --sv-text-muted: #7860a0;
   --sv-accent: #7c4dbd;
@@ -2505,7 +2505,8 @@
 }
 
 /* Kort-header — varm gradient */
-.skyview-page--flower-power .skyview-card-header {
+.skyview-page--flower-power .skyview-card-header,
+.skyview-page--flower-power .tandem-load__head {
   background: linear-gradient(135deg, #ffe0a0, #ffd0c0);
 }
 
@@ -2659,7 +2660,8 @@
     0 10px 30px rgba(0, 0, 0, 0.62);
 }
 
-.skyview-page--wizard-cup .skyview-card-header {
+.skyview-page--wizard-cup .skyview-card-header,
+.skyview-page--wizard-cup .tandem-load__head {
   background: linear-gradient(135deg, rgba(80, 45, 130, 0.95), rgba(120, 45, 95, 0.95));
   border-bottom-color: rgba(201, 166, 91, 0.3);
 }
@@ -2720,7 +2722,8 @@
 }
 
 /* Header — svart bakgrund, vit text */
-.skyview-page--classic .skyview-card-header {
+.skyview-page--classic .skyview-card-header,
+.skyview-page--classic .tandem-load__head {
   background: #111111;
   border-bottom: 2px solid #000000;
 }

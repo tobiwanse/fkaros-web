@@ -1,0 +1,335 @@
+/* Tandem view — table layout matching the Loadplanner TV view, in the Skywin dark theme. */
+
+/* ---- Side-by-side layout with skyview-loads ---- */
+.skyview-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(380px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.skyview-main-grid > .skyview-loads {
+  min-width: 0;
+}
+.skyview-main-grid > .tandem-section {
+  min-width: 0;
+  margin-top: 0;
+}
+@media (max-width: 1400px) {
+  .skyview-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .skyview-main-grid > .tandem-section {
+    margin-top: 1.25rem;
+  }
+}
+
+.tandem-section {
+  margin-top: 1.25rem;
+}
+
+.tandem-section__title {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin: 0 0 0.5rem;
+  color: var(--sv-text, #ffffff);
+}
+
+.tandem-loading,
+.tandem-empty,
+.tandem-error {
+  font-size: 0.95rem;
+  opacity: 0.7;
+  padding: 0.75rem 0.5rem;
+  color: var(--sv-text, #ffffff);
+}
+
+.tandem-error {
+  color: #ffb4b4;
+  opacity: 0.95;
+}
+
+/* Header meta (Uppdaterad HH:MM) */
+.tandem-view__meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--sv-text-muted, #7a9bbf);
+}
+
+.tandem-view__stale {
+  background: rgba(224, 154, 44, 0.18);
+  color: #e0a92c;
+  border: 1px solid rgba(224, 154, 44, 0.4);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tandem-view--stale .tandem-table {
+  opacity: 0.85;
+}
+
+/* ---- Table ---- */
+.tandem-table {
+  --col-pilot:  1.4fr;
+  --col-photog: 1.4fr;
+  --col-media:  0.4fr;
+  --col-pax:    1.4fr;
+  --col-comment: 0px;
+  --col-color:  2rem;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--sv-text, #ffffff);
+}
+
+.tandem-cell--comment {
+  display: none;
+}
+
+.tandem-table__head,
+.tandem-row,
+.tandem-load__head,
+.tandem-load__placeholder {
+  display: grid;
+  grid-template-columns:
+    var(--col-pilot)
+    var(--col-photog)
+    var(--col-media)
+    var(--col-pax)
+    var(--col-comment)
+    var(--col-color);
+  align-items: center;
+}
+
+.tandem-table__head {
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sv-text-muted, #7a9bbf);
+}
+
+.tandem-cell {
+  padding: 0 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tandem-cell--media {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tandem-cell--color {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* ---- Lift block ---- */
+.tandem-load {
+  margin-bottom: 1rem;
+  border: 1px solid var(--sv-card-border, #2a4d70);
+  background-color: var(--sv-card-bg);
+  border-radius: var(--sv-radius, 8px);
+  overflow: hidden;
+}
+.tandem-load:last-child {
+  margin-bottom: 0;
+}
+
+/* Spacer band between lifts — transparent so each theme's page bg shows through. */
+.tandem-load + .tandem-load {
+  margin-top: 0;
+}
+
+/* ---- Enter/leave animations (mirror .skyview-load-sortable--animate) ---- */
+@keyframes tandemLoadEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes tandemLoadLeave {
+  from { opacity: 1; transform: translateY(0);     max-height: var(--tandem-load-h, 600px); margin-bottom: 1rem; }
+  to   { opacity: 0; transform: translateY(-12px); max-height: 0;                            margin-bottom: 0; }
+}
+
+.tandem-load--animate {
+  animation: tandemLoadEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 0.08s);
+}
+
+.tandem-load--leaving {
+  animation: tandemLoadLeave 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tandem-load__head {
+  background: var(--sv-card-header-bg, #1a4a78);
+  color: var(--sv-header-text, #ffffff);
+  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  /* Span all columns visually */
+  grid-template-columns: 1fr auto;
+  border-bottom: 1px solid var(--sv-card-border, #2a4d70);
+
+}
+
+.tandem-load__title {
+  grid-column: 1;
+}
+
+.tandem-load__placeholder {
+  display: block;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  color: var(--sv-text-muted, #7a9bbf);
+  font-style: italic;
+}
+
+/* ---- Jump rows ---- */
+.tandem-row {
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--sv-card-border, rgba(127, 127, 127, 0.35));
+  position: relative;
+}
+
+.tandem-row:last-of-type {
+  border-bottom: none;
+}
+
+.tandem-row:nth-of-type(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tandem-row__comment {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  color: var(--sv-text-muted, #7a9bbf);
+  margin-top: 0.2rem;
+  padding-left: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tandem-cell--comment {
+  font-size: 0.88rem;
+  color: var(--sv-text-muted, #7a9bbf);
+  font-style: italic;
+}
+
+.tandem-cell--pax {
+  display: block;
+}
+
+.tandem-cell__pax-name,
+.tandem-cell__comment {
+  display: inline;
+}
+
+/* ---- Color group wrappers (mirror Skyview group containers) ---- */
+.tandem-group {
+  border-left: 4px solid transparent;
+  /* Compensate for the 4px left border so columns stay aligned with header. */
+}
+.tandem-group .tandem-row {
+  padding-left: calc(1rem - 4px);
+  border-bottom: none;
+}
+
+.tandem-group--color-1  { border-left-color: var(--sv-g1,  #e05c5c); background: rgba(224, 92,  92,  0.16); }
+.tandem-group--color-2  { border-left-color: var(--sv-g2,  #e09a2c); background: rgba(224, 154, 44,  0.16); }
+.tandem-group--color-3  { border-left-color: var(--sv-g3,  #50c878); background: rgba(80,  200, 120, 0.16); }
+.tandem-group--color-4  { border-left-color: var(--sv-g4,  #3fa7d6); background: rgba(63,  167, 214, 0.16); }
+.tandem-group--color-5  { border-left-color: var(--sv-g5,  #a070d8); background: rgba(160, 112, 216, 0.16); }
+.tandem-group--color-6  { border-left-color: var(--sv-g6,  #d45f9e); background: rgba(212, 95,  158, 0.16); }
+.tandem-group--color-7  { border-left-color: var(--sv-g7,  #2ec4b6); background: rgba(46,  196, 182, 0.16); }
+.tandem-group--color-8  { border-left-color: var(--sv-g8,  #b5d430); background: rgba(181, 212, 48,  0.16); }
+.tandem-group--color-9  { border-left-color: var(--sv-g9,  #e8833a); background: rgba(232, 131, 58,  0.16); }
+.tandem-group--color-10 { border-left-color: var(--sv-g10, #5b8af5); background: rgba(91,  138, 245, 0.16); }
+
+/* Inside a coloured group, keep the tint solid — no even-row striping. */
+.tandem-group .tandem-row:nth-of-type(even) {
+  background: transparent;
+}
+
+/* ---- Color dot (Blip Grupp) ---- */
+.tandem-color-dot {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #888;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.tandem-row--color-1  .tandem-color-dot { background: var(--sv-g1,  #e05c5c); }
+.tandem-row--color-2  .tandem-color-dot { background: var(--sv-g2,  #e09a2c); }
+.tandem-row--color-3  .tandem-color-dot { background: var(--sv-g3,  #50c878); }
+.tandem-row--color-4  .tandem-color-dot { background: var(--sv-g4,  #3fa7d6); }
+.tandem-row--color-5  .tandem-color-dot { background: var(--sv-g5,  #a070d8); }
+.tandem-row--color-6  .tandem-color-dot { background: var(--sv-g6,  #d45f9e); }
+.tandem-row--color-7  .tandem-color-dot { background: var(--sv-g7,  #2ec4b6); }
+.tandem-row--color-8  .tandem-color-dot { background: var(--sv-g8,  #b5d430); }
+.tandem-row--color-9  .tandem-color-dot { background: var(--sv-g9,  #e8833a); }
+.tandem-row--color-10 .tandem-color-dot { background: var(--sv-g10, #5b8af5); }
+
+/* ---- Explicit Loadplanner colour names (Tailwind palette, oklch) ---- *
+ * Override the theme-palette dot + group tint so the visual matches the
+ * actual colour name used in Loadplanner, regardless of active Skyview theme.
+ */
+.tandem-row--amber   .tandem-color-dot { background: oklch(82.8% 0.189 84.429); }
+.tandem-row--sky     .tandem-color-dot { background: oklch(74.6% 0.160 232.661); }
+.tandem-row--emerald .tandem-color-dot { background: oklch(76.5% 0.177 163.223); }
+.tandem-row--rose    .tandem-color-dot { background: oklch(71.2% 0.194 13.428); }
+.tandem-row--violet  .tandem-color-dot { background: oklch(70.2% 0.183 293.541); }
+.tandem-row--slate   .tandem-color-dot { background: oklch(70.4% 0.040 256.788); }
+
+.tandem-group[data-color="amber"]   { border-left-color: oklch(82.8% 0.189 84.429);  background: oklch(82.8% 0.189 84.429  / 0.16); }
+.tandem-group[data-color="sky"]     { border-left-color: oklch(74.6% 0.160 232.661); background: oklch(74.6% 0.160 232.661 / 0.16); }
+.tandem-group[data-color="emerald"] { border-left-color: oklch(76.5% 0.177 163.223); background: oklch(76.5% 0.177 163.223 / 0.16); }
+.tandem-group[data-color="rose"]    { border-left-color: oklch(71.2% 0.194 13.428);  background: oklch(71.2% 0.194 13.428  / 0.16); }
+.tandem-group[data-color="violet"]  { border-left-color: oklch(70.2% 0.183 293.541); background: oklch(70.2% 0.183 293.541 / 0.16); }
+.tandem-group[data-color="slate"]   { border-left-color: oklch(70.4% 0.040 256.788); background: oklch(70.4% 0.040 256.788 / 0.16); }
+
+/* ---- Responsive: collapse to a stacked card layout on narrow screens ---- */
+@media (max-width: 720px) {
+  .tandem-table__head {
+    display: none;
+  }
+  .tandem-row,
+  .tandem-load__head,
+  .tandem-load__placeholder {
+    grid-template-columns: 1fr auto;
+    row-gap: 0.15rem;
+    padding: 0.6rem 0.85rem;
+  }
+  .tandem-load__head {
+    grid-template-columns: 1fr auto;
+  }
+  .tandem-cell--pilot   { grid-column: 1; font-weight: 700; font-size: 1.05rem; }
+  .tandem-cell--pax     { grid-column: 1; grid-row: 2; color: var(--sv-text-muted, #7a9bbf); }
+  .tandem-cell--photog  { grid-column: 1; grid-row: 3; font-size: 0.85rem; opacity: 0.8; }
+  .tandem-cell--media   { grid-column: 2; grid-row: 1; text-align: right; }
+  .tandem-cell--color   { grid-column: 2; grid-row: 2; justify-content: flex-end; }
+  .tandem-cell--comment { grid-column: 1 / -1; grid-row: 4; font-size: 0.8rem; }
+}

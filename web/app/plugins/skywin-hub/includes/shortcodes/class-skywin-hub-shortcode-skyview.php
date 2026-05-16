@@ -40,17 +40,19 @@ class Skywin_Hub_Shortcode_Skyview {
 		}
 
 		$template_args = [
-			'endpoint'       => $endpoint,
-			'title'          => $title,
-			'date'           => $date,
-			'refresh'        => $refresh,
-			'logged_in'      => $logged_in,
-			'sw'             => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_sw_url() : '',
-			'vapid'          => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_vapid_public_key() : '',
-			'push_endpoint'  => rest_url( 'skywin-hub/v1/push' ),
-			'login_url'      => wp_login_url( get_permalink() ),
-			'logout_url'     => wp_logout_url( get_permalink() ),
-			'queue_endpoint' => rest_url( 'skywin-hub/v1/jump-queue' ),
+			'endpoint'        => $endpoint,
+			'title'           => $title,
+			'date'            => $date,
+			'refresh'         => $refresh,
+			'logged_in'       => $logged_in,
+			'sw'              => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_sw_url() : '',
+			'vapid'           => class_exists( 'Skywin_Hub_Push' ) ? Skywin_Hub_Push::get_vapid_public_key() : '',
+			'push_endpoint'   => rest_url( 'skywin-hub/v1/push' ),
+			'login_url'       => wp_login_url( get_permalink() ),
+			'logout_url'      => wp_logout_url( get_permalink() ),
+			'queue_endpoint'  => rest_url( 'skywin-hub/v1/jump-queue' ),
+			'tandem_endpoint' => rest_url( 'skywin-hub/v1/tandem' ),
+			'tandem_initial'  => self::build_tandem_initial_html( $date ),
 		];
 
 		ob_start();
@@ -396,6 +398,41 @@ class Skywin_Hub_Shortcode_Skyview {
 				true
 			);
 		}
+
+		$tandem_css = $plugin_dir . 'assets/css/tandem.css';
+		if ( file_exists( $tandem_css ) ) {
+			wp_enqueue_style(
+				'skywin-hub-tandem',
+				$plugin_url . 'assets/css/tandem.css',
+				[ 'skywin-hub-skyview' ],
+				filemtime( $tandem_css )
+			);
+		}
+
+		$tandem_js = $plugin_dir . 'assets/js/tandem.js';
+		if ( file_exists( $tandem_js ) ) {
+			wp_enqueue_script(
+				'skywin-hub-tandem',
+				$plugin_url . 'assets/js/tandem.js',
+				[],
+				filemtime( $tandem_js ),
+				true
+			);
+		}
+	}
+
+	private static function build_tandem_initial_html( string $date ): string {
+		if ( ! class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
+			return '';
+		}
+		if ( $date === '' ) {
+			$date = wp_date( 'Y-m-d' );
+		}
+		$payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
+		if ( is_wp_error( $payload ) ) {
+			return '';
+		}
+		return Skywin_Hub_FC_Tandem_View::render( $payload );
 	}
 
 	// ── Data pipeline ────────────────────────────────────────────────────────

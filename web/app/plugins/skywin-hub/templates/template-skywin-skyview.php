@@ -29,7 +29,8 @@ defined( 'ABSPATH' ) || exit;
      data-skyview-push-endpoint="<?php echo esc_attr( $args['push_endpoint'] ); ?>"
      data-skyview-login-url="<?php echo esc_attr( $args['login_url'] ); ?>"
      data-skyview-logout-url="<?php echo esc_attr( $args['logout_url'] ); ?>"
-     data-skyview-queue-endpoint="<?php echo esc_attr( $args['queue_endpoint'] ); ?>">
+     data-skyview-queue-endpoint="<?php echo esc_attr( $args['queue_endpoint'] ); ?>"
+     data-tandem-endpoint="<?php echo esc_attr( $args['tandem_endpoint'] ?? '' ); ?>">
     <header class="skyview-header">
         <div class="skyview-header-row">
             <div class="skyview-crew">
@@ -66,7 +67,22 @@ defined( 'ABSPATH' ) || exit;
     </header>
     <main class="skyview-main">
         <div class="skyview-messages"></div>
-        <div class="skyview-loads"></div>
+        <div class="skyview-main-grid">
+            <div class="skyview-loads"></div>
+            <section class="tandem-section" data-tandem-date="<?php echo esc_attr( $args['date'] ); ?>">
+                <h2 class="tandem-section__title"><?php esc_html_e( 'Tandems', 'skywin-hub' ); ?></h2>
+                <div class="tandem-section__body">
+                    <?php
+                    $tandem_initial = $args['tandem_initial'] ?? '';
+                    if ( $tandem_initial !== '' ) {
+                        echo $tandem_initial; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered server-side via Skywin_Hub_FC_Tandem_View::render().
+                    } else {
+                        echo '<div class="tandem-loading">' . esc_html__( 'Laddar tandems…', 'skywin-hub' ) . '</div>';
+                    }
+                    ?>
+                </div>
+            </section>
+        </div>
     </main>
     <div class="skyview-modal-overlay">
         <div class="skyview-modal"></div>
