@@ -214,6 +214,33 @@
   margin-top: 0;
 }
 
+/* ---- Refueling divider (themed) ---- */
+.tandem-refuel-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.85rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--sv-radius, 8px);
+  background: color-mix(in srgb, var(--sv-accent, #e0a92c) 18%, var(--sv-card-bg, transparent));
+  border: 1px solid color-mix(in srgb, var(--sv-accent, #e0a92c) 55%, var(--sv-card-border, transparent));
+  color: var(--sv-accent, #e0a92c);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.tandem-refuel-divider__label {
+  display: inline-block;
+}
+.tandem-refuel-divider:first-child {
+  margin-top: 0;
+}
+.tandem-refuel-divider + .tandem-load {
+  margin-top: 0;
+}
+
 /* ---- Enter/leave animations (mirror .skyview-load-sortable--animate) ---- */
 @keyframes tandemLoadEnter {
   from { opacity: 0; transform: translateY(12px); }

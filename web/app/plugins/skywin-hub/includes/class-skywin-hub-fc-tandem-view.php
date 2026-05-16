@@ -160,6 +160,11 @@ class Skywin_Hub_FC_Tandem_View {
 						<div class="tandem-cell tandem-cell--color" role="columnheader" aria-label="<?php esc_attr_e( 'Blip Grupp', 'skywin-hub' ); ?>"></div>
 					</div>
 					<?php foreach ( $sections as $section ) : ?>
+						<?php if ( is_array( $section ) && ! empty( $section['isRefueling'] ) ) : ?>
+							<div class="tandem-refuel-divider" role="row" aria-label="<?php esc_attr_e( 'Tankning', 'skywin-hub' ); ?>">
+								<span class="tandem-refuel-divider__label"><?php esc_html_e( 'Tankning', 'skywin-hub' ); ?></span>
+							</div>
+						<?php endif; ?>
 						<?php echo self::render_load( is_array( $section ) ? $section : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					<?php endforeach; ?>
 				</div>
