@@ -223,13 +223,20 @@
   margin: 0.4rem 0 0.85rem;
   padding: 0.4rem 0.85rem;
   border-radius: var(--sv-radius, 8px);
-  background: color-mix(in srgb, var(--sv-accent, #e0a92c) 18%, var(--sv-card-bg, transparent));
-  border: 1px solid color-mix(in srgb, var(--sv-accent, #e0a92c) 55%, var(--sv-card-border, transparent));
+  /* Fallbacks for browsers without color-mix() (iOS Safari < 16.2 etc.) */
+  background: var(--sv-card-header-bg, rgba(224, 169, 44, 0.18));
+  border: 1px solid var(--sv-card-border, rgba(224, 169, 44, 0.55));
   color: var(--sv-accent, #e0a92c);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+@supports (background: color-mix(in srgb, red, blue)) {
+  .tandem-refuel-divider {
+    background: color-mix(in srgb, var(--sv-accent, #e0a92c) 18%, var(--sv-card-bg, transparent));
+    border-color: color-mix(in srgb, var(--sv-accent, #e0a92c) 55%, var(--sv-card-border, transparent));
+  }
 }
 .tandem-refuel-divider__label {
   display: inline-block;
