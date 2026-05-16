@@ -1964,6 +1964,28 @@ function mountSkyview(root) {
           });
           settingsBtn._skyviewBound = true;
         }
+
+        // Tandem toggle button: slide tandem section in/out, persist to localStorage.
+        const tandemToggle = rootEl.querySelector('.skyview-tandem-toggle');
+        const tandemPage = rootEl.querySelector ? rootEl.querySelector('.skyview-page') : null;
+        if (tandemToggle && tandemPage) {
+          const collapsed = tandemPage.classList.contains('skyview-page--tandem-collapsed');
+          tandemToggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+          if (!tandemToggle._skyviewBound) {
+            tandemToggle.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const isCollapsed = tandemPage.classList.toggle('skyview-page--tandem-collapsed');
+              tandemToggle.setAttribute('aria-pressed', isCollapsed ? 'true' : 'false');
+              try {
+                const raw = localStorage.getItem('skyview_settings');
+                const saved = raw ? JSON.parse(raw) : {};
+                saved.tandemCollapsed = isCollapsed;
+                localStorage.setItem('skyview_settings', JSON.stringify(saved));
+              } catch (err) {}
+            });
+            tandemToggle._skyviewBound = true;
+          }
+        }
     function renderOverlays() {
       const existingQueueModal = root.querySelector('.skyview-queue-modal-overlay');
       if (existingQueueModal) existingQueueModal.remove();

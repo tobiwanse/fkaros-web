@@ -53,6 +53,11 @@ defined( 'ABSPATH' ) || exit;
                         
                     </div>
                     <div class="skyview-settings-wrapper">
+                        <button class="skyview-tandem-toggle" type="button" title="Visa/dölj tandems" aria-label="Visa/dölj tandems" aria-pressed="false">
+                            <svg class="skyview-tandem-toggle-icon" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 4h14M3 10h14M3 16h14"></path>
+                            </svg>
+                        </button>
                         <button class="skyview-settings-button" type="button" title="Inställningar" aria-label="Visa inställningar">
                             <svg class="skyview-settings-icon" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8.5 2h3l.4 2.2a5.5 5.5 0 0 1 1.8 1l2.1-.7 1.5 2.6-1.7 1.5a5.6 5.6 0 0 1 0 2.1l1.7 1.5-1.5 2.6-2.1-.7a5.5 5.5 0 0 1-1.8 1L11.5 18h-3l-.4-2.2a5.5 5.5 0 0 1-1.8-1l-2.1.7-1.5-2.6 1.7-1.5a5.6 5.6 0 0 1 0-2.1L2.7 7.8l1.5-2.6 2.1.7a5.5 5.5 0 0 1 1.8-1z"></path>
@@ -70,7 +75,6 @@ defined( 'ABSPATH' ) || exit;
         <div class="skyview-main-grid">
             <div class="skyview-loads"></div>
             <section class="tandem-section" data-tandem-date="<?php echo esc_attr( $args['date'] ); ?>">
-                <h2 class="tandem-section__title"><?php esc_html_e( 'Tandems', 'skywin-hub' ); ?></h2>
                 <div class="tandem-section__body">
                     <?php
                     $tandem_initial = $args['tandem_initial'] ?? '';
@@ -88,3 +92,18 @@ defined( 'ABSPATH' ) || exit;
         <div class="skyview-modal"></div>
     </div>
 </div>
+<script>
+(function () {
+    try {
+        var raw = localStorage.getItem('skyview_settings');
+        var saved = raw ? JSON.parse(raw) : {};
+        if (saved && saved.tandemCollapsed) {
+            var page = document.currentScript.previousElementSibling;
+            while (page && !page.classList.contains('skyview-page')) {
+                page = page.previousElementSibling;
+            }
+            if (page) page.classList.add('skyview-page--tandem-collapsed');
+        }
+    } catch (e) {}
+})();
+</script>
