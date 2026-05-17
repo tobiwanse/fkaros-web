@@ -223,32 +223,25 @@ class Skywin_Hub_Push {
 			$tandem_payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
 			if ( is_wp_error( $tandem_payload ) ) {
 				$tandem_error = $tandem_payload->get_error_message();
-			} elseif ( is_array( $tandem_payload ) && ! empty( $tandem_payload['sections'] ) && is_array( $tandem_payload['sections'] ) ) {
-				foreach ( $tandem_payload['sections'] as $section ) {
-					if ( ! is_array( $section ) ) {
-						continue;
-					}
-					$section_status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
-					$jumps          = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
-					$tandem_section_summary[] = [
-						'loadNumber' => $section['loadNumber'] ?? null,
-						'status'     => $section_status,
-						'jumps'      => count( $jumps ),
-					];
-					if ( $section_status !== 'planned' ) {
-						continue;
-					}
-					foreach ( $jumps as $jump ) {
-						if ( is_array( $jump ) && ! empty( $jump['id'] ) ) {
-							$current_tandem_ids[] = (string) $jump['id'];
+			} elseif ( is_array( $tandem_payload ) ) {
+				$current_tandem_ids = Skywin_Hub_FC_Tandem_View::collect_planned_jump_keys( $tandem_payload );
+				if ( ! empty( $tandem_payload['sections'] ) && is_array( $tandem_payload['sections'] ) ) {
+					foreach ( $tandem_payload['sections'] as $section ) {
+						if ( ! is_array( $section ) ) {
+							continue;
 						}
+						$tandem_section_summary[] = [
+							'loadNumber' => $section['loadNumber'] ?? null,
+							'status'     => $section['status'] ?? null,
+							'jumps'      => isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? count( $section['jumps'] ) : 0,
+						];
 					}
 				}
 				if ( $raw ) {
 					$tandem_raw = [
 						'date'        => $tandem_payload['date'] ?? null,
 						'generatedAt' => $tandem_payload['generatedAt'] ?? null,
-						'sections'    => $tandem_payload['sections'],
+						'sections'    => $tandem_payload['sections'] ?? [],
 					];
 				}
 			}
@@ -546,26 +539,8 @@ class Skywin_Hub_Push {
 		$current_tandem_ids = [];
 		if ( class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
 			$tandem_payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
-			if ( is_array( $tandem_payload ) && ! empty( $tandem_payload['sections'] ) && is_array( $tandem_payload['sections'] ) ) {
-				foreach ( $tandem_payload['sections'] as $section ) {
-					if ( ! is_array( $section ) ) {
-						continue;
-					}
-					$section_status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
-					if ( $section_status !== 'planned' ) {
-						continue;
-					}
-					$jumps = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
-					foreach ( $jumps as $jump ) {
-						if ( ! is_array( $jump ) ) {
-							continue;
-						}
-						$jid = isset( $jump['id'] ) ? (string) $jump['id'] : '';
-						if ( $jid !== '' ) {
-							$current_tandem_ids[] = $jid;
-						}
-					}
-				}
+			if ( is_array( $tandem_payload ) ) {
+				$current_tandem_ids = Skywin_Hub_FC_Tandem_View::collect_planned_jump_keys( $tandem_payload );
 			}
 		}
 		$new_tandem_ids = $is_first_run ? [] : array_values( array_diff( $current_tandem_ids, $prev_tandem_ids ) );

@@ -406,6 +406,59 @@ class Skywin_Hub_FC_Tandem_View {
 	private static function render_error( string $message ): string {
 		return '<div class="tandem-error">' . esc_html( $message ) . '</div>';
 	}
+
+	/**
+	 * Build a stable synthetic identifier for a tandem jump.
+	 *
+	 * FC payloads don't include a real `id` per jump, so we derive one from
+	 * the section's loadNumber + position + jump content. Used by both the
+	 * tandem-view DOM (data-jump-id) and the push-notification change
+	 * detector so they stay in sync.
+	 */
+	public static function tandem_jump_key( int $load_number, int $index, array $jump ): string {
+		if ( ! empty( $jump['id'] ) ) {
+			return (string) $jump['id'];
+		}
+		$parts = [
+			(string) ( $jump['passengerName'] ?? '' ),
+			(string) ( $jump['tandemPilotName'] ?? '' ),
+			(string) ( $jump['photographerName'] ?? '' ),
+			(string) ( $jump['colorGroup'] ?? '' ),
+			(string) ( $jump['mediaType'] ?? '' ),
+			(string) ( $jump['comment'] ?? '' ),
+		];
+		return sprintf( 'l%d#%d:%s', $load_number, $index, substr( md5( implode( '|', $parts ) ), 0, 10 ) );
+	}
+
+	/**
+	 * Collect synthetic ids for all "planned" tandem jumps in a payload.
+	 *
+	 * @return string[]
+	 */
+	public static function collect_planned_jump_keys( array $payload ): array {
+		$ids = [];
+		if ( empty( $payload['sections'] ) || ! is_array( $payload['sections'] ) ) {
+			return $ids;
+		}
+		foreach ( $payload['sections'] as $section ) {
+			if ( ! is_array( $section ) ) {
+				continue;
+			}
+			$status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
+			if ( $status !== 'planned' ) {
+				continue;
+			}
+			$load_number = isset( $section['loadNumber'] ) ? (int) $section['loadNumber'] : 0;
+			$jumps       = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
+			foreach ( $jumps as $idx => $jump ) {
+				if ( ! is_array( $jump ) ) {
+					continue;
+				}
+				$ids[] = self::tandem_jump_key( $load_number, (int) $idx, $jump );
+			}
+		}
+		return $ids;
+	}
 }
 
 endif;
