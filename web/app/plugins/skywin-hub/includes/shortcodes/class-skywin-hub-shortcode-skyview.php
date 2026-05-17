@@ -42,6 +42,8 @@ class Skywin_Hub_Shortcode_Skyview {
 		}
 
 		$can_view_tandem = class_exists( 'Skywin_Hub_FC_Tandem_View' )
+			&& function_exists( 'skywin_hub_fc_is_configured' )
+			&& skywin_hub_fc_is_configured()
 			&& Skywin_Hub_FC_Tandem_View::current_user_can_view();
 
 		$template_args = [

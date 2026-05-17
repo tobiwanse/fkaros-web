@@ -128,3 +128,10 @@ if ( ! function_exists( 'skywin_hub_fc_api' ) ) {
 		return Skywin_Hub_FC_API::instance();
 	}
 }
+
+if ( ! function_exists( 'skywin_hub_fc_is_configured' ) ) {
+	function skywin_hub_fc_is_configured(): bool {
+		return '' !== trim( (string) get_option( 'skywin_hub_fc_authorization', '' ) )
+			&& '' !== trim( (string) get_option( 'skywin_hub_fc_url', '' ) );
+	}
+}

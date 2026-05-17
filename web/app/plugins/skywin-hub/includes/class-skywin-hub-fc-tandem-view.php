@@ -317,9 +317,7 @@ class Skywin_Hub_FC_Tandem_View {
 			</div>
 			<?php if ( $empty ) : ?>
 				<div class="tandem-load__placeholder" role="row">
-					<?php echo $refueling
-						? esc_html__( 'Tankning – inga tandems tilldelade.', 'skywin-hub' )
-						: esc_html__( 'Inga tandems tilldelade.', 'skywin-hub' ); ?>
+					<?php esc_html_e( 'Inga tandems tilldelade.', 'skywin-hub' ); ?>
 				</div>
 			<?php else : ?>
 				<?php

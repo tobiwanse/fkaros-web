@@ -413,12 +413,12 @@ class Skywin_Hub_Push {
 		$date = wp_date( 'Y-m-d' );
 
 		// Fetch current data using the same method as the REST endpoint.
-		$result = Skywin_Hub_Shortcode_Skyview::build_payload( $date );
-		if ( is_wp_error( $result ) ) {
-			return [ 'skipped' => 'fetch_error', 'error' => $result->get_error_message() ];
-		}
-
-		$loads  = $result['loads'] ?? [];
+		// If the main Skywin upstream is unreachable we still continue with
+		// tandem-only detection so FC-based push notifications keep working.
+		$result          = Skywin_Hub_Shortcode_Skyview::build_payload( $date );
+		$skywin_ok       = ! is_wp_error( $result );
+		$skywin_error    = $skywin_ok ? null : $result->get_error_message();
+		$loads           = $skywin_ok ? ( $result['loads'] ?? [] ) : [];
 
 		// Fetch messages directly from the Skywin DB instead of the API field.
 		$db_messages         = function_exists( 'skywin_hub_db' ) ? skywin_hub_db()->get_intmessages() : [];
@@ -439,7 +439,7 @@ class Skywin_Hub_Push {
 			}
 		}
 
-		$current_queue_count = $result['jumpQueueCount'] ?? null;
+		$current_queue_count = $skywin_ok ? ( $result['jumpQueueCount'] ?? null ) : null;
 		if ( $current_queue_count !== null ) {
 			$current_queue_count = (int) $current_queue_count;
 		}
@@ -525,14 +525,15 @@ class Skywin_Hub_Push {
 			}
 		}
 
-		// Save current state.
+		// Save current state. When the Skywin upstream failed, preserve previous
+		// load/jumper/queue state so we don't false-positive when it recovers.
 		update_option( self::OPTION_LAST_STATE, [
-			'loadIds'    => $current_load_ids,
-			'jumperKeys' => $current_jumper_counts,
+			'loadIds'         => $skywin_ok ? $current_load_ids : $prev_load_ids,
+			'jumperKeys'      => $skywin_ok ? $current_jumper_counts : $prev_jumper_keys,
 			'latestMessageKey' => $latest_message_key,
-			'queueCount' => $current_queue_count,
-			'tandemJumpIds' => $current_tandem_ids,
-			'date'       => $date,
+			'queueCount'      => $skywin_ok ? $current_queue_count : $prev_queue_count,
+			'tandemJumpIds'   => $current_tandem_ids,
+			'date'            => $date,
 		], false );
 
 		// Clear previous state if date changed.
@@ -591,7 +592,7 @@ class Skywin_Hub_Push {
 		}
 
 		self::send_push( $subs, $messages );
-		return [ 'sent' => $messages, 'subs' => count( $subs ) ];
+		return [ 'sent' => $messages, 'subs' => count( $subs ), 'skywin_error' => $skywin_error ];
 	}
 
 	/* ── Send push notifications ───────────────────────────────────── */
