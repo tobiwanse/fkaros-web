@@ -14,7 +14,7 @@
 /* Override viewport-based column counts: size to actual container width instead. */
 .skyview-main-grid > .skyview-loads,
 .skyview-main-grid > .skyview-board {
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
 }
 .skyview-main-grid > .tandem-section {
   min-width: 0;
