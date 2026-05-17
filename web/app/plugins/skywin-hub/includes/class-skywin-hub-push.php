@@ -202,6 +202,7 @@ class Skywin_Hub_Push {
 		$subs  = get_option( self::OPTION_SUBS, [] );
 		$prev  = get_option( self::OPTION_LAST_STATE, false );
 		$date  = wp_date( 'Y-m-d' );
+		$raw   = isset( $_GET['raw'] ) && $_GET['raw']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$payload_result = Skywin_Hub_Shortcode_Skyview::build_payload( $date );
 		$payload_ok     = ! is_wp_error( $payload_result );
@@ -216,6 +217,8 @@ class Skywin_Hub_Push {
 			: [];
 		$current_tandem_ids = [];
 		$tandem_error       = null;
+		$tandem_raw         = null;
+		$tandem_section_summary = [];
 		if ( class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
 			$tandem_payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
 			if ( is_wp_error( $tandem_payload ) ) {
@@ -226,15 +229,27 @@ class Skywin_Hub_Push {
 						continue;
 					}
 					$section_status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
+					$jumps          = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
+					$tandem_section_summary[] = [
+						'loadNumber' => $section['loadNumber'] ?? null,
+						'status'     => $section_status,
+						'jumps'      => count( $jumps ),
+					];
 					if ( $section_status !== 'planned' ) {
 						continue;
 					}
-					$jumps = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
 					foreach ( $jumps as $jump ) {
 						if ( is_array( $jump ) && ! empty( $jump['id'] ) ) {
 							$current_tandem_ids[] = (string) $jump['id'];
 						}
 					}
+				}
+				if ( $raw ) {
+					$tandem_raw = [
+						'date'        => $tandem_payload['date'] ?? null,
+						'generatedAt' => $tandem_payload['generatedAt'] ?? null,
+						'sections'    => $tandem_payload['sections'],
+					];
 				}
 			}
 		}
@@ -262,6 +277,8 @@ class Skywin_Hub_Push {
 				'previous'   => count( $prev_tandem_ids ),
 				'new_ids'    => $new_tandem_ids,
 				'removed_ids' => $removed_tandem_ids,
+				'sections'   => $tandem_section_summary,
+				'raw'        => $tandem_raw,
 			],
 		] );
 	}
