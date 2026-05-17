@@ -35,35 +35,19 @@
   visibility: hidden;
 }
 
-/* Toggle button in the header toolbar. */
-.skyview-tandem-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  margin-right: 0.4rem;
-  background: transparent;
-  border: 1px solid var(--sv-card-border, rgba(127, 127, 127, 0.35));
-  border-radius: 6px;
-  color: var(--sv-text, inherit);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+/* ---- Tandem-only standalone mode (shortcode: [skywin_hub_tandem]) ---- */
+.skyview-page--tandem-only .skyview-main-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
 }
-.skyview-tandem-toggle:hover,
-.skyview-tandem-toggle:focus-visible {
-  background: rgba(127, 127, 127, 0.12);
-  outline: none;
+.skyview-page--tandem-only .skyview-main-grid > .skyview-loads,
+.skyview-page--tandem-only .skyview-queue-badge,
+.skyview-page--tandem-only .skyview-crew,
+.skyview-page--tandem-only .skyview-messages {
+  display: none !important;
 }
-.skyview-tandem-toggle[aria-pressed="true"] {
-  background: rgba(127, 127, 127, 0.18);
-  border-color: var(--sv-accent, currentColor);
-  color: var(--sv-accent, currentColor);
-}
-.skyview-tandem-toggle-icon {
-  width: 1.05rem;
-  height: 1.05rem;
+.skyview-page--tandem-only .skyview-main-grid > .tandem-section {
+  margin-top: 0;
 }
 
 @media (max-width: 1400px) {
@@ -222,7 +206,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin: 0.6rem 0 1rem;
+  margin: 0rem 0 1rem;
   padding: 0.55rem 1rem;
   border-radius: var(--sv-radius, 8px);
   background: var(--sv-accent, #e0a92c);
@@ -336,6 +320,7 @@
 /* ---- Color group wrappers (mirror Skyview group containers) ---- */
 .tandem-group {
   border-left: 4px solid transparent;
+  margin: 0.35rem 0;
   /* Compensate for the 4px left border so columns stay aligned with header. */
 }
 .tandem-group .tandem-row {

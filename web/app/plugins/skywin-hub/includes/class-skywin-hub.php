@@ -84,6 +84,7 @@ if (!class_exists('Skywin_Hub')):
 			include_once SW_ABSPATH . 'includes/class-skywin-hub-shortcodes.php';
 			include_once SW_ABSPATH . 'includes/shortcodes/class-skywin-hub-shortcode-deposit.php';
 			include_once SW_ABSPATH . 'includes/shortcodes/class-skywin-hub-shortcode-skyview.php';
+			include_once SW_ABSPATH . 'includes/shortcodes/class-skywin-hub-shortcode-tandem.php';
 
 			include_once SW_ABSPATH . 'includes/functions-wc.php';
 			include_once SW_ABSPATH . 'includes/functions-um.php';

@@ -17,10 +17,11 @@ class Skywin_Hub_Shortcode_Skyview {
 	public static function output( $atts = [] ) {
 		$atts = shortcode_atts(
 			[
-				'title'    => '',
-				'date'     => '',
-				'refresh'  => '30',
-				'aircraft' => '',
+				'title'       => '',
+				'date'        => '',
+				'refresh'     => '30',
+				'aircraft'    => '',
+				'tandem_only' => '0',
 			],
 			$atts,
 			'skywin_hub_skyview'
@@ -34,10 +35,14 @@ class Skywin_Hub_Shortcode_Skyview {
 		$refresh  = absint( $atts['refresh'] );
 		$aircraft = sanitize_text_field( $atts['aircraft'] );
 		$logged_in = is_user_logged_in() ? '1' : '0';
+		$tandem_only = in_array( strtolower( (string) $atts['tandem_only'] ), [ '1', 'true', 'yes', 'on' ], true );
 
 		if ( '' !== $aircraft ) {
 			$endpoint = add_query_arg( 'aircraft', $aircraft, $endpoint );
 		}
+
+		$can_view_tandem = class_exists( 'Skywin_Hub_FC_Tandem_View' )
+			&& Skywin_Hub_FC_Tandem_View::current_user_can_view();
 
 		$template_args = [
 			'endpoint'        => $endpoint,
@@ -51,8 +56,11 @@ class Skywin_Hub_Shortcode_Skyview {
 			'login_url'       => wp_login_url( get_permalink() ),
 			'logout_url'      => wp_logout_url( get_permalink() ),
 			'queue_endpoint'  => rest_url( 'skywin-hub/v1/jump-queue' ),
-			'tandem_endpoint' => rest_url( 'skywin-hub/v1/tandem' ),
-			'tandem_initial'  => self::build_tandem_initial_html( $date ),
+			'tandem_endpoint' => $can_view_tandem ? rest_url( 'skywin-hub/v1/tandem' ) : '',
+			'tandem_nonce'    => $can_view_tandem ? wp_create_nonce( 'wp_rest' ) : '',
+			'tandem_initial'  => $can_view_tandem ? self::build_tandem_initial_html( $date ) : '',
+			'tandem_only'     => $tandem_only,
+			'can_view_tandem' => $can_view_tandem,
 		];
 
 		ob_start();
@@ -423,6 +431,9 @@ class Skywin_Hub_Shortcode_Skyview {
 
 	private static function build_tandem_initial_html( string $date ): string {
 		if ( ! class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
+			return '';
+		}
+		if ( ! Skywin_Hub_FC_Tandem_View::current_user_can_view() ) {
 			return '';
 		}
 		if ( $date === '' ) {

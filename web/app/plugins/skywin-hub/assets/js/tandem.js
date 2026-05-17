@@ -9,6 +9,7 @@
   function mount(root) {
     const endpoint = root.getAttribute('data-tandem-endpoint') || '';
     if (!endpoint) return;
+    const nonce = root.getAttribute('data-tandem-nonce') || '';
 
     const section = root.querySelector('.tandem-section');
     const body    = root.querySelector('.tandem-section__body');
@@ -34,6 +35,20 @@
         }
       } catch (_) { /* ignore */ }
       return fallbackRefresh;
+    }
+
+    function getTandemPrefs() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          return {
+            status: saved && saved.tandemStatusFilter === 'all' ? 'all' : 'planned',
+            hideEmpty: !!(saved && saved.tandemHideEmpty),
+          };
+        }
+      } catch (_) { /* ignore */ }
+      return { status: 'planned', hideEmpty: false };
     }
 
     function getLoadKeys(container) {
@@ -99,10 +114,17 @@
       try {
         const url = new URL(endpoint, window.location.origin);
         if (currentDate) url.searchParams.set('date', currentDate);
+        const prefs = getTandemPrefs();
+        url.searchParams.set('status', prefs.status);
+        url.searchParams.set('hide_empty', prefs.hideEmpty ? '1' : '0');
+        console.info('[tandem] fetch', url.toString(), 'prefs=', prefs);
 
+        const headers = { Accept: 'application/json' };
+        if (nonce) headers['X-WP-Nonce'] = nonce;
         const res = await fetch(url.toString(), {
           credentials: 'same-origin',
-          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+          headers,
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
@@ -166,6 +188,13 @@
       if (e.key === SETTINGS_KEY) {
         startTimer();
       }
+    });
+
+    // React to immediate settings changes from the SkyView UI (same tab).
+    document.addEventListener('skywin-hub:tandem-refresh', () => {
+      console.info('[tandem] refresh event received');
+      fetchAndRender(true);
+      startTimer();
     });
 
     // Initial render is already in the DOM (server-side). Just start polling.

@@ -667,7 +667,7 @@ function urlBase64ToUint8Array(base64String) {
 
 function syncPushSubscription(vapidKey, pushApiBase, state) {
   if (!vapidKey || !pushApiBase) return Promise.resolve();
-  var wantsAny = state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper;
+  var wantsAny = state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper || state.notifyNewTandem;
   var supportedContentEncodings = Array.isArray(window.PushManager && PushManager.supportedContentEncodings)
     ? PushManager.supportedContentEncodings
     : [];
@@ -718,6 +718,7 @@ function syncPushSubscription(vapidKey, pushApiBase, state) {
               newJumper: state.notifyNewJumper,
               newMessage: state.notifyNewMessage,
               newQueueJumper: state.notifyNewQueueJumper,
+              newTandem: state.notifyNewTandem,
             },
           }),
         }).catch(function () {});
@@ -738,6 +739,7 @@ function mountSkyview(root) {
   const loginUrl = root.dataset.skyviewLoginUrl || '';
   const logoutUrl = root.dataset.skyviewLogoutUrl || '';
   const queueEndpoint = root.dataset.skyviewQueueEndpoint || '';
+  const tandemOnly = root.dataset.skyviewTandemOnly === '1';
 
   if (swUrl) registerSkyviewSW(swUrl);
 
@@ -768,6 +770,10 @@ function mountSkyview(root) {
         notifyNewQueueJumper: state.notifyNewQueueJumper,
         soundNewQueueJumper: state.soundNewQueueJumper,
         maxLoads: state.maxLoads,
+        tandemCollapsed: state.tandemCollapsed,
+        tandemHideEmpty: state.tandemHideEmpty,
+        tandemStatusFilter: state.tandemStatusFilter,
+        notifyNewTandem: state.notifyNewTandem,
       }));
     } catch (_) { /* ignore */ }
   }
@@ -798,6 +804,7 @@ function mountSkyview(root) {
     offlineTicker: null,
     calendarOpen: false,
     settingsOpen: false,
+    settingsActiveTab: '',
     queueModalOpen: false,
     queueList: [],
     queueLoading: false,
@@ -813,6 +820,10 @@ function mountSkyview(root) {
     notifyNewQueueJumper: typeof saved.notifyNewQueueJumper === 'boolean' ? saved.notifyNewQueueJumper : false,
     soundNewQueueJumper: typeof saved.soundNewQueueJumper === 'boolean' ? saved.soundNewQueueJumper : false,
     maxLoads: Number.isFinite(saved.maxLoads) && saved.maxLoads >= 0 ? saved.maxLoads : 0,
+    tandemCollapsed: typeof saved.tandemCollapsed === 'boolean' ? saved.tandemCollapsed : false,
+    tandemHideEmpty: typeof saved.tandemHideEmpty === 'boolean' ? saved.tandemHideEmpty : false,
+    tandemStatusFilter: saved.tandemStatusFilter === 'all' ? 'all' : 'planned',
+    notifyNewTandem: typeof saved.notifyNewTandem === 'boolean' ? saved.notifyNewTandem : false,
     offlineMode: false,
     knownJumperCounts: {},
     knownQueueBookingIds: new Set(),
@@ -1104,6 +1115,7 @@ function mountSkyview(root) {
   }
 
   async function fetchLoads() {
+    if (tandemOnly) return;
     // Allow forced fetch even if auto update is off
     if (arguments[0] !== true && state.refreshIntervalSeconds <= 0 && !state.firstRender) {
       return;
@@ -1603,6 +1615,76 @@ function mountSkyview(root) {
     compactItem.appendChild(compactToggle);
     list.appendChild(compactItem);
 
+    // --- Tandem-vy --- (only when the tandem section is actually rendered server-side)
+    const tandemSectionEl = root.querySelector('.tandem-section');
+    if (tandemSectionEl) {
+      list.appendChild(createEl('div', 'skyview-settings-category', 'Tandem-vy'));
+
+      const tandemShowItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+      const tandemShowLabel = createEl('span', 'skyview-settings-label', 'Visa tandem-vy');
+      const tandemShowToggle = createEl('input', 'skyview-settings-toggle');
+      tandemShowToggle.type = 'checkbox';
+      tandemShowToggle.checked = !state.tandemCollapsed;
+      tandemShowToggle.addEventListener('change', () => {
+        state.tandemCollapsed = !tandemShowToggle.checked;
+        saveSettings();
+        const pageEl = root.querySelector('.skyview-page') || root.closest('.skyview-page');
+        if (pageEl) {
+          pageEl.classList.toggle('skyview-page--tandem-collapsed', state.tandemCollapsed);
+        }
+      });
+      tandemShowItem.appendChild(tandemShowLabel);
+      tandemShowItem.appendChild(tandemShowToggle);
+      list.appendChild(tandemShowItem);
+
+      const tandemPlannedItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+      const tandemPlannedLabel = createEl('span', 'skyview-settings-label', 'Visa endast planerade');
+      const tandemPlannedToggle = createEl('input', 'skyview-settings-toggle');
+      tandemPlannedToggle.type = 'checkbox';
+      tandemPlannedToggle.checked = state.tandemStatusFilter === 'planned';
+      tandemPlannedToggle.addEventListener('change', () => {
+        state.tandemStatusFilter = tandemPlannedToggle.checked ? 'planned' : 'all';
+        saveSettings();
+        document.dispatchEvent(new CustomEvent('skywin-hub:tandem-refresh'));
+      });
+      tandemPlannedItem.appendChild(tandemPlannedLabel);
+      tandemPlannedItem.appendChild(tandemPlannedToggle);
+      list.appendChild(tandemPlannedItem);
+
+      const tandemEmptyItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+      const tandemEmptyLabel = createEl('span', 'skyview-settings-label', 'Göm tomma lifter');
+      const tandemEmptyToggle = createEl('input', 'skyview-settings-toggle');
+      tandemEmptyToggle.type = 'checkbox';
+      tandemEmptyToggle.checked = Boolean(state.tandemHideEmpty);
+      tandemEmptyToggle.addEventListener('change', () => {
+        state.tandemHideEmpty = tandemEmptyToggle.checked;
+        saveSettings();
+        document.dispatchEvent(new CustomEvent('skywin-hub:tandem-refresh'));
+      });
+      tandemEmptyItem.appendChild(tandemEmptyLabel);
+      tandemEmptyItem.appendChild(tandemEmptyToggle);
+      list.appendChild(tandemEmptyItem);
+
+      if (state.isLoggedIn) {
+        const tandemNotifyItem = createEl('label', 'skyview-settings-item skyview-settings-control');
+        const tandemNotifyLabel = createEl('span', 'skyview-settings-label', 'Notis: ny tandem');
+        const tandemNotifyToggle = createEl('input', 'skyview-settings-toggle');
+        tandemNotifyToggle.type = 'checkbox';
+        tandemNotifyToggle.checked = Boolean(state.notifyNewTandem);
+        tandemNotifyToggle.addEventListener('change', () => {
+          state.notifyNewTandem = tandemNotifyToggle.checked;
+          if (state.notifyNewTandem && 'Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
+          saveSettings();
+          syncPushSubscription(vapidPublicKey, pushEndpoint, state);
+        });
+        tandemNotifyItem.appendChild(tandemNotifyLabel);
+        tandemNotifyItem.appendChild(tandemNotifyToggle);
+        list.appendChild(tandemNotifyItem);
+      }
+    }
+
     if (state.isLoggedIn) {
     function ensureNotificationPermission() {
       if (!('Notification' in window)) return;
@@ -1748,6 +1830,80 @@ function mountSkyview(root) {
       logoutBtn.href = logoutUrl;
       logoutItem.appendChild(logoutBtn);
       list.appendChild(logoutItem);
+    }
+
+    // ---- Convert flat list into tabbed panes (group by .skyview-settings-category) ----
+    {
+      const flatChildren = Array.from(list.children);
+      const tabs = []; // { name, pane }
+      let currentPane = null;
+      const preCategory = [];
+      flatChildren.forEach((child) => {
+        if (child.classList && child.classList.contains('skyview-settings-category')) {
+          const name = (child.textContent || '').trim() || 'Övrigt';
+          const pane = createEl('div', 'skyview-settings-tab-pane');
+          tabs.push({ name, pane });
+          currentPane = pane;
+          return;
+        }
+        if (currentPane) {
+          currentPane.appendChild(child);
+        } else {
+          preCategory.push(child);
+        }
+      });
+
+      list.innerHTML = '';
+
+      if (tabs.length === 0) {
+        preCategory.forEach((el) => list.appendChild(el));
+      } else {
+        if (preCategory.length) {
+          const firstPane = tabs[0].pane;
+          // prepend in original order
+          for (let i = preCategory.length - 1; i >= 0; i--) {
+            firstPane.insertBefore(preCategory[i], firstPane.firstChild);
+          }
+        }
+
+        let activeIdx = tabs.findIndex((t) => t.name === state.settingsActiveTab);
+        if (activeIdx < 0) activeIdx = 0;
+        state.settingsActiveTab = tabs[activeIdx].name;
+
+        const tabNav = createEl('div', 'skyview-settings-tabs');
+        tabNav.setAttribute('role', 'tablist');
+        const panesWrap = createEl('div', 'skyview-settings-tab-panes');
+
+        tabs.forEach((t, i) => {
+          const btn = createEl('button', 'skyview-settings-tab-btn', t.name);
+          btn.type = 'button';
+          btn.setAttribute('role', 'tab');
+          if (i === activeIdx) {
+            btn.classList.add('is-active');
+            btn.setAttribute('aria-selected', 'true');
+            t.pane.classList.add('is-active');
+          } else {
+            btn.setAttribute('aria-selected', 'false');
+          }
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.settingsActiveTab = t.name;
+            tabNav.querySelectorAll('.skyview-settings-tab-btn').forEach((b) => {
+              b.classList.remove('is-active');
+              b.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('is-active');
+            btn.setAttribute('aria-selected', 'true');
+            panesWrap.querySelectorAll('.skyview-settings-tab-pane').forEach((p) => p.classList.remove('is-active'));
+            t.pane.classList.add('is-active');
+          });
+          tabNav.appendChild(btn);
+          panesWrap.appendChild(t.pane);
+        });
+
+        list.appendChild(tabNav);
+        list.appendChild(panesWrap);
+      }
     }
 
     panel.appendChild(list);
@@ -1965,26 +2121,11 @@ function mountSkyview(root) {
           settingsBtn._skyviewBound = true;
         }
 
-        // Tandem toggle button: slide tandem section in/out, persist to localStorage.
-        const tandemToggle = rootEl.querySelector('.skyview-tandem-toggle');
+        // Tandem-vy: apply the saved collapsed state to the page wrapper on (re)render.
         const tandemPage = rootEl.querySelector ? rootEl.querySelector('.skyview-page') : null;
-        if (tandemToggle && tandemPage) {
-          const collapsed = tandemPage.classList.contains('skyview-page--tandem-collapsed');
-          tandemToggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
-          if (!tandemToggle._skyviewBound) {
-            tandemToggle.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const isCollapsed = tandemPage.classList.toggle('skyview-page--tandem-collapsed');
-              tandemToggle.setAttribute('aria-pressed', isCollapsed ? 'true' : 'false');
-              try {
-                const raw = localStorage.getItem('skyview_settings');
-                const saved = raw ? JSON.parse(raw) : {};
-                saved.tandemCollapsed = isCollapsed;
-                localStorage.setItem('skyview_settings', JSON.stringify(saved));
-              } catch (err) {}
-            });
-            tandemToggle._skyviewBound = true;
-          }
+        const hasTandemSection = !!(rootEl.querySelector && rootEl.querySelector('.tandem-section'));
+        if (tandemPage && hasTandemSection) {
+          tandemPage.classList.toggle('skyview-page--tandem-collapsed', !!state.tandemCollapsed);
         }
     function renderOverlays() {
       const existingQueueModal = root.querySelector('.skyview-queue-modal-overlay');
@@ -2266,7 +2407,7 @@ function mountSkyview(root) {
   }
 
   // Sync push subscription on load if notifications are enabled.
-  if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper) {
+  if (state.notifyNewLoad || state.notifyNewJumper || state.notifyNewMessage || state.notifyNewQueueJumper || state.notifyNewTandem) {
     syncPushSubscription(vapidPublicKey, pushEndpoint, state);
   }
 }

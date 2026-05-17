@@ -1511,6 +1511,48 @@
   margin-top: 0.3rem;
 }
 
+.skyview-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0 0.1rem 0.5rem;
+  border-bottom: 1px solid var(--sv-border, rgba(255, 255, 255, 0.1));
+  margin-bottom: 0.4rem;
+}
+
+.skyview-settings-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--sv-text-muted);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.skyview-settings-tab-btn:hover {
+  color: var(--sv-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.skyview-settings-tab-btn.is-active {
+  color: var(--sv-text);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.skyview-settings-tab-pane {
+  display: none;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.skyview-settings-tab-pane.is-active {
+  display: flex;
+}
+
 .skyview-settings-item {
   color: var(--sv-text);
   font-size: 1.01rem;

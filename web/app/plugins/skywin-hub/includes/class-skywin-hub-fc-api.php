@@ -56,7 +56,7 @@ class Skywin_Hub_FC_API {
 	 * @param string $jump_date Date in Y-m-d format. Defaults to today (site timezone).
 	 * @return array|WP_Error Decoded JSON on success, WP_Error on failure.
 	 */
-	public function get_loadplanning( ) {
+	public function get_loadplanning( $jump_date = '' ) {
 		$auth = $this->get_authorization();
 		if ( $auth === '' ) {
 			return new WP_Error( 'fc_missing_auth', __( 'FC Authorization is not configured.', 'skywin-hub' ) );
@@ -77,9 +77,6 @@ class Skywin_Hub_FC_API {
 				'Authorization' => $auth,
 			],
 		];
-
-        error_log(json_encode($args));
-        error_log(json_encode($base . $this->get_endpoint()));
 
 		$url      = $base . $this->get_endpoint();
 		$attempts = 0;

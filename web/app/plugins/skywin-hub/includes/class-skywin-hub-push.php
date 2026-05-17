@@ -259,6 +259,7 @@ class Skywin_Hub_Push {
 				'newJumper'      => ! empty( $types['newJumper'] ),
 				'newMessage'     => ! empty( $types['newMessage'] ),
 				'newQueueJumper' => ! empty( $types['newQueueJumper'] ),
+				'newTandem'      => ! empty( $types['newTandem'] ),
 			],
 			'created'  => time(),
 		];
@@ -453,6 +454,7 @@ class Skywin_Hub_Push {
 		$prev_jumper_keys = $prev['jumperKeys'] ?? [];
 		$prev_latest_message_key = (string) ( $prev['latestMessageKey'] ?? '' );
 		$prev_queue_count = $prev['queueCount'] ?? null;
+		$prev_tandem_ids  = $prev['tandemJumpIds'] ?? [];
 
 		// Current state.
 		$current_load_ids    = [];
@@ -484,6 +486,34 @@ class Skywin_Hub_Push {
 		// Detect new loads.
 		$new_loads = array_diff( $current_load_ids, $prev_load_ids );
 
+		// Detect new tandem jumps (planned only) via the FC Tandem view payload.
+		$current_tandem_ids = [];
+		if ( class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
+			$tandem_payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
+			if ( is_array( $tandem_payload ) && ! empty( $tandem_payload['sections'] ) && is_array( $tandem_payload['sections'] ) ) {
+				foreach ( $tandem_payload['sections'] as $section ) {
+					if ( ! is_array( $section ) ) {
+						continue;
+					}
+					$section_status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
+					if ( $section_status !== 'planned' ) {
+						continue;
+					}
+					$jumps = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
+					foreach ( $jumps as $jump ) {
+						if ( ! is_array( $jump ) ) {
+							continue;
+						}
+						$jid = isset( $jump['id'] ) ? (string) $jump['id'] : '';
+						if ( $jid !== '' ) {
+							$current_tandem_ids[] = $jid;
+						}
+					}
+				}
+			}
+		}
+		$new_tandem_ids = $is_first_run ? [] : array_values( array_diff( $current_tandem_ids, $prev_tandem_ids ) );
+
 		// Detect jumpers whose count increased.
 		$new_jumper_loads = [];
 		if ( ! $is_first_run ) {
@@ -501,6 +531,7 @@ class Skywin_Hub_Push {
 			'jumperKeys' => $current_jumper_counts,
 			'latestMessageKey' => $latest_message_key,
 			'queueCount' => $current_queue_count,
+			'tandemJumpIds' => $current_tandem_ids,
 			'date'       => $date,
 		], false );
 
@@ -518,7 +549,7 @@ class Skywin_Hub_Push {
 		$message_changed = '' !== $latest_message_key && $latest_message_key !== $prev_latest_message_key;
 		$queue_increased = $current_queue_count !== null && $prev_queue_count !== null && $current_queue_count > $prev_queue_count;
 
-		if ( empty( $new_loads ) && empty( $new_jumper_loads ) && ! $message_changed && ! $queue_increased ) {
+		if ( empty( $new_loads ) && empty( $new_jumper_loads ) && ! $message_changed && ! $queue_increased && empty( $new_tandem_ids ) ) {
 			return [ 'skipped' => 'no_changes', 'loads' => count( $current_load_ids ), 'prev_loads' => count( $prev_load_ids ) ];
 		}
 
@@ -552,6 +583,13 @@ class Skywin_Hub_Push {
 			$messages['newQueueJumper'] = $current_queue_count . ' i kön';
 		}
 
+		if ( ! empty( $new_tandem_ids ) ) {
+			$c = count( $new_tandem_ids );
+			$messages['newTandem'] = $c === 1
+				? 'Ny tandem inbokad!'
+				: $c . ' nya tandems inbokade!';
+		}
+
 		self::send_push( $subs, $messages );
 		return [ 'sent' => $messages, 'subs' => count( $subs ) ];
 	}
@@ -580,6 +618,7 @@ class Skywin_Hub_Push {
 			$title = match ( $type ) {
 				'newMessage'      => 'Nytt meddelande',
 				'newQueueJumper'  => 'Ny i önskelistan',
+				'newTandem'       => 'Ny tandem',
 				default           => 'SkyView',
 			};
 			$payload = wp_json_encode( [

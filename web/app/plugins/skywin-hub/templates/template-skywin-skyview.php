@@ -17,8 +17,10 @@
  * }
  */
 defined( 'ABSPATH' ) || exit;
+$sw_tandem_only = ! empty( $args['tandem_only'] );
+$sw_page_classes = 'skyview-page' . ( $sw_tandem_only ? ' skyview-page--tandem-only' : '' );
 ?>
-<div class="skyview-page"
+<div class="<?php echo esc_attr( $sw_page_classes ); ?>"
      data-skyview-endpoint="<?php echo esc_attr( $args['endpoint'] ); ?>"
      data-skyview-title="<?php echo esc_attr( $args['title'] ); ?>"
      data-skyview-date="<?php echo esc_attr( $args['date'] ); ?>"
@@ -30,7 +32,9 @@ defined( 'ABSPATH' ) || exit;
      data-skyview-login-url="<?php echo esc_attr( $args['login_url'] ); ?>"
      data-skyview-logout-url="<?php echo esc_attr( $args['logout_url'] ); ?>"
      data-skyview-queue-endpoint="<?php echo esc_attr( $args['queue_endpoint'] ); ?>"
-     data-tandem-endpoint="<?php echo esc_attr( $args['tandem_endpoint'] ?? '' ); ?>">
+     data-skyview-tandem-only="<?php echo $sw_tandem_only ? '1' : '0'; ?>"
+     data-tandem-endpoint="<?php echo esc_attr( $args['tandem_endpoint'] ?? '' ); ?>"
+     data-tandem-nonce="<?php echo esc_attr( $args['tandem_nonce'] ?? '' ); ?>">
     <header class="skyview-header">
         <div class="skyview-header-row">
             <div class="skyview-crew">
@@ -53,11 +57,6 @@ defined( 'ABSPATH' ) || exit;
                         
                     </div>
                     <div class="skyview-settings-wrapper">
-                        <button class="skyview-tandem-toggle" type="button" title="Visa/dölj tandems" aria-label="Visa/dölj tandems" aria-pressed="false">
-                            <svg class="skyview-tandem-toggle-icon" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 4h14M3 10h14M3 16h14"></path>
-                            </svg>
-                        </button>
                         <button class="skyview-settings-button" type="button" title="Inställningar" aria-label="Visa inställningar">
                             <svg class="skyview-settings-icon" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8.5 2h3l.4 2.2a5.5 5.5 0 0 1 1.8 1l2.1-.7 1.5 2.6-1.7 1.5a5.6 5.6 0 0 1 0 2.1l1.7 1.5-1.5 2.6-2.1-.7a5.5 5.5 0 0 1-1.8 1L11.5 18h-3l-.4-2.2a5.5 5.5 0 0 1-1.8-1l-2.1.7-1.5-2.6 1.7-1.5a5.6 5.6 0 0 1 0-2.1L2.7 7.8l1.5-2.6 2.1.7a5.5 5.5 0 0 1 1.8-1z"></path>
@@ -74,6 +73,7 @@ defined( 'ABSPATH' ) || exit;
         <div class="skyview-messages"></div>
         <div class="skyview-main-grid">
             <div class="skyview-loads"></div>
+            <?php if ( ! empty( $args['can_view_tandem'] ) ) : ?>
             <section class="tandem-section" data-tandem-date="<?php echo esc_attr( $args['date'] ); ?>">
                 <div class="tandem-section__body">
                     <?php
@@ -86,6 +86,7 @@ defined( 'ABSPATH' ) || exit;
                     ?>
                 </div>
             </section>
+            <?php endif; ?>
         </div>
     </main>
     <div class="skyview-modal-overlay">

@@ -16,6 +16,7 @@ class Skywin_Hub_Shortcodes {
         $shortcodes = array(
             'skywin_hub_deposit_product_fields' => array( $this, 'skywin_hub_deposit_product_fields' ),
 			'skywin_hub_skyview' => array( $this, 'skywin_hub_skyview' ),
+			'skywin_hub_tandem'  => array( $this, 'skywin_hub_tandem' ),
         );
         foreach ( $shortcodes as $shortcode => $function ) {
 			add_shortcode( $shortcode, $function );
@@ -26,6 +27,9 @@ class Skywin_Hub_Shortcodes {
     }
 	public function skywin_hub_skyview( $args ) {
 		return Skywin_Hub_Shortcode_Skyview::output( $args );
+	}
+	public function skywin_hub_tandem( $args ) {
+		return Skywin_Hub_Shortcode_Tandem::output( $args );
 	}
 }
 function skywin_hub_shortcodes() {

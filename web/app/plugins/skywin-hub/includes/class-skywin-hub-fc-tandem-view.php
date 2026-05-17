@@ -26,15 +26,53 @@ class Skywin_Hub_FC_Tandem_View {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ __CLASS__, 'rest_get_tandem' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ __CLASS__, 'rest_permission' ],
 				'args'                => [
-					'date' => [
+					'date'       => [
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'default'           => '',
 					],
+					'status'     => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => 'planned',
+					],
+					'hide_empty' => [
+						'type'              => 'boolean',
+						'default'           => false,
+					],
 				],
 			]
+		);
+	}
+
+	/**
+	 * Only admins, fc-admin and fc-staff may see the tandem view.
+	 */
+	public static function current_user_can_view(): bool {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+		$user = wp_get_current_user();
+		if ( ! $user || empty( $user->roles ) ) {
+			return false;
+		}
+		$allowed = [ 'administrator', 'fc-admin', 'fc-staff' ];
+		return (bool) array_intersect( $allowed, (array) $user->roles );
+	}
+
+	public static function rest_permission() {
+		if ( self::current_user_can_view() ) {
+			return true;
+		}
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'Du har inte behörighet att se tandem-vyn.', 'skywin-hub' ),
+			[ 'status' => is_user_logged_in() ? 403 : 401 ]
 		);
 	}
 
@@ -43,6 +81,12 @@ class Skywin_Hub_FC_Tandem_View {
 		if ( $date === '' ) {
 			$date = wp_date( 'Y-m-d' );
 		}
+		$status     = strtolower( (string) $request->get_param( 'status' ) );
+		$hide_empty = (bool) $request->get_param( 'hide_empty' );
+		$opts       = [
+			'status'     => in_array( $status, [ 'planned', 'all' ], true ) ? $status : 'planned',
+			'hide_empty' => $hide_empty,
+		];
 
 		$payload = self::get_payload( $date );
 		if ( is_wp_error( $payload ) ) {
@@ -60,7 +104,7 @@ class Skywin_Hub_FC_Tandem_View {
 			[
 				'date'        => $payload['date'] ?? $date,
 				'generatedAt' => $payload['generatedAt'] ?? null,
-				'html'        => self::render( $payload ),
+				'html'        => self::render( $payload, $opts ),
 			],
 			200
 		);
@@ -105,8 +149,19 @@ class Skywin_Hub_FC_Tandem_View {
 
 	/**
 	 * Render the full tandem view HTML from a decoded FC payload.
+	 *
+	 * @param array $payload
+	 * @param array $opts {
+	 *     @type string $status     'planned' (default) or 'all'.
+	 *     @type bool   $hide_empty Whether to drop loads with no jumps.
+	 * }
 	 */
-	public static function render( array $payload ): string {
+	public static function render( array $payload, array $opts = [] ): string {
+		$status_filter = isset( $opts['status'] ) && in_array( $opts['status'], [ 'planned', 'all' ], true )
+			? $opts['status']
+			: 'planned';
+		$hide_empty = ! empty( $opts['hide_empty'] );
+
 		$sections = isset( $payload['sections'] ) && is_array( $payload['sections'] )
 			? $payload['sections']
 			: [];
@@ -134,15 +189,26 @@ class Skywin_Hub_FC_Tandem_View {
 		?>
 		<div class="tandem-view<?php echo $stale ? ' tandem-view--stale' : ''; ?>">
 			<?php
-			// Only show loads with status === 'planned'. Drop the rest before rendering.
+			// Apply status + empty-load filters.
 			$sections = array_values( array_filter(
 				$sections,
-				static function ( $section ) {
+				static function ( $section ) use ( $status_filter, $hide_empty ) {
 					if ( ! is_array( $section ) ) {
 						return false;
 					}
-					$status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
-					return $status === 'planned';
+					if ( $status_filter === 'planned' ) {
+						$status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
+						if ( $status !== 'planned' ) {
+							return false;
+						}
+					}
+					if ( $hide_empty ) {
+						$jumps = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
+						if ( empty( $jumps ) ) {
+							return false;
+						}
+					}
+					return true;
 				}
 			) );
 			?>
@@ -157,7 +223,6 @@ class Skywin_Hub_FC_Tandem_View {
 						<div class="tandem-cell tandem-cell--media" role="columnheader">V/S</div>
 						<div class="tandem-cell tandem-cell--pax" role="columnheader">Pax</div>
 						<div class="tandem-cell tandem-cell--comment" role="columnheader"><?php esc_html_e( 'Kommentar', 'skywin-hub' ); ?></div>
-						<div class="tandem-cell tandem-cell--color" role="columnheader" aria-label="<?php esc_attr_e( 'Blip Grupp', 'skywin-hub' ); ?>"></div>
 					</div>
 					<?php foreach ( $sections as $section ) : ?>
 						<?php echo self::render_load( is_array( $section ) ? $section : [] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -292,6 +357,7 @@ class Skywin_Hub_FC_Tandem_View {
 	}
 
 	private static function render_jump( array $jump ): string {
+		$jump_id = isset( $jump['id'] ) ? (string) $jump['id'] : '';
 		$pax     = isset( $jump['passengerName'] ) ? (string) $jump['passengerName'] : '';
 		$pilot   = isset( $jump['tandemPilotName'] ) ? (string) $jump['tandemPilotName'] : '';
 		$photog  = isset( $jump['photographerName'] ) ? (string) $jump['photographerName'] : '';
@@ -325,6 +391,7 @@ class Skywin_Hub_FC_Tandem_View {
 		?>
 		<div
 			class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+			data-jump-id="<?php echo esc_attr( $jump_id ); ?>"
 			data-media="<?php echo esc_attr( $media ); ?>"
 			data-color="<?php echo esc_attr( $color ); ?>"
 			role="row">
@@ -333,11 +400,6 @@ class Skywin_Hub_FC_Tandem_View {
 			<div class="tandem-cell tandem-cell--media" role="cell"><?php echo esc_html( $media_code ); ?></div>
 			<div class="tandem-cell tandem-cell--pax" role="cell"><?php echo esc_html( $pax ); ?></div>
 			<div class="tandem-cell tandem-cell--comment" role="cell" title="<?php echo esc_attr( $comment ); ?>"><?php echo esc_html( $comment ); ?></div>
-			<div class="tandem-cell tandem-cell--color" role="cell">
-				<?php if ( $group_index > 0 ) : ?>
-					<span class="tandem-color-dot" aria-label="<?php echo esc_attr( $color ); ?>" title="<?php echo esc_attr( $color ); ?>"></span>
-				<?php endif; ?>
-			</div>
 		</div>
 		<?php
 		return (string) ob_get_clean();
