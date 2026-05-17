@@ -210,6 +210,37 @@ class Skywin_Hub_Push {
 
 		$sub_types = array_map( fn( $s ) => $s['types'] ?? [], is_array( $subs ) ? $subs : [] );
 
+		// Inspect tandem state (current vs previously stored ids).
+		$prev_tandem_ids    = is_array( $prev ) && isset( $prev['tandemJumpIds'] ) && is_array( $prev['tandemJumpIds'] )
+			? array_map( 'strval', $prev['tandemJumpIds'] )
+			: [];
+		$current_tandem_ids = [];
+		$tandem_error       = null;
+		if ( class_exists( 'Skywin_Hub_FC_Tandem_View' ) ) {
+			$tandem_payload = Skywin_Hub_FC_Tandem_View::get_payload( $date );
+			if ( is_wp_error( $tandem_payload ) ) {
+				$tandem_error = $tandem_payload->get_error_message();
+			} elseif ( is_array( $tandem_payload ) && ! empty( $tandem_payload['sections'] ) && is_array( $tandem_payload['sections'] ) ) {
+				foreach ( $tandem_payload['sections'] as $section ) {
+					if ( ! is_array( $section ) ) {
+						continue;
+					}
+					$section_status = isset( $section['status'] ) ? (string) $section['status'] : 'planned';
+					if ( $section_status !== 'planned' ) {
+						continue;
+					}
+					$jumps = isset( $section['jumps'] ) && is_array( $section['jumps'] ) ? $section['jumps'] : [];
+					foreach ( $jumps as $jump ) {
+						if ( is_array( $jump ) && ! empty( $jump['id'] ) ) {
+							$current_tandem_ids[] = (string) $jump['id'];
+						}
+					}
+				}
+			}
+		}
+		$new_tandem_ids     = array_values( array_diff( $current_tandem_ids, $prev_tandem_ids ) );
+		$removed_tandem_ids = array_values( array_diff( $prev_tandem_ids, $current_tandem_ids ) );
+
 		return new WP_REST_Response( [
 			'subscribers'    => count( is_array( $subs ) ? $subs : [] ),
 			'sub_types'      => $sub_types,
@@ -218,11 +249,19 @@ class Skywin_Hub_Push {
 				'date'       => $prev['date'] ?? null,
 				'loads'      => count( $prev['loadIds'] ?? [] ),
 				'jumpers'    => count( $prev['jumperKeys'] ?? [] ),
+				'tandems'    => count( $prev_tandem_ids ),
 			] : null,
 			'current_fetch'  => [
 				'ok'         => $payload_ok,
 				'error'      => $payload_error,
 				'loads'      => $load_count,
+			],
+			'tandem'         => [
+				'error'      => $tandem_error,
+				'current'    => count( $current_tandem_ids ),
+				'previous'   => count( $prev_tandem_ids ),
+				'new_ids'    => $new_tandem_ids,
+				'removed_ids' => $removed_tandem_ids,
 			],
 		] );
 	}
